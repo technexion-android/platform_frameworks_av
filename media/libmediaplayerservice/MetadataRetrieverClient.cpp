@@ -15,6 +15,8 @@
 ** limitations under the License.
 */
 
+/* Copyright 2009-2013 Freescale Semiconductor Inc. */
+
 //#define LOG_NDEBUG 0
 #define LOG_TAG "MetadataRetrieverClient"
 #include <utils/Log.h>
@@ -35,6 +37,9 @@
 #include <media/MediaMetadataRetrieverInterface.h>
 #include <media/MediaPlayerInterface.h>
 #include <media/stagefright/DataSource.h>
+#ifdef FSL_GM_PLAYER
+#include <media/OMXMetadataRetriever.h>
+#endif
 #include <private/media/VideoFrame.h>
 #include "MetadataRetrieverClient.h"
 #include "StagefrightMetadataRetriever.h"
@@ -83,6 +88,7 @@ void MetadataRetrieverClient::disconnect()
 static sp<MediaMetadataRetrieverBase> createRetriever(player_type playerType)
 {
     sp<MediaMetadataRetrieverBase> p;
+
     switch (playerType) {
         case STAGEFRIGHT_PLAYER:
         case NU_PLAYER:
@@ -90,6 +96,12 @@ static sp<MediaMetadataRetrieverBase> createRetriever(player_type playerType)
             p = new StagefrightMetadataRetriever;
             break;
         }
+#ifdef FSL_GM_PLAYER
+        case OMX_PLAYER:
+            ALOGV("Create OMXMetadataRetriever.\n");
+            p = new OMXMetadataRetriever();
+            break;
+#endif
         default:
             // TODO:
             // support for TEST_PLAYER

@@ -15,7 +15,10 @@
 ** limitations under the License.
 */
 
+/* Copyright 2013 Freescale Semiconductor Inc. */
+
 //#define LOG_NDEBUG 0
+
 #define LOG_TAG "MediaPlayerFactory"
 #include <utils/Log.h>
 
@@ -30,6 +33,9 @@
 
 #include "MediaPlayerFactory.h"
 
+#ifdef FSL_GM_PLAYER
+#include <media/OMXPlayer.h>
+#endif
 #include "TestPlayerStub.h"
 #include "StagefrightPlayer.h"
 #include "nuplayer/NuPlayerDriver.h"
@@ -176,6 +182,113 @@ sp<MediaPlayerBase> MediaPlayerFactory::createPlayer(
  *                                                                           *
  *****************************************************************************/
 
+#ifdef FSL_GM_PLAYER
+class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
+    public:
+        virtual float scoreFactory(const sp<IMediaPlayer>& client,
+                const char* url,
+                float curScore) {
+            static const float kOurScore = 1.0;
+            static const char* const FILE_EXTS[] = {
+                ".avi",
+                ".mkv",
+                ".mp4",
+                ".m4a",
+                ".3gp",
+                ".3g2",
+                ".3gpp",
+                ".mov",
+                ".rmvb",
+                ".rm", 
+                ".wmv",
+                ".asf",
+                ".flv",
+                ".mpg",
+                ".vob",
+                ".ts", 
+                ".f4v",
+                ".mp3",
+                ".aac",
+                ".wma",
+                ".ra", 
+                ".wav",
+                ".flac",
+                ".divx",
+                ".m4v",        
+                //".ogg,   
+#ifdef MX6X
+                ".webm",   
+#endif
+                ".amr",
+                ".awb"
+            };
+
+            char value[PROPERTY_VALUE_MAX];
+            if (!(property_get("media.omxgm.enable-player", value, NULL)
+                    && (!strcmp("1", value) || !strcasecmp("true", value)))) {
+                return 0.0;
+            }
+
+            if (kOurScore <= curScore)
+                return 0.0;
+
+            if (!strncasecmp(url, "http://", 7) \
+                    || !strncasecmp(url, "rtsp://", 7) \
+                    || !strncasecmp(url, "udp://", 6) \
+                    || !strncasecmp(url, "rtp://", 6))
+                return kOurScore;
+
+            int lenURL = strlen(url);
+            for (int i = 0; i < NELEM(FILE_EXTS); ++i) {
+                int len = strlen(FILE_EXTS[i]);
+                int start = lenURL - len;
+                if (start > 0) {
+                    if (!strncasecmp(url + start, FILE_EXTS[i], len)) {
+                        return kOurScore;
+                    }
+                }
+            }
+
+            return 0.0;
+        }
+
+        virtual float scoreFactory(const sp<IMediaPlayer>& client,
+                int fd,
+                int64_t offset,
+                int64_t length,
+                float curScore) {
+            static const float kOurScore = 1.0;
+
+            char value[PROPERTY_VALUE_MAX];
+            if (!(property_get("media.omxgm.enable-player", value, NULL)
+                    && (!strcmp("1", value) || !strcasecmp("true", value)))) {
+                return 0.0;
+            }
+
+            if (kOurScore <= curScore)
+                return 0.0;
+
+            char url[128];
+            int ret = 0;
+
+            OMXPlayerType *pType = new OMXPlayerType();
+            sprintf(url, "sharedfd://%d:%lld:%lld",  fd, offset, length);
+            ret = pType->IsSupportedContent(url);
+            delete pType;
+            if(ret) {
+                return kOurScore;
+            }
+
+            return 0.0;
+        }
+
+        virtual sp<MediaPlayerBase> createPlayer() {
+            ALOGV(" create OMXPlayer");
+            return new OMXPlayer();
+        }
+};
+#endif
+
 class StagefrightPlayerFactory :
     public MediaPlayerFactory::IFactory {
   public:
@@ -310,6 +423,9 @@ void MediaPlayerFactory::registerBuiltinFactories() {
     if (sInitComplete)
         return;
 
+#ifdef FSL_GM_PLAYER
+    registerFactory_l(new OMXPlayerFactory(), OMX_PLAYER);
+#endif
     registerFactory_l(new StagefrightPlayerFactory(), STAGEFRIGHT_PLAYER);
     registerFactory_l(new NuPlayerFactory(), NU_PLAYER);
     registerFactory_l(new TestPlayerFactory(), TEST_PLAYER);

@@ -118,7 +118,15 @@ LOCAL_STATIC_LIBRARIES := \
         libstagefright_mpeg2ts \
         libstagefright_id3 \
         libFLAC \
-        libmedia_helper \
+        libmedia_helper
+
+ifeq ($(HAVE_FSL_IMX_CODEC),true)
+LOCAL_CFLAGS += -DFSL_GM_PLAYER
+endif
+
+ifeq ($(BOARD_SOC_CLASS), IMX5X)
+   LOCAL_CFLAGS += -DIMX5X
+endif
 
 LOCAL_SHARED_LIBRARIES += \
         libstagefright_enc_common \

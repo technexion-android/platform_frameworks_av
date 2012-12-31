@@ -15,6 +15,8 @@
 ** limitations under the License.
 */
 
+/* Copyright 2009-2013 Freescale Semiconductor, Inc. */
+
 // Proxy for media player implementations
 
 //#define LOG_NDEBUG 0
@@ -699,6 +701,10 @@ status_t MediaPlayerService::Client::setDataSource(
 
     if ((strncmp(url, "http://", 7) == 0) ||
         (strncmp(url, "https://", 8) == 0) ||
+#ifdef FSL_GM_PLAYER
+        (strncmp(url, "rtp://", 6) == 0) ||
+        (strncmp(url, "udp://", 6) == 0) ||
+#endif
         (strncmp(url, "rtsp://", 7) == 0)) {
         if (!checkPermission("android.permission.INTERNET")) {
             return PERMISSION_DENIED;

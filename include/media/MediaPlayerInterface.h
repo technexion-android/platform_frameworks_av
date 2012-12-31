@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/* Copyright 2009-2013 Freescale Semiconductor Inc. */
+
 #ifndef ANDROID_MEDIAPLAYERINTERFACE_H
 #define ANDROID_MEDIAPLAYERINTERFACE_H
 
@@ -52,6 +54,8 @@ enum player_type {
     // The shared library with the test player is passed passed as an
     // argument to the 'test:' url in the setDataSource call.
     TEST_PLAYER = 5,
+
+    OMX_PLAYER = 6,
 };
 
 
