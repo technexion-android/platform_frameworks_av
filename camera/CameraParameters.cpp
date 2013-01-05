@@ -512,11 +512,11 @@ void CameraParameters::getSupportedPreviewFormats(Vector<int>& formats) const {
 int CameraParameters::previewFormatToEnum(const char* format) {
     return
         !format ?
-            HAL_PIXEL_FORMAT_YCrCb_420_SP :
+            HAL_PIXEL_FORMAT_YCbCr_420_SP :
         !strcmp(format, PIXEL_FORMAT_YUV422SP) ?
             HAL_PIXEL_FORMAT_YCbCr_422_SP : // NV16
         !strcmp(format, PIXEL_FORMAT_YUV420SP) ?
-            HAL_PIXEL_FORMAT_YCrCb_420_SP : // NV21
+            HAL_PIXEL_FORMAT_YCbCr_420_SP : // NV21
         !strcmp(format, PIXEL_FORMAT_YUV422I) ?
             HAL_PIXEL_FORMAT_YCbCr_422_I :  // YUY2
         !strcmp(format, PIXEL_FORMAT_YUV420P) ?

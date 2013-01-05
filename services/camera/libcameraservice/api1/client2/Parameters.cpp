@@ -149,7 +149,27 @@ status_t Parameters::initialize(const CameraMetadata *info, int deviceVersion) {
         staticInfo(ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES, 2);
     if (!availableFpsRanges.count) return NO_INIT;
 
-    previewFormat = HAL_PIXEL_FORMAT_YCrCb_420_SP;
+    previewFpsRange[0] = availableFpsRanges.data.i32[0];
+    previewFpsRange[1] = availableFpsRanges.data.i32[1];
+
+    params.set(CameraParameters::KEY_PREVIEW_FPS_RANGE,
+            String8::format("%d,%d",
+                    previewFpsRange[0] * kFpsToApiScale,
+                    previewFpsRange[1] * kFpsToApiScale));
+
+    {
+        String8 supportedPreviewFpsRange;
+        for (size_t i=0; i < availableFpsRanges.count; i += 2) {
+            if (i != 0) supportedPreviewFpsRange += ",";
+            supportedPreviewFpsRange += String8::format("(%d,%d)",
+                    availableFpsRanges.data.i32[i] * kFpsToApiScale,
+                    availableFpsRanges.data.i32[i+1] * kFpsToApiScale);
+        }
+        params.set(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE,
+                supportedPreviewFpsRange);
+    }
+
+    previewFormat = HAL_PIXEL_FORMAT_YCbCr_420_SP;
     params.set(CameraParameters::KEY_PREVIEW_FORMAT,
             formatEnumToString(previewFormat)); // NV21
 
@@ -168,7 +188,7 @@ status_t Parameters::initialize(const CameraMetadata *info, int deviceVersion) {
                 supportedPreviewFormats +=
                     CameraParameters::PIXEL_FORMAT_YUV422SP;
                 break;
-            case HAL_PIXEL_FORMAT_YCrCb_420_SP:
+            case HAL_PIXEL_FORMAT_YCbCr_420_SP:
                 supportedPreviewFormats +=
                     CameraParameters::PIXEL_FORMAT_YUV420SP;
                 break;
@@ -2262,7 +2282,7 @@ const char* Parameters::formatEnumToString(int format) {
         case HAL_PIXEL_FORMAT_YCbCr_422_SP: // NV16
             fmt = CameraParameters::PIXEL_FORMAT_YUV422SP;
             break;
-        case HAL_PIXEL_FORMAT_YCrCb_420_SP: // NV21
+        case HAL_PIXEL_FORMAT_YCbCr_420_SP: // NV21
             fmt = CameraParameters::PIXEL_FORMAT_YUV420SP;
             break;
         case HAL_PIXEL_FORMAT_YCbCr_422_I: // YUY2
