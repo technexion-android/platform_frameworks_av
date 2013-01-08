@@ -77,7 +77,7 @@ class JpegProcessor:
 
     status_t processNewCapture();
     size_t findJpegSize(uint8_t* jpegBuffer, size_t maxSize);
-
+    int mMaxJpegSize;
 };
 
 
