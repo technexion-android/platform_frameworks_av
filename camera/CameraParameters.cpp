@@ -520,7 +520,7 @@ int CameraParameters::previewFormatToEnum(const char* format) {
         !strcmp(format, PIXEL_FORMAT_YUV422I) ?
             HAL_PIXEL_FORMAT_YCbCr_422_I :  // YUY2
         !strcmp(format, PIXEL_FORMAT_YUV420P) ?
-            HAL_PIXEL_FORMAT_YV12 :         // YV12
+            HAL_PIXEL_FORMAT_YCbCr_420_P :         // YV12
         !strcmp(format, PIXEL_FORMAT_RGB565) ?
             HAL_PIXEL_FORMAT_RGB_565 :      // RGB565
         !strcmp(format, PIXEL_FORMAT_RGBA8888) ?

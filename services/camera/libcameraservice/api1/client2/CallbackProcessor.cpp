@@ -245,6 +245,11 @@ bool CallbackProcessor::threadLoop() {
 status_t CallbackProcessor::discardNewCallback() {
     ATRACE_CALL();
     status_t res;
+
+    if (mCallbackConsumer.get() == NULL) {
+        return BAD_VALUE;
+    }
+
     CpuConsumer::LockedBuffer imgBuffer;
     res = mCallbackConsumer->lockNextBuffer(&imgBuffer);
     if (res != OK) {

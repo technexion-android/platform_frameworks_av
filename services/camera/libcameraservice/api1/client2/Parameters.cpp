@@ -197,6 +197,7 @@ status_t Parameters::initialize(const CameraMetadata *info, int deviceVersion) {
                     CameraParameters::PIXEL_FORMAT_YUV422I;
                 break;
             case HAL_PIXEL_FORMAT_YV12:
+            case HAL_PIXEL_FORMAT_YCbCr_420_P:
                 supportedPreviewFormats +=
                     CameraParameters::PIXEL_FORMAT_YUV420P;
                 break;
@@ -2289,6 +2290,7 @@ const char* Parameters::formatEnumToString(int format) {
             fmt = CameraParameters::PIXEL_FORMAT_YUV422I;
             break;
         case HAL_PIXEL_FORMAT_YV12:        // YV12
+        case HAL_PIXEL_FORMAT_YCbCr_420_P:        // I420
             fmt = CameraParameters::PIXEL_FORMAT_YUV420P;
             break;
         case HAL_PIXEL_FORMAT_RGB_565:     // RGB565
