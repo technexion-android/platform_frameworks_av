@@ -69,8 +69,6 @@ public:
     virtual status_t    setParameter(int key, const Parcel &request);
     virtual status_t    getParameter(int key, Parcel *reply);
 
-    void                sendEvent(int msg, int ext1=0, int ext2=0) { MediaPlayerBase::sendEvent(msg, ext1, ext2); }
-
     status_t            ProcessEvent(int eventID, void* Eventpayload);
     status_t            ProcessAsyncCmd();
     status_t            PropertyCheck();
@@ -90,6 +88,7 @@ private:
     int                 mSharedFd;
     bool                bLoop;
     char                *contentURI;
+    char                *subtitleURI;
     MSGTYPE             msg;
     int                 msgData;
     void                *sem;
