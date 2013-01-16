@@ -31,7 +31,8 @@ class MediaPlayerFactory {
 
         virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                    const char* /*url*/,
-                                   float /*curScore*/) { return 0.0; }
+                                   float /*curScore*/,
+                                   const KeyedVector<String8, String8> *headers = NULL) { return 0.0; }
 
         virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                    int /*fd*/,
@@ -54,7 +55,8 @@ class MediaPlayerFactory {
                                     player_type type);
     static void unregisterFactory(player_type type);
     static player_type getPlayerType(const sp<IMediaPlayer>& client,
-                                     const char* url);
+                                     const char* url,
+                                     const KeyedVector<String8, String8> *headers = NULL);
     static player_type getPlayerType(const sp<IMediaPlayer>& client,
                                      int fd,
                                      int64_t offset,

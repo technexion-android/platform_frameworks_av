@@ -726,7 +726,7 @@ status_t MediaPlayerService::Client::setDataSource(
         close(fd);
         return mStatus;
     } else {
-        player_type playerType = MediaPlayerFactory::getPlayerType(this, url);
+        player_type playerType = MediaPlayerFactory::getPlayerType(this, url, headers);
         sp<MediaPlayerBase> p = setDataSource_pre(playerType);
         if (p == NULL) {
             return NO_INIT;
