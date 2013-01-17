@@ -141,8 +141,6 @@ status_t Parameters::initialize(const CameraMetadata *info, int deviceVersion) {
                     availableVideoSizes[i].height);
         }
         ALOGV("Supported video sizes are: %s", supportedVideoSizes.string());
-        params.set(CameraParameters::KEY_SUPPORTED_VIDEO_SIZES,
-                supportedVideoSizes);
     }
 
     camera_metadata_ro_entry_t availableFpsRanges =
