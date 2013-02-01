@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 The Android Open Source Project
+ * Copyright (C) 2013 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,8 +89,8 @@ public:
     src_quality getQuality() const { return mQuality; }
 
 protected:
-    // number of bits for phase fraction - 30 bits allows nearly 2x downsampling
-    static const int kNumPhaseBits = 30;
+    // number of bits for phase fraction - 28 bits allows nearly 8x downsampling
+    static const int kNumPhaseBits = 28;
 
     // phase mask for fraction
     static const uint32_t kPhaseMask = (1LU<<kNumPhaseBits)-1;
