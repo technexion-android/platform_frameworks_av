@@ -2055,6 +2055,7 @@ size_t Camera2Client::calculateBufferSize(int width, int height,
             return width * height * 3 / 2;
         case HAL_PIXEL_FORMAT_YCbCr_422_I: // YUY2
             return width * height * 2;
+        case HAL_PIXEL_FORMAT_YCbCr_420_P: // I420
         case HAL_PIXEL_FORMAT_YV12: {      // YV12
             size_t ySize = stride * height;
             size_t uvStride = (stride / 2 + 0xF) & ~0xF;
