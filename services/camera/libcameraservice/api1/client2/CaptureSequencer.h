@@ -110,7 +110,7 @@ class CaptureSequencer:
     static const nsecs_t kWaitDuration = 100000000; // 100 ms
     static const int kMaxTimeoutsForPrecaptureStart = 10; // 1 sec
     static const int kMaxTimeoutsForPrecaptureEnd = 20;  // 2 sec
-    static const int kMaxTimeoutsForCaptureEnd    = 40;  // 4 sec
+    static const int kMaxTimeoutsForCaptureEnd    = 100;  // 10 sec
 
     wp<Camera2Client> mClient;
     wp<ZslProcessorInterface> mZslProcessor;
