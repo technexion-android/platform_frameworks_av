@@ -171,7 +171,7 @@ status_t Converter::initEncoder() {
         mOutputFormat->setInt32("bitrate", videoBitrate);
         mOutputFormat->setInt32("bitrate-mode", OMX_Video_ControlRateConstant);
         mOutputFormat->setInt32("frame-rate", 30);
-        mOutputFormat->setInt32("i-frame-interval", 15);  // Iframes every 15 secs
+        mOutputFormat->setInt32("i-frame-interval", 1);  // Iframes every 15 secs
 
         // Configure encoder to use intra macroblock refresh mode
         mOutputFormat->setInt32("intra-refresh-mode", OMX_VIDEO_IntraRefreshCyclic);
