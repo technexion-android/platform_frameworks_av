@@ -14,6 +14,7 @@ namespace android {
 
 RepeaterSource::RepeaterSource(const sp<MediaSource> &source, double rateHz)
     : mStarted(false),
+      mStopping(false),
       mSource(source),
       mRateHz(rateHz),
       mBuffer(NULL),
@@ -70,6 +71,7 @@ status_t RepeaterSource::start(MetaData *params) {
     postRead();
 
     mStarted = true;
+    mStopping = false;
 
     return OK;
 }
@@ -78,6 +80,16 @@ status_t RepeaterSource::stop() {
     CHECK(mStarted);
 
     ALOGV("stopping");
+    {
+        Mutex::Autolock autoLock(mLock);
+        mStopping = true;
+        if (mBuffer != NULL) {
+            ALOGV("releasing mbuf %p", mBuffer);
+            mBuffer->release();
+            mBuffer = NULL;
+        }
+
+    }
 
     status_t err = mSource->stop();
 
@@ -87,13 +99,6 @@ status_t RepeaterSource::stop() {
 
         mReflector.clear();
     }
-
-    if (mBuffer != NULL) {
-        ALOGV("releasing mbuf %p", mBuffer);
-        mBuffer->release();
-        mBuffer = NULL;
-    }
-
 
     ALOGV("stopped");
 
@@ -197,7 +202,14 @@ void RepeaterSource::onMessageReceived(const sp<AMessage> &msg) {
             mCondition.broadcast();
 
             if (err == OK) {
-                postRead();
+                if (mStopping) {
+                    if (mBuffer != NULL) {
+                        mBuffer->release();
+                        mBuffer = NULL;
+                    }
+                } else {
+                    postRead();
+                }
             }
             break;
         }

@@ -43,6 +43,7 @@ private:
     Condition mCondition;
 
     bool mStarted;
+    bool mStopping;
 
     sp<MediaSource> mSource;
     double mRateHz;
