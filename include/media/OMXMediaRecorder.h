@@ -22,7 +22,7 @@
 #include <media/MediaRecorderBase.h>
 #include <utils/String8.h>
 #include <camera/ICamera.h>
-#include <gui/ISurface.h>
+#include <gui/IGraphicBufferProducer.h>
 
 namespace android {
 
@@ -40,12 +40,12 @@ struct OMXRecorder : public MediaRecorderBase {
     virtual status_t setVideoFrameRate(int frames_per_second);
 	virtual status_t setCamera(const sp<ICamera>& camera);
 	virtual status_t setCamera(const sp<ICamera>& camera, const sp<ICameraRecordingProxy>& proxy);
-    virtual status_t setPreviewSurface(const sp<ISurface>& surface);
-    virtual status_t setPreviewSurface(const sp<Surface>& surface);
+    virtual status_t setPreviewSurface(const sp<IGraphicBufferProducer>& surface);
     virtual status_t setOutputFile(const char *path);
     virtual status_t setOutputFile(int fd, int64_t offset, int64_t length);
     virtual status_t setParameters(const String8& params);
     virtual status_t setListener(const sp<IMediaRecorderClient>& listener);
+    virtual status_t setClientName(const String16& clientName);
     virtual status_t prepare();
     virtual status_t start();
     virtual status_t pause();
@@ -56,7 +56,7 @@ struct OMXRecorder : public MediaRecorderBase {
     virtual status_t dump(int fd, const Vector<String16>& args) const;
     status_t ProcessEvent(int msg, int ext1, int ext2);
     // Querying a SurfaceMediaSourcer
-    virtual sp<ISurfaceTexture> querySurfaceMediaSource() const;
+    virtual sp<IGraphicBufferProducer> querySurfaceMediaSource() const;
 
 private:
     // Encoding parameter handling utilities
@@ -68,8 +68,9 @@ private:
 	void                *cameraProxyPtr;
 	sp<ICamera>			mCamera; 
 	sp<ICameraRecordingProxy> mCameraProxy; 
-    sp<ISurface> mPreviewSurface;
-    sp<Surface> mPreviewSurface2;
+    sp<IGraphicBufferProducer> mPreviewSurface;
+    String16 mClientName;
+    uid_t mClientUid;
 
     OMXRecorder(const OMXRecorder &);
     OMXRecorder &operator=(const OMXRecorder &);

@@ -22,7 +22,6 @@
 #include <utils/Errors.h>
 #include <media/MediaPlayerInterface.h>
 #include <private/media/VideoFrame.h>
-#include <gui/ISurface.h>
 
 namespace android {
 
@@ -37,9 +36,7 @@ public:
     virtual status_t    initCheck();
     virtual status_t    setDataSource(const char *url, const KeyedVector<String8, String8> *headers);
     virtual status_t    setDataSource(int fd, int64_t offset, int64_t length);
-    virtual status_t    setVideoSurface(const sp<ISurface>& surface);
-    virtual status_t    setVideoSurface(const sp<Surface>& surface);
-    virtual status_t    setVideoSurfaceTexture(const sp<ISurfaceTexture>& surfaceTexture);
+    virtual status_t    setVideoSurfaceTexture(const sp<IGraphicBufferProducer>& surfaceTexture);
     virtual status_t    prepare();
     virtual status_t    prepareAsync();
     virtual status_t    start();
@@ -82,8 +79,6 @@ private:
 
     void                *player;
     status_t            mInit;
-    sp<ISurface>        mISurface;
-    sp<Surface>         mSurface;
     sp<ANativeWindow>   mNativeWindow;
     int                 mSharedFd;
     bool                bLoop;
