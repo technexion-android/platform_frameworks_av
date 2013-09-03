@@ -52,6 +52,7 @@ AMessage::AMessage(void)
     : mWhat(0),
       mTarget(0),
       mNumItems(0) {
+    memset(&mItems, 0, sizeof(mItems));
 }
 
 AMessage::AMessage(uint32_t what, const sp<const AHandler> &handler)
@@ -98,7 +99,10 @@ void AMessage::freeItemValue(Item *item) {
     switch (item->mType) {
         case kTypeString:
         {
-            delete item->u.stringValue;
+            if (item->u.stringValue != NULL) {
+                delete item->u.stringValue;
+                item->u.stringValue = NULL;
+            }
             break;
         }
 
@@ -108,6 +112,7 @@ void AMessage::freeItemValue(Item *item) {
         {
             if (item->u.refValue != NULL) {
                 item->u.refValue->decStrong(this);
+                item->u.refValue = NULL;
             }
             break;
         }
