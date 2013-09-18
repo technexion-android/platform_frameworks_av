@@ -1,5 +1,6 @@
 /*
  * Copyright 2012, The Android Open Source Project
+ * Copyright (C) 2013 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -367,7 +368,7 @@ void Converter::onMessageReceived(const sp<AMessage> &msg) {
 #endif
 
                 mInputBufferQueue.push_back(accessUnit);
-
+                refineVideoQueue();
                 feedEncoderInputBuffers();
 
                 scheduleDoMoreWork();
@@ -466,6 +467,47 @@ void Converter::onMessageReceived(const sp<AMessage> &msg) {
         default:
             TRESPASS();
     }
+}
+
+void Converter::refineVideoQueue()
+{
+    size_t requireSize = mAvailEncoderInputIndices.size();
+    size_t bufSize = mInputBufferQueue.size();
+
+    if (mIsVideo) {
+        ALOGV("Converter: inputQueue size:%d, resize:%d", bufSize, requireSize);
+    }
+    if (!mIsVideo || bufSize <= requireSize) {
+        return;
+    }
+
+    List<sp<ABuffer> >::iterator start = mInputBufferQueue.begin();
+    List<sp<ABuffer> >::iterator end = mInputBufferQueue.end();
+    sp<ABuffer> buffer = *start;
+    List<sp<ABuffer> >::iterator prev = start;
+    sp<ABuffer> prevBuf = *prev;
+    start++;
+    int bufHandle = *(int *)(buffer->data() + 4);
+    int handle = 0;
+    while (start != end) {
+        buffer = *start;
+        handle = *(int *)(buffer->data() + 4);
+        if (bufHandle == handle) {
+            // if buffer repeat, delete it.
+            mInputBufferQueue.erase(prev);
+            // release buffer.
+            ReleaseMediaBufferReference(prevBuf);
+            bufSize --;
+            if (bufSize <= requireSize) break;
+        }
+        else {
+            bufHandle = handle;
+        }
+        prev = start;
+        prevBuf = *prev;
+        start++;
+    }
+    ALOGV("Converter: inputQueue size:%d", mInputBufferQueue.size());
 }
 
 void Converter::scheduleDoMoreWork() {
