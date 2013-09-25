@@ -15,7 +15,7 @@
 ** limitations under the License.
 */
 
-/* Copyright 2013 Freescale Semiconductor Inc. */
+/* Copyright (C) 2013 Freescale Semiconductor, Inc. */
 
 //#define LOG_NDEBUG 0
 
@@ -46,6 +46,7 @@
 #include "../libstagefright/include/NuCachedSource2.h"
 #include "../libstagefright/include/WVMExtractor.h"
 #include <media/stagefright/DataSource.h>
+#include <media/stagefright/FileSource.h>
 #include <media/OMXPlayer.h>
 #endif
 
@@ -292,6 +293,40 @@ bool isWVM(const char* url,
     return false;
 }
 
+bool isWVM(int fd,
+           int64_t offset,
+           int64_t length) {
+    sp<DataSource> dataSource;
+
+    void *VendorLibHandle = NULL;
+    if (VendorLibHandle == NULL) {
+        VendorLibHandle = dlopen("libwvm.so", RTLD_NOW);
+    }
+
+    if (!VendorLibHandle) {
+        return false;
+    }
+
+    dataSource = new FileSource(dup(fd), offset, length);
+
+    if (dataSource == NULL) {
+        return false;
+    }
+
+    typedef WVMLoadableExtractor *(*SnifferFunc)(const sp<DataSource>&);
+    SnifferFunc snifferFunc =
+        (SnifferFunc) dlsym(VendorLibHandle,
+                "_ZN7android15IsWidevineMediaERKNS_2spINS_10DataSourceEEE");
+
+    if (snifferFunc) {
+        if ((*snifferFunc)(dataSource)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
     public:
         virtual float scoreFactory(const sp<IMediaPlayer>& client,
@@ -385,6 +420,9 @@ class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
             }
 
             if (kOurScore <= curScore)
+                return 0.0;
+
+            if (isWVM(fd, offset, length))
                 return 0.0;
 
             char url[128];
