@@ -368,10 +368,14 @@ status_t AudioSource::dataCallback(const AudioRecord::Buffer& audioBuffer) {
 void AudioSource::queueInputBuffer_l(MediaBuffer *buffer, int64_t timeUs) {
     const size_t bufferSize = buffer->range_length();
     const size_t frameSize = mRecord->frameSize();
-    const int64_t timestampUs =
+    int64_t timestampUs =
                 mPrevSampleTimeUs +
                     ((1000000LL * (bufferSize / frameSize)) +
                         (mSampleRate >> 1)) / mSampleRate;
+
+    if (mRecord->inputSource() == AUDIO_SOURCE_REMOTE_SUBMIX) {
+        timestampUs = timeUs;
+    }
 
     if (mNumFramesReceived == 0) {
         buffer->meta_data()->setInt64(kKeyAnchorTime, mStartTimeUs);
