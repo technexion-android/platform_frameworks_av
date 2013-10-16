@@ -662,7 +662,7 @@ status_t ANetworkSession::Session::writeMore() {
         mSawSendFailure = true;
     }
 
-#if 0
+#if 1
     int numBytesQueued;
     int res = ioctl(mSocket, SIOCOUTQ, &numBytesQueued);
     if (res == 0 && numBytesQueued > 50 * 1024) {

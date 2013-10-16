@@ -242,7 +242,6 @@ status_t MediaSender::queueAccessUnit(
             }
 
             if (minTrackIndex < 0) {
-                adjustAudioQueue();
                 return OK;
             }
 
@@ -282,47 +281,6 @@ status_t MediaSender::queueAccessUnit(
             info->mIsAudio ? 96 : 97 /* packetType */,
             info->mIsAudio
                 ? RTPSender::PACKETIZATION_AAC : RTPSender::PACKETIZATION_H264);
-}
-
-void MediaSender::adjustAudioQueue()
-{
-    for (size_t i = 0; i < mTrackInfos.size(); ++i) {
-        TrackInfo &info = (TrackInfo &)mTrackInfos.itemAt(i);
-        if (info.mAccessUnits.size() > 10) {
-            List< sp<ABuffer> >::iterator lasti = info.mAccessUnits.end();
-            List< sp<ABuffer> >::iterator firsti = info.mAccessUnits.begin();
-            lasti --;
-            sp<ABuffer> first = *firsti;
-            sp<ABuffer> last = *lasti;
-            int64_t lastTimeUs = 0, firstTimeUs = 0;
-            first->meta()->findInt64("timeUs", &firstTimeUs);
-            last->meta()->findInt64("timeUs", &lastTimeUs);
-
-            // if audio timestamp span in the queue large than 300ms.
-            // start to drop audio frames.
-            if ((lastTimeUs - firstTimeUs) > 300000) {
-                ALOGI("adjustAudioQueue timeus:%lld", lastTimeUs - firstTimeUs);
-                int64_t startTimeUs = 0;
-                sp<ABuffer> start;
-                List< sp<ABuffer> >::iterator starti;
-                while (firsti != lasti) {
-                    starti = firsti;
-                    start = *starti;
-                    firsti ++;
-                    int64_t startTimeUs = 0;
-                    start->meta()->findInt64("timeUs", &startTimeUs);
-                    // drop audio timestamp span more than 200ms.
-                    if (lastTimeUs - startTimeUs >= 200000) {
-                        ALOGI("adjustAudioQueue drop timeus:%lld", lastTimeUs - startTimeUs);
-                        info.mAccessUnits.erase(starti);
-                    }
-                    else {
-                        break;
-                    }
-                }//end while
-            }
-        }//end if
-    }//end for
 }
 
 void MediaSender::onMessageReceived(const sp<AMessage> &msg) {

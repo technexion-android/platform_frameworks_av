@@ -118,7 +118,6 @@ private:
     void notifyInitDone(status_t err);
     void notifyError(status_t err);
     void notifyNetworkStall(size_t numBytesQueued);
-    void adjustAudioQueue();
 
     status_t packetizeAccessUnit(
             size_t trackIndex,
