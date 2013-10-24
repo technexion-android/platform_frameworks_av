@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2013 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +159,7 @@ SoftAVCEncoder::SoftAVCEncoder(
     : SoftVideoEncoderOMXComponent(
             name, "video_encoder.avc", OMX_VIDEO_CodingAVC,
             kProfileLevels, NELEM(kProfileLevels),
-            176 /* width */, 144 /* height */,
+            320 /* width */, 240 /* height */,
             callbacks, appData, component),
       mIDRFrameRefreshIntervalInSec(1),
       mAVCEncProfile(AVC_BASELINE),

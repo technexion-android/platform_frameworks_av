@@ -1,5 +1,6 @@
 /* ------------------------------------------------------------------
  * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 2013 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,9 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+
 #include "avcenc_lib.h"
+#include <cutils/log.h>
 
 #define WORD_SIZE 32
 
@@ -90,6 +93,9 @@ AVCEnc_Status AVCBitstreamSaveWord(AVCEncBitstream *stream)
 
     if (stream->buf_size - stream->write_pos <= (num_bits >> 3) + 2) /* 2 more bytes for possible EPBS */
     {
+        ALOGW("BitStream overflow, size %d, pos %d, bits %d",
+            stream->buf_size, stream->write_pos, num_bits);
+
         if (AVCENC_SUCCESS != AVCBitstreamUseOverrunBuffer(stream, (num_bits >> 3) + 2))
         {
             return AVCENC_BITSTREAM_BUFFER_FULL;
