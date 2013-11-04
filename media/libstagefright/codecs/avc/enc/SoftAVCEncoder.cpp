@@ -613,6 +613,14 @@ void SoftAVCEncoder::onQueueFilled(OMX_U32 /* portIndex */) {
                         return;
                     } else {
                         ALOGV("encoderStatus = %d at line %d", encoderStatus, __LINE__);
+
+                       //If skip this frame, del mInputBufferInfoVec,
+                       //or will cause video time stamp drift, and memory leakage
+                       if(AVCENC_SKIPPED_PICTURE == encoderStatus) {
+                           CHECK(!mInputBufferInfoVec.empty());
+                           mInputBufferInfoVec.erase(mInputBufferInfoVec.end() - 1);
+                       }
+
                         inQueue.erase(inQueue.begin());
                         inInfo->mOwnedByUs = false;
                         notifyEmptyBufferDone(inHeader);
