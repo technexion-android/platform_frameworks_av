@@ -2043,6 +2043,14 @@ void OMXCodec::on_message(const omx_message &msg) {
         {
             IOMX::buffer_id buffer = msg.u.extended_buffer_data.buffer;
 
+			//If the frame is dropped by avcEncoder, need drop stamp in mDecodingTimeList
+            OMX_BUFFERHEADERTYPE *head = (OMX_BUFFERHEADERTYPE *)buffer;
+             if( mIsEncoder && mIsVideo && (!strcasecmp(MEDIA_MIMETYPE_VIDEO_AVC, mMIME)) &&
+                (head->nFlags == OMX_BUFFERFLAG_FRAMEDROP) ) {
+                CODEC_LOGV("drop time stamp %lld us", head->nTimeStamp);
+                getDecodingTimeUs();
+             }
+
             CODEC_LOGV("EMPTY_BUFFER_DONE(buffer: %u)", buffer);
 
             Vector<BufferInfo> *buffers = &mPortBuffers[kPortIndexInput];

@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+/*
+ * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ */
+
 #ifndef MEDIA_DEFS_H_
 
 #define MEDIA_DEFS_H_
@@ -65,6 +69,8 @@ extern const char *MEDIA_MIMETYPE_TEXT_SUBRIP;
 extern const char *MEDIA_MIMETYPE_TEXT_VTT;
 extern const char *MEDIA_MIMETYPE_TEXT_CEA_608;
 extern const char *MEDIA_MIMETYPE_DATA_TIMED_ID3;
+
+#define OMX_BUFFERFLAG_FRAMEDROP 0xbeafdeed
 
 }  // namespace android
 
