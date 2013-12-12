@@ -1168,10 +1168,16 @@ status_t ANetworkSession::connectUDPSession(
         int32_t sessionID, const char *remoteHost, unsigned remotePort) {
     Mutex::Autolock autoLock(mLock);
 
+    status_t err = OK;
     ssize_t index = mSessions.indexOfKey(sessionID);
 
     if (index < 0) {
         return -ENOENT;
+    }
+
+    if (remotePort <= 0) {
+        ALOGI("Remote port is %d, no need to connect!", remotePort);
+        return err;
     }
 
     const sp<Session> session = mSessions.valueAt(index);
@@ -1182,7 +1188,6 @@ status_t ANetworkSession::connectUDPSession(
     remoteAddr.sin_family = AF_INET;
     remoteAddr.sin_port = htons(remotePort);
 
-    status_t err = OK;
     struct hostent *ent = gethostbyname(remoteHost);
     if (ent == NULL) {
         err = -h_errno;
