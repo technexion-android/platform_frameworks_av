@@ -255,6 +255,10 @@ status_t NuPlayer::StreamingSource::dequeueAccessUnit(
     return err;
 }
 
+bool NuPlayer::StreamingSource::isAVCReorderDisabled() const {
+    return mSource->flags() & IStreamSource::kFlagKeepLowLatency;
+}
+
 bool NuPlayer::StreamingSource::isRealTime() const {
     return mSource->flags() & IStreamSource::kFlagIsRealTimeData;
 }

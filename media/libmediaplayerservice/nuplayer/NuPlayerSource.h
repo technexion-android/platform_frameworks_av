@@ -114,6 +114,10 @@ struct NuPlayer::Source : public AHandler {
         return INVALID_OPERATION;
     }
 
+    virtual bool isAVCReorderDisabled() const {
+        return false;
+    }
+
     virtual bool isRealTime() const {
         return false;
     }

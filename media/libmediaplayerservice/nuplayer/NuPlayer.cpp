@@ -1511,6 +1511,11 @@ status_t NuPlayer::instantiateDecoder(bool audio, sp<DecoderBase> *decoder) {
     if (!audio) {
         AString mime;
         CHECK(format->findString("mime", &mime));
+        bool bVideoIsAVC = !strcasecmp(MEDIA_MIMETYPE_VIDEO_AVC, mime.c_str());
+        if (bVideoIsAVC && mSource->isAVCReorderDisabled())
+            format->setString("disreorder", "1");
+        else
+            format->setString("disreorder", "0");
 
         sp<AMessage> ccNotify = new AMessage(kWhatClosedCaptionNotify, this);
         if (mCCDecoder == NULL) {

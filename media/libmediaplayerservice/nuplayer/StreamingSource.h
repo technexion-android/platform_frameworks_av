@@ -41,6 +41,8 @@ struct NuPlayer::StreamingSource : public NuPlayer::Source {
 
     virtual bool isRealTime() const;
 
+    virtual bool isAVCReorderDisabled() const;
+
 protected:
     virtual ~StreamingSource();
 

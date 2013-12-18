@@ -1745,6 +1745,32 @@ status_t ACodec::configureCodec(
             mCreateInputBuffersSuspended = false;
         }
     }
+    if (video && (!encoder)) {
+        OMX_INDEXTYPE index;
+        err = mOMX->getExtensionIndex(
+                mNode,
+                "OMX.google.android.index.disableAVCReorder",
+                &index);
+
+        if (err == OK) {
+            AString temp;
+            if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_AVC, mime)) {
+                CHECK(msg->findString("disreorder", &temp));
+            }
+
+            DisableAVCReorderParams params;
+            InitOMXParams(&params);
+            params.bDisable = (!strcmp(temp.c_str(), "1")) ? OMX_TRUE : OMX_FALSE;
+            ALOGI("Send reorder config(%d) to VPU",params.bDisable);
+            err = mOMX->setParameter(
+                    mNode, index, &params, sizeof(params));
+            if (err != OK) {
+                ALOGE("disable AVC reorder failed");
+                // allow failure
+                err = OK;
+            }
+        }
+    }
 
     // NOTE: we only use native window for video decoders
     sp<RefBase> obj;
