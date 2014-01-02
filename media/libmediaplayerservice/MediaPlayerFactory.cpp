@@ -351,6 +351,7 @@ class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
                 ".mpg",
                 ".vob",
                 ".ts", 
+                ".m2ts", 
                 ".f4v",
                 ".mp3",
                 ".aac",
