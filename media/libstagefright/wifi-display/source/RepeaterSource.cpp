@@ -1,3 +1,7 @@
+
+/* Copyright 2013-2014 Freescale Semiconductor, Inc. */
+
+//
 //#define LOG_NDEBUG 0
 #define LOG_TAG "RepeaterSource"
 #include <utils/Log.h>

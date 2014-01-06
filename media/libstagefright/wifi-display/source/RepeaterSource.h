@@ -1,3 +1,6 @@
+
+/* Copyright 2013-2014 Freescale Semiconductor, Inc. */
+
 #ifndef REPEATER_SOURCE_H_
 
 #define REPEATER_SOURCE_H_
