@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+ /*
+ * Copyright (C) 2014 Freescale Semiconductor, Inc.
+ */
+
 #define LOG_TAG "Camera2-CaptureSequencer"
 #define ATRACE_TAG ATRACE_TAG_CAMERA
 //#define LOG_NDEBUG 0
@@ -435,7 +439,13 @@ CaptureSequencer::CaptureState CaptureSequencer::manageStandardStart(
 
         mTriggerId = l.mParameters.precaptureTriggerCounter++;
     }
-    client->getCameraDevice()->triggerPrecaptureMetering(mTriggerId);
+
+    status_t res;
+    res = client->getCameraDevice()->triggerPrecaptureMetering(mTriggerId);
+    //if HAL not support precaptrue, jumpt to STANDARD_CAPTURE
+    if (res != OK) {
+        return STANDARD_CAPTURE;
+    }
 
     mAeInPrecapture = false;
     mTimeoutCount = kMaxTimeoutsForPrecaptureStart;
