@@ -1755,12 +1755,15 @@ status_t ACodec::configureCodec(
         if (err == OK) {
             AString temp;
             if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_AVC, mime)) {
-                CHECK(msg->findString("disreorder", &temp));
+                msg->findString("disreorder", &temp);
             }
 
             DisableAVCReorderParams params;
             InitOMXParams(&params);
-            params.bDisable = (!strcmp(temp.c_str(), "1")) ? OMX_TRUE : OMX_FALSE;
+            if(!temp.c_str())
+                params.bDisable = OMX_FALSE;
+            else
+                params.bDisable = (!strcmp(temp.c_str(), "1")) ? OMX_TRUE : OMX_FALSE;
             ALOGI("Send reorder config(%d) to VPU",params.bDisable);
             err = mOMX->setParameter(
                     mNode, index, &params, sizeof(params));
