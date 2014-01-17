@@ -385,6 +385,12 @@ class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
             if (!strncasecmp(url, "http://", 7)) { 
                 if (isWVM(url, headers))
                 return 0.0;
+
+                size_t len = strlen(url);
+                if (len >= 5 && !strcasecmp(".m3u8", &url[len - 5])) {
+                    return 0.0;
+                }
+                
             }
 
             if (!strncasecmp(url, "http://", 7) \
