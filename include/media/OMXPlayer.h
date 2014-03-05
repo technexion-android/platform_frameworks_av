@@ -112,6 +112,7 @@ private:
     status_t            getTrackInfo(Parcel *reply);
 
     bool                qdFlag;
+    bool                bNetworkFail;
 };
 
 class OMXPlayerType
