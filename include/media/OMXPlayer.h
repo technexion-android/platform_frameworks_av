@@ -115,12 +115,19 @@ private:
     bool                bNetworkFail;
 };
 
+typedef enum {
+    URL_SUPPORT = 0,
+    URL_NOT_SUPPORT,
+    URL_UNKNOWN,
+}URL_TYPE;
+
 class OMXPlayerType
 {
 public:
                         OMXPlayerType();
     virtual             ~OMXPlayerType();
     int                 IsSupportedContent(char *url);
+    URL_TYPE            IsSupportedUrl(const char *url);
 };
 
 }; // namespace android

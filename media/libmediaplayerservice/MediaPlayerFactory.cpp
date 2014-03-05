@@ -378,26 +378,19 @@ class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
             if (kOurScore <= curScore)
                 return 0.0;
 
-            if (!strncasecmp("widevine://", url, 11)) {
-                return 0.0;
-            }
-
             if (!strncasecmp(url, "http://", 7)) { 
                 if (isWVM(url, headers))
                 return 0.0;
-
-                size_t len = strlen(url);
-                if (len >= 5 && !strcasecmp(".m3u8", &url[len - 5])) {
-                    return 0.0;
-                }
-                
             }
-
-            if (!strncasecmp(url, "http://", 7) \
-                    || !strncasecmp(url, "rtsp://", 7) \
-                    || !strncasecmp(url, "udp://", 6) \
-                    || !strncasecmp(url, "rtp://", 6))
+            
+            URL_TYPE url_type;
+            OMXPlayerType *pType = new OMXPlayerType();
+            url_type = pType->IsSupportedUrl(url);
+            delete pType;
+            if(url_type == URL_SUPPORT)
                 return kOurScore;
+            else if(url_type == URL_NOT_SUPPORT)
+                return 0.0;
 
             int lenURL = strlen(url);
             for (int i = 0; i < NELEM(FILE_EXTS); ++i) {
