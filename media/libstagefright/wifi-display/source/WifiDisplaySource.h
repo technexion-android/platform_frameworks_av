@@ -46,6 +46,7 @@ struct WifiDisplaySource : public AHandler {
             const char *path = NULL);
 
     status_t start(const char *iface);
+    status_t startUibc(const int32_t port);
     status_t stop();
 
     status_t pause();
@@ -77,6 +78,7 @@ private:
     enum {
         kWhatStart,
         kWhatRTSPNotify,
+        kWhatUIBCNotify,
         kWhatStop,
         kWhatPause,
         kWhatResume,
@@ -126,6 +128,7 @@ private:
     AString mMediaPath;
     struct in_addr mInterfaceAddr;
     int32_t mSessionID;
+    int32_t mUibcSessionID;
 
     sp<AReplyToken> mStopReplyID;
 
@@ -142,6 +145,7 @@ private:
 
     bool mSinkSupportsAudio;
 
+    bool mSinkSupportsUIBC;
     bool mUsingPCMAudio;
     int32_t mClientSessionID;
 

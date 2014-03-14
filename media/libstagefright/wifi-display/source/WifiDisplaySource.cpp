@@ -48,6 +48,7 @@ const int64_t WifiDisplaySource::kTeardownTriggerTimeouSecs;
 const int64_t WifiDisplaySource::kPlaybackSessionTimeoutSecs;
 const int64_t WifiDisplaySource::kPlaybackSessionTimeoutUs;
 const AString WifiDisplaySource::sUserAgent = MakeUserAgent();
+const int32_t DEFAULT_UIBC_PORT = 7239;
 
 WifiDisplaySource::WifiDisplaySource(
         const String16 &opPackageName,
@@ -59,6 +60,7 @@ WifiDisplaySource::WifiDisplaySource(
       mNetSession(netSession),
       mClient(client),
       mSessionID(0),
+      mUibcSessionID(0),
       mStopReplyID(NULL),
       mChosenRTPPort(-1),
       mUsingPCMAudio(false),
@@ -113,6 +115,19 @@ status_t WifiDisplaySource::start(const char *iface) {
 
     sp<AMessage> response;
     return PostAndAwaitResponse(msg, &response);
+}
+
+status_t WifiDisplaySource::startUibc(const int32_t port) {
+
+    status_t err = OK;
+    sp<AMessage> notify = new AMessage(kWhatUIBCNotify, id());
+    ALOGI("source will create uibc channel");
+    err = mNetSession->createTCPDatagramSession(
+            mInterfaceAddr,
+            port,
+            notify,
+            &mUibcSessionID);
+   return err;
 }
 
 status_t WifiDisplaySource::stop() {
@@ -185,7 +200,33 @@ void WifiDisplaySource::onMessageReceived(const sp<AMessage> &msg) {
             response->postReply(replyID);
             break;
         }
+        case kWhatStartUibc:
+        {
+            uint32_t replyID;
+            CHECK(msg->senderAwaitsResponse(&replyID));
 
+            int32_t localUibcPort;
+            CHECK(msg->findInt32("port", &localUibcPort));
+            ALOGI("Create listening uibc tcp channel on port %d", localUibcPort);
+
+            status_t err = OK;
+            sp<AMessage> notify = new AMessage(kWhatUIBCNotify, id());
+            err = mNetSession->createTCPDatagramSession(
+                    mInterfaceAddr,
+                    localUibcPort,
+                    notify,
+                    &mUibcSessionID);
+
+            sp<AMessage> response = new AMessage;
+            response->setInt32("err", err);
+            response->postReply(replyID);
+            break;
+        }
+        case kWhatUIBCNotify:
+        {
+            ALOGI("get uibc notify");
+            break;
+        }
         case kWhatRTSPNotify:
         {
             int32_t reason;
@@ -425,7 +466,7 @@ void WifiDisplaySource::onMessageReceived(const sp<AMessage> &msg) {
                                     &height,
                                     NULL /* framesPerSecond */,
                                     NULL /* interlaced */));
-
+                        ALOGI("get configuration width=%d height=%d", width,height);
                         mClient->onDisplayConnected(
                                 mClientInfo.mPlaybackSession
                                     ->getSurfaceTexture(),
@@ -592,6 +633,7 @@ status_t WifiDisplaySource::sendM1(int32_t sessionID) {
 status_t WifiDisplaySource::sendM3(int32_t sessionID) {
     AString body =
         "wfd_content_protection\r\n"
+        "wfd_uibc_capability\r\n"
         "wfd_video_formats\r\n"
         "wfd_audio_codecs\r\n"
         "wfd_client_rtp_ports\r\n";
@@ -655,7 +697,20 @@ status_t WifiDisplaySource::sendM4(int32_t sessionID) {
     body.append(
             AStringPrintf(
                 "wfd_client_rtp_ports: %s\r\n", mWfdClientRtpPorts.c_str()));
+    if (mSinkSupportsUIBC) {
+        body.append(
+                StringPrintf(
+                    "wfd_uibc_capability: input_category_list=GENERIC;"
+                    "generic_cap_list=Mouse,SingleTouch;"
+                    "hidc_cap_list=none;"
+                    "port=%d\r\n", DEFAULT_UIBC_PORT)
+                );
+        body.append(
+                StringPrintf(
+                    "wfd_uibc_setting: %s\r\n", "enable")
+                );
 
+    }
     AString request = "SET_PARAMETER rtsp://localhost/wfd1.0 RTSP/1.0\r\n";
     AppendCommonResponse(&request, mNextCSeq);
 
@@ -936,6 +991,19 @@ status_t WifiDisplaySource::onReceiveM3Response(
         return ERROR_UNSUPPORTED;
     }
 
+    mSinkSupportsUIBC = false;
+    if (!params->findParameter("wfd_uibc_capability", &value)) {
+        ALOGI("Sink doesn't appear to support uibc.");
+    } else if (value == "none") {
+        ALOGI("Sink does not support uibc.");
+    } else {
+        mSinkSupportsUIBC = true;
+        ALOGI("Sink support uibc.");
+        status_t err = startUibc(DEFAULT_UIBC_PORT);
+        if (err != OK) {
+            ALOGI("start uibc channel failed");
+        }
+    }
     mUsingHDCP = false;
     if (!params->findParameter("wfd_content_protection", &value)) {
         ALOGI("Sink doesn't appear to support content protection.");
@@ -971,7 +1039,6 @@ status_t WifiDisplaySource::onReceiveM3Response(
             mUsingHDCP = false;
         }
     }
-
     return sendM4(sessionID);
 }
 
@@ -1515,6 +1582,10 @@ void WifiDisplaySource::finishStop2() {
         mSessionID = 0;
     }
 
+    if (mUibcSessionID != 0) {
+        mNetSession->destroySession(mUibcSessionID);
+        mUibcSessionID = 0;
+   }
     ALOGI("We're stopped.");
     mState = STOPPED;
 
