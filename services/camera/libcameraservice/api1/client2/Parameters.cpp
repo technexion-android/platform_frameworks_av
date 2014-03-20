@@ -1244,14 +1244,6 @@ status_t Parameters::set(const String8& paramString) {
     // RECORDING_HINT (always supported)
     validatedParams.recordingHint = boolFromString(
         newParams.get(CameraParameters::KEY_RECORDING_HINT) );
-    IF_ALOGV() { // Avoid unused variable warning
-        bool recordingHintChanged =
-                validatedParams.recordingHint != recordingHint;
-        if (recordingHintChanged) {
-            ALOGV("%s: Recording hint changed to %d",
-                  __FUNCTION__, validatedParams.recordingHint);
-        }
-    }
 
     // PREVIEW_FPS_RANGE
 
@@ -1359,13 +1351,18 @@ status_t Parameters::set(const String8& paramString) {
         }
     }
 
-    // PREVIEW_FRAME_RATE Deprecated
-    // - Use only if the single FPS value was set later than the FPS range
+    // PREVIEW_FRAME_RATE Deprecated, only use if the preview fps range is
+    // unchanged this time.  The single-value FPS is the same as the minimum of
+    // the range.  To detect whether the application has changed the value of
+    // previewFps, compare against their last-set preview FPS.
     if (fpsUseSingleValue) {
+        // fsl platform private change.
+        // because preview and recording share the same camera path.
+        // that means preview fps decides recording fps.
+        // so replace recordingHintChanged condition to recordingHint.
         int previewFps = newParams.getPreviewFrameRate();
-        ALOGV("%s: Preview FPS single value requested: %d",
-              __FUNCTION__, previewFps);
-        {
+        int lastSetPreviewFps = params.getPreviewFrameRate();
+        if (previewFps != lastSetPreviewFps || validatedParams.recordingHint) {
             camera_metadata_ro_entry_t availableFrameRates =
                 staticInfo(ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
             /**
@@ -1425,6 +1422,12 @@ status_t Parameters::set(const String8& paramString) {
                     bestRange.min;
             validatedParams.previewFpsRange[1] =
                     bestRange.max;
+
+            // sync the previewFpsRange to newParams.
+            newParams.set(CameraParameters::KEY_PREVIEW_FPS_RANGE,
+                String8::format("%d,%d",
+                        validatedParams.previewFpsRange[0] * kFpsToApiScale,
+                        validatedParams.previewFpsRange[1] * kFpsToApiScale));
 
             ALOGV("%s: New preview FPS range: %d, %d, recordingHint = %d",
                 __FUNCTION__,
