@@ -74,8 +74,17 @@ private:
     typedef enum {
         MSG_NONE,
         MSG_PREPAREASYNC,
+        MSG_START,
         MSG_SEEKTO,
+        MSG_PAUSE,
+        MSG_RESUME,
+        MSG_SETSURFACE,
     }MSGTYPE;
+
+    typedef struct {
+        MSGTYPE type;
+        int data;
+    }ASYNC_COMMAND;
 
     void                *player;
     status_t            mInit;
@@ -110,9 +119,15 @@ private:
     status_t            DoSeekTo(int msec);
     status_t            setVideoScalingMode(int32_t mode);
     status_t            getTrackInfo(Parcel *reply);
+    status_t            EnQueueCommand(ASYNC_COMMAND * pCmd);
+    status_t            DoSetVideoSurfaceTexture();
 
     bool                qdFlag;
     bool                bNetworkFail;
+    void                *cmdQueue;
+    bool                bPlaying;
+    void                *queueLock;
+    
 };
 
 typedef enum {
