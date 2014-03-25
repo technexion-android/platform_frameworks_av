@@ -1,5 +1,6 @@
 /*
  * Copyright 2012, The Android Open Source Project
+ * Copyright (C) 2014 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,7 +209,7 @@ status_t WifiDisplaySource::PlaybackSession::Track::start() {
 }
 
 void WifiDisplaySource::PlaybackSession::Track::stopAsync() {
-    ALOGV("Track::stopAsync isAudio=%d", mIsAudio);
+    ALOGI("Track::stopAsync isAudio=%d", mIsAudio);
 
     if (mConverter != NULL) {
         mConverter->shutdownAsync();
