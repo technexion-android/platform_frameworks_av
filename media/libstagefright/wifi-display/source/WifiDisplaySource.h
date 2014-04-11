@@ -307,9 +307,9 @@ private:
     const int16_t TOUCH_ACTION_CANCEL = 3;
     const int16_t TOUCH_ACTION_POINTER_DOWN = 5;
     const int16_t TOUCH_ACTION_POINTER_UP = 6;
+    const int16_t TOUCH_RANDOM_PRESSURE = 1234;
     const int16_t KEY_ACTION_DOWN = 3;
     const int16_t KEY_ACTION_UP = 4;
-
 }  // namespace android
 
 #endif  // WIFI_DISPLAY_SOURCE_H_
