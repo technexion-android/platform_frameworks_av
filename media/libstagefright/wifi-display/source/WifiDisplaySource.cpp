@@ -37,6 +37,9 @@
 #include <media/stagefright/Utils.h>
 #include <arpa/inet.h>
 #include <cutils/properties.h>
+#include <gui/ISurfaceComposer.h>
+#include <gui/SurfaceComposerClient.h>
+#include <ui/DisplayInfo.h>
 
 #include <ctype.h>
 
@@ -81,15 +84,30 @@ WifiDisplaySource::WifiDisplaySource(
     if (path != NULL) {
         mMediaPath.setTo(path);
     }
+    DisplayInfo mainDpyInfo;
+    VideoFormats::ResolutionType type;
+    size_t err = 0;
+    size_t index;
+    sp<IBinder> mainDpy = SurfaceComposerClient::getBuiltInDisplay(
+            ISurfaceComposer::eDisplayIdMain);
+    err = SurfaceComposerClient::getDisplayInfo(mainDpy, &mainDpyInfo);
+    if (err != NO_ERROR) {
+        fprintf(stderr, "ERROR: unable to get display characteristics\n");
+        return;
+    }
+    mSupportedSourceVideoFormats.ConvertDpyInfo2Resolution(mainDpyInfo, type, index);
+    ALOGI("Main display is %dx%d @%.2ffps, so pick best resolution type=%d, index=%d\n",
+            mainDpyInfo.w, mainDpyInfo.h, mainDpyInfo.fps,
+            type, index);
 
     mSupportedSourceVideoFormats.disableAll();
 
     mSupportedSourceVideoFormats.setNativeResolution(
-            VideoFormats::RESOLUTION_CEA, 5);  // 1280x720 p30
+            type, index);
 
-    // Enable all resolutions up to 1280x720p30
+    // Enable all resolutions up to NativeResolution
     mSupportedSourceVideoFormats.enableResolutionUpto(
-            VideoFormats::RESOLUTION_CEA, 5,
+            type, index,
             VideoFormats::PROFILE_CHP,  // Constrained High Profile
             VideoFormats::LEVEL_32);    // Level 3.2
 }
@@ -308,7 +326,7 @@ status_t WifiDisplaySource::sendtouchevent(int32_t action, int32_t x, int32_t y)
             ALOGI("action pointer down");
         case TOUCH_ACTION_MOVE:
             ALOGI("send move x=%d y=%d", x, y);
-            calculateXY(x*1.333-170.24, 1.333*y, &abs_x, &abs_y);
+            calculateXY(x, y, &abs_x, &abs_y);
             write_event(mUibcTouchFd, EV_ABS, ABS_MT_POSITION_X, abs_x);
             write_event(mUibcTouchFd, EV_ABS, ABS_MT_POSITION_Y, abs_y);
             write_event(mUibcTouchFd, EV_ABS, ABS_MT_PRESSURE, TOUCH_RANDOM_PRESSURE);

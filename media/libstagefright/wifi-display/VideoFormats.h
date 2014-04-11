@@ -19,7 +19,7 @@
 #define VIDEO_FORMATS_H_
 
 #include <media/stagefright/foundation/ABase.h>
-
+#include <ui/DisplayInfo.h>
 #include <stdint.h>
 
 namespace android {
@@ -77,6 +77,10 @@ struct VideoFormats {
             ResolutionType type, size_t index, bool enabled = true);
 
     bool isResolutionEnabled(ResolutionType type, size_t index) const;
+
+    void ConvertDpyInfo2Resolution(
+            DisplayInfo Dpy, ResolutionType& type,
+            size_t& index);
 
     void setProfileLevel(
             ResolutionType type, size_t index,
