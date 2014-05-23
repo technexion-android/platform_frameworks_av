@@ -156,9 +156,15 @@ void VideoFormats::setNativeResolution(ResolutionType type, size_t index) {
 void VideoFormats::ConvertDpyInfo2Resolution(DisplayInfo Dpy, ResolutionType& type, size_t& index) {
      for (size_t i = 0; i < kNumResolutionTypes; ++i) {
         for (size_t j = 0; j < 32; ++j) {
+            if (Dpy.w > 1280) {
+                type = RESOLUTION_CEA;
+                index = 5;
+                return;
+            }
+            //fps should be less 30, or performance will downgrade.
             if (mResolutionTable[i][j].width == Dpy.w
                     && mResolutionTable[i][j].height == Dpy.h
-                    && mResolutionTable[i][j].framesPerSecond == (size_t)Dpy.fps) {
+                    && mResolutionTable[i][j].framesPerSecond <= 30) {
                 type = (ResolutionType)i;
                 index = j;
                 return;
