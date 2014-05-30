@@ -362,7 +362,9 @@ int JetPlayer::loadFromFD(const int fd, const long long offset, const long long 
 int JetPlayer::closeFile()
 {
     Mutex::Autolock lock(mMutex);
-    return JET_CloseFile(mEasData);
+    int ret = JET_CloseFile(mEasData);
+    usleep(100000);
+    return ret;
 }
 
 
