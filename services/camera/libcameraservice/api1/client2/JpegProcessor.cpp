@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+/*
+ * Copyright (C) 2013-2014 Freescale Semiconductor, Inc.
+*/
+
 #define LOG_TAG "Camera2-JpegProcessor"
 #define ATRACE_TAG ATRACE_TAG_CAMERA
 //#define LOG_NDEBUG 0
@@ -272,7 +276,7 @@ status_t JpegProcessor::processNewCapture() {
         }
 
         // TODO: Optimize this to avoid memcopy
-    sp<MemoryBase> captureBuffer = new MemoryBase(mCaptureHeap, 0, jpegSize);
+        captureBuffer = new MemoryBase(mCaptureHeap, 0, jpegSize);
         void* captureMemory = mCaptureHeap->getBase();
         memcpy(captureMemory, imgBuffer.data, jpegSize);
 
