@@ -27,6 +27,7 @@ enum {
     ON_DISPLAY_CONNECTED = IBinder::FIRST_CALL_TRANSACTION,
     ON_DISPLAY_DISCONNECTED,
     ON_DISPLAY_ERROR,
+    ON_DISPLAY_UIBC,
 };
 
 class BpRemoteDisplayClient: public BpInterface<IRemoteDisplayClient>
@@ -35,6 +36,17 @@ public:
     BpRemoteDisplayClient(const sp<IBinder>& impl)
         : BpInterface<IRemoteDisplayClient>(impl)
     {
+    }
+
+    void onUibcData(uint32_t type, float f0, float f1, uint32_t i0)
+    {
+        Parcel data, reply;
+        data.writeInterfaceToken(IRemoteDisplayClient::getInterfaceDescriptor());
+        data.writeInt32(type);
+        data.writeFloat(f0);
+        data.writeFloat(f1);
+        data.writeInt32(i0);
+        remote()->transact(ON_DISPLAY_UIBC, data, &reply, IBinder::FLAG_ONEWAY);
     }
 
     void onDisplayConnected(const sp<IGraphicBufferProducer>& bufferProducer,
@@ -95,6 +107,14 @@ status_t BnRemoteDisplayClient::onTransact(
             int32_t error = data.readInt32();
             onDisplayError(error);
             return NO_ERROR;
+        }
+        case ON_DISPLAY_UIBC: {
+            CHECK_INTERFACE(IRemoteDisplayClient, data, reply);
+            uint32_t type = data.readInt32();
+            float f0      = data.readFloat();
+            float f1      = data.readFloat();
+            uint32_t i0   = data.readInt32();
+            onUibcData(type, f0, f1, i0);
         }
         default:
             return BBinder::onTransact(code, data, reply, flags);

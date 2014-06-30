@@ -60,6 +60,9 @@ public:
     // Indicates that a connection could not be established to the remote display
     // or an unrecoverable error occurred and the connection was severed.
     virtual void onDisplayError(int32_t error) = 0; // one-way
+
+    // Uibc data will be easy to realize in java
+    virtual void onUibcData(uint32_t type, float f0, float f1, uint32_t i0) = 0;
 };
 
 

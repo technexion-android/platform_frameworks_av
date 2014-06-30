@@ -180,6 +180,22 @@ private:
 
     KeyedVector<ResponseID, HandleRTSPResponseFunc> mResponseHandlers;
 
+    //VideoResolution
+    size_t resolutionWidth;
+    size_t resolutionHeigh;
+
+    //UIBC Native and real resolution data
+    size_t mResolution_RealW;
+    size_t mResolution_RealH;
+    size_t mResolution_NativeW;
+    size_t mResolution_NativeH;
+
+    //UIBC calc data
+    float uibc_calc_data_Ss;
+    float uibc_calc_data_Wbs;
+    float uibc_calc_data_Hbs;
+    int32_t mUibcMouseID;
+
     // HDCP specific section >>>>
     bool mUsingHDCP;
     bool mIsHDCP2_0;
@@ -191,6 +207,11 @@ private:
     bool mSetupTriggerDeferred;
 
     bool mPlaybackSessionEstablished;
+
+    //Parse UIBC data
+    void parseUIBCtouchEvent(const uint8_t *data);
+    void parseUIBCscrollEvent(const uint8_t *data);
+    void parseUIBCkeyEvent(const uint8_t *data);
 
     status_t makeHDCP();
     // <<<< HDCP specific section
@@ -277,6 +298,9 @@ private:
     void scheduleReaper();
     void scheduleKeepAlive(int32_t sessionID);
 
+    //calc UIBC coordinate para
+    int calc_uibc_parameter(size_t witdh, size_t height);
+
     int32_t makeUniquePlaybackSessionID() const;
 
     sp<PlaybackSession> findPlaybackSession(
@@ -293,6 +317,7 @@ private:
     int open_dev(const char *deviceName);
     int write_event(int fd, int type, int code, int value);
     void calculateXY(float x, float y, int *abs_x, int *abs_y);
+    void calculateNormalXY(float x, float y, int *abs_x, int *abs_y);
     int containsNonZeroByte(const uint8_t* array, uint32_t startIndex, uint32_t endIndex);
     DISALLOW_EVIL_CONSTRUCTORS(WifiDisplaySource);
 };
@@ -310,6 +335,11 @@ private:
     const int16_t TOUCH_RANDOM_PRESSURE = 1234;
     const int16_t KEY_ACTION_DOWN = 3;
     const int16_t KEY_ACTION_UP = 4;
+    const int16_t MOUSE_WHEEL_SCROLL = 8;
+    const int16_t UIBC_MOUSE_VSCROLL = 6;
+    const int16_t UIBC_MOUSE_HSCROLL = 7;
+
+    const int16_t ANDROID_ACTION_SCROLL = 0x8;
 }  // namespace android
 
 #endif  // WIFI_DISPLAY_SOURCE_H_
