@@ -2045,7 +2045,7 @@ void OMXCodec::on_message(const omx_message &msg) {
         {
             IOMX::buffer_id buffer = msg.u.extended_buffer_data.buffer;
 
-            /*  Buffer header pointer from vpu component can only be used as raw
+            /*  In MovieEditor, Buffer header pointer from vpu component can only be used as raw
                 value, if use it to access structure member, segment fault occurs.
                 It might be IPC issue or limitation.
                 
@@ -2053,15 +2053,15 @@ void OMXCodec::on_message(const omx_message &msg) {
                 comment out these lines when using vpu encoder.
             */
             
-            /*
-			//If the frame is dropped by avcEncoder, need drop stamp in mDecodingTimeList
+#ifdef SOFTWARE_ENCODER                
+            //If the frame is dropped by avcEncoder, need drop stamp in mDecodingTimeList
             OMX_BUFFERHEADERTYPE *head = (OMX_BUFFERHEADERTYPE *)buffer;
              if( mIsEncoder && mIsVideo && (!strcasecmp(MEDIA_MIMETYPE_VIDEO_AVC, mMIME)) &&
                 (head->nFlags == OMX_BUFFERFLAG_FRAMEDROP) ) {
-                CODEC_LOGV("drop time stamp %lld us", head->nTimeStamp);
+                CODEC_LOGE("drop time stamp %lld us", head->nTimeStamp);
                 getDecodingTimeUs();
              }
-             */
+#endif
 
             CODEC_LOGV("EMPTY_BUFFER_DONE(buffer: %u)", buffer);
 

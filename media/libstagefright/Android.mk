@@ -128,6 +128,10 @@ ifeq ($(BOARD_SOC_CLASS), IMX5X)
    LOCAL_CFLAGS += -DIMX5X
 endif
 
+ifeq ($(BOARD_HAVE_VPU),false)
+   LOCAL_CFLAGS += -DSOFTWARE_ENCODER
+endif
+
 LOCAL_SHARED_LIBRARIES += \
         libstagefright_enc_common \
         libstagefright_avc_common \
