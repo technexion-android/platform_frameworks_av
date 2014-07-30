@@ -213,6 +213,11 @@ private:
     void parseUIBCscrollEvent(const uint8_t *data);
     void parseUIBCkeyEvent(const uint8_t *data);
 
+    uint8_t getOrientation();
+    uint8_t mOrientation;
+    size_t mVideoWidth;
+    size_t mVideoHeight;
+
     status_t makeHDCP();
     // <<<< HDCP specific section
 
