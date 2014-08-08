@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2014 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -361,9 +362,10 @@ status_t CallbackProcessor::processNewCallback(sp<Camera2Client> &client,
             l.mParameters.previewCallbackOneShot = false;
         }
 
+        bool recalculateStrideOnImx6Platform = true;
         uint32_t destYStride = 0;
         uint32_t destCStride = 0;
-        if (useFlexibleYuv) {
+        if (useFlexibleYuv || recalculateStrideOnImx6Platform) {
             if (previewFormat == HAL_PIXEL_FORMAT_YV12) {
                 // Strides must align to 16 for YV12
                 destYStride = ALIGN(imgBuffer.width, 16);
