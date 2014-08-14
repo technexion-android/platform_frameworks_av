@@ -46,6 +46,7 @@
 #define UIBC_SCROLL_MOUSE_NOTCH 0x4000
 #define UIBC_SCROLL_MOUSE_UP    0x2000
 #define UIBC_SCROLL_NUMBER_MASK 0x1FFF
+#define UIBC_LATENCY_THRESHOLD  10
 
 namespace android {
 
@@ -314,18 +315,28 @@ int WifiDisplaySource::containsNonZeroByte(const uint8_t* array, uint32_t startI
     }
     return 0;
 }
+bool WifiDisplaySource::checkUIBCtimeStamp(const uint8_t *data) {
+    if (data[0] & 0x08) {
+        uint16_t timestamp = (int32_t)U16_AT(&data[4]);
+        uint16_t tnow = (uint16_t) (((ALooper::GetNowUs() * 9) / 100ll) >> 16);
+        ALOGI("UIBC latency is %d = %d - %d", tnow - timestamp, tnow, timestamp);
+        uint16_t uibc_latency = tnow - timestamp;
+        if (uibc_latency >= UIBC_LATENCY_THRESHOLD) {
+            ALOGD("UIBC latency %d too long and drop it.", uibc_latency);
+            return false;
+        }
+    }
+    return true;
 
+}
 void WifiDisplaySource::parseUIBCtouchEvent(const uint8_t *data) {
+    if (!checkUIBCtimeStamp(data))
+        return;
     if (data[6] < 3) {
         for (int i = 0; i < data[7]; i++) {
             int32_t x = (int32_t)U16_AT(&data[9]);
             int32_t y = (int32_t)U16_AT(&data[11]);
             int32_t action = (int32_t)data[6];
-            //Just mesure uibc latency here
-            int16_t timestamp = (int32_t)U16_AT(&data[4]);
-            if (timestamp > 0) {
-                ALOGI("UIBC latency is %d",(int16_t)(ALooper::GetNowUs()-timestamp));
-            }
             int32_t abs_x, abs_y;
             if (action == TOUCH_ACTION_DOWN) {
                 uint8_t ori = getOrientation();
@@ -356,6 +367,8 @@ void WifiDisplaySource::parseUIBCtouchEvent(const uint8_t *data) {
 void WifiDisplaySource::parseUIBCscrollEvent(const uint8_t *data) {
     if (data == NULL)
          return;
+    if (!checkUIBCtimeStamp(data))
+        return;
     if (data[3] != 9) {
          ALOGI("parseUIBCscrollEvent data len error!");
          return;
@@ -383,6 +396,8 @@ void WifiDisplaySource::parseUIBCscrollEvent(const uint8_t *data) {
 
 void WifiDisplaySource::parseUIBCkeyEvent(const uint8_t *data) {
 
+    if (!checkUIBCtimeStamp(data))
+        return;
     if (data[3] != 10) {
         ALOGE("parseUIBCkeyEvent length err!!");
         return;
