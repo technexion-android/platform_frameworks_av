@@ -329,6 +329,20 @@ bool WifiDisplaySource::checkUIBCtimeStamp(const uint8_t *data) {
     return true;
 
 }
+void WifiDisplaySource::recalculateUibcParamaterViaOrientation() {
+    uint8_t ori = getOrientation();
+    /* Orientation = 0 and 2 are the same and 1 and 3 are same*/
+    if ((ori & 0x1) ^ (mOrientation & 0x1)) {
+        ALOGW("sendrolon on UIBC swaped");
+        mOrientation = ori;
+        size_t tmp = mResolution_RealW;
+        mResolution_RealW = mResolution_RealH;
+        mResolution_RealH = tmp;
+        calc_uibc_parameter(mVideoWidth, mVideoHeight);
+    }
+
+
+}
 void WifiDisplaySource::parseUIBCtouchEvent(const uint8_t *data) {
     if (!checkUIBCtimeStamp(data))
         return;
@@ -338,21 +352,7 @@ void WifiDisplaySource::parseUIBCtouchEvent(const uint8_t *data) {
             int32_t y = (int32_t)U16_AT(&data[11]);
             int32_t action = (int32_t)data[6];
             int32_t abs_x, abs_y;
-            if (action == TOUCH_ACTION_DOWN) {
-                uint8_t ori = getOrientation();
-                bool swap = false;
-                /* Orientation = 0 and 2 are the same and 1 and 3 are same*/
-                if ((ori & 0x1) ^ (mOrientation & 0x1)) {
-                    ALOGW("sendrolon on UIBC swaped");
-                    mOrientation = ori;
-                    size_t tmp = mResolution_RealW;
-                    mResolution_RealW = mResolution_RealH;
-                    mResolution_RealH = tmp;
-                    calc_uibc_parameter(mVideoWidth, mVideoHeight);
-
-                }
-
-            }
+            recalculateUibcParamaterViaOrientation();
             calculateNormalXY(x, y, &abs_x, &abs_y);
 
             ALOGI("WFD UIBC TOUCH x=%d y=%d action=%d", abs_x, abs_y,action);

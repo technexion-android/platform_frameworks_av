@@ -212,6 +212,7 @@ private:
     void parseUIBCtouchEvent(const uint8_t *data);
     void parseUIBCscrollEvent(const uint8_t *data);
     void parseUIBCkeyEvent(const uint8_t *data);
+    void recalculateUibcParamaterViaOrientation();
 
     uint8_t getOrientation();
     uint8_t mOrientation;
