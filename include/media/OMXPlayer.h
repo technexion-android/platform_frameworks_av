@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* Copyright 2009-2013 Freescale Semiconductor, Inc. */
+/* Copyright 2009-2014 Freescale Semiconductor, Inc. */
 
 #ifndef ANDROID_OMXPLAYER_H
 #define ANDROID_OMXPLAYER_H
@@ -34,7 +34,7 @@ public:
     virtual             ~OMXPlayer();
 
     virtual status_t    initCheck();
-    virtual status_t    setDataSource(const char *url, const KeyedVector<String8, String8> *headers);
+    virtual status_t    setDataSource(const sp<IMediaHTTPService> &httpService, const char *url, const KeyedVector<String8, String8> *headers);
     virtual status_t    setDataSource(int fd, int64_t offset, int64_t length);
     virtual status_t    setVideoSurfaceTexture(const sp<IGraphicBufferProducer>& surfaceTexture);
     virtual status_t    prepare();

@@ -20,6 +20,7 @@
 
 #include <media/MediaPlayerInterface.h>
 #include <media/stagefright/foundation/ABase.h>
+#include <media/IMediaHTTPService.h>
 
 namespace android {
 
@@ -32,7 +33,8 @@ class MediaPlayerFactory {
         virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                    const char* /*url*/,
                                    float /*curScore*/,
-                                   const KeyedVector<String8, String8> *headers = NULL) { return 0.0; }
+                                   const KeyedVector<String8, String8> *headers = NULL,
+                                   const IMediaHTTPService* httpService = NULL) { return 0.0; }
 
         virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                    int /*fd*/,
@@ -56,7 +58,8 @@ class MediaPlayerFactory {
     static void unregisterFactory(player_type type);
     static player_type getPlayerType(const sp<IMediaPlayer>& client,
                                      const char* url,
-                                     const KeyedVector<String8, String8> *headers = NULL);
+                                     const KeyedVector<String8, String8> *headers = NULL,
+                                     const IMediaHTTPService* httpService = NULL);
     static player_type getPlayerType(const sp<IMediaPlayer>& client,
                                      int fd,
                                      int64_t offset,

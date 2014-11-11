@@ -15,7 +15,7 @@
 ** limitations under the License.
 */
 
-/* Copyright 2009-2013 Freescale Semiconductor, Inc. */
+/* Copyright 2009-2014 Freescale Semiconductor, Inc. */
 
 // Proxy for media player implementations
 
@@ -726,7 +726,8 @@ status_t MediaPlayerService::Client::setDataSource(
         close(fd);
         return mStatus;
     } else {
-        player_type playerType = MediaPlayerFactory::getPlayerType(this, url, headers);
+        player_type playerType = MediaPlayerFactory::getPlayerType(this, url,
+                                                 headers, httpService.get());
         sp<MediaPlayerBase> p = setDataSource_pre(playerType);
         if (p == NULL) {
             return NO_INIT;

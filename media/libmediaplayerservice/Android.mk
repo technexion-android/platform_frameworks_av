@@ -63,6 +63,7 @@ LOCAL_C_INCLUDES :=                                                 \
     $(TOP)/frameworks/av/media/libstagefright/wifi-display          \
     $(TOP)/frameworks/av/media/libstagefright/webm                  \
     $(TOP)/frameworks/native/include/media/openmax                  \
+    $(TOP)/frameworks/av/media/libstagefright               	    \
     $(TOP)/external/tremolo/Tremolo                                 \
 
 LOCAL_CFLAGS += -Werror -Wno-error=deprecated-declarations -Wall
