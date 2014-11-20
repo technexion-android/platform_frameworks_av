@@ -999,6 +999,7 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
             return err;
         }
     }
+    *minUndequeuedBuffers = 0;
 
     err = native_window_set_buffer_count(
             mNativeWindow.get(), def.nBufferCountActual);

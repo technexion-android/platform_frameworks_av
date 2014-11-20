@@ -1883,6 +1883,7 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
             return err;
         }
     }
+    minUndequeuedBufs = 0;
     CODEC_LOGI("OMX-buffers: min=%u actual=%u undeq=%d+1",
             def.nBufferCountMin, def.nBufferCountActual, minUndequeuedBufs);
 
