@@ -624,9 +624,12 @@ ATSParser::Stream::Stream(
             break;
 
         case STREAMTYPE_LPCM_AC3:
+            mQueue = new ElementaryStreamQueue(
+               ElementaryStreamQueue::PCM_AUDIO);
+           break;
         case STREAMTYPE_AC3:
             mQueue = new ElementaryStreamQueue(
-                    ElementaryStreamQueue::AC3);
+               ElementaryStreamQueue::AC3);
             break;
 
         case STREAMTYPE_METADATA:
