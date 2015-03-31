@@ -15,7 +15,7 @@
 ** limitations under the License.
 */
 
-/* Copyright (C) 2013-2014 Freescale Semiconductor, Inc. */
+/* Copyright (C) 2013-2015 Freescale Semiconductor, Inc. */
 
 //#define LOG_NDEBUG 0
 
@@ -369,9 +369,7 @@ class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
                 ".divx",
                 ".m4v",        
                 //".ogg,   
-#ifdef MX6X
                 ".webm",   
-#endif
                 ".amr",
                 ".awb"
             };
