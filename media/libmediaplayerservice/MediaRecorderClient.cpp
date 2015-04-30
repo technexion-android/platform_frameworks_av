@@ -41,6 +41,7 @@
 
 #include "StagefrightRecorder.h"
 #include <gui/IGraphicBufferProducer.h>
+#include <camera/ICamera.h>
 
 #ifdef FSL_GM_PLAYER
 #include "media/OMXMediaRecorder.h"
