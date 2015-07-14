@@ -371,7 +371,8 @@ class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
                 //".ogg,   
                 ".webm",   
                 ".amr",
-                ".awb"
+                ".awb",
+                ".ape"
             };
 
             char value[PROPERTY_VALUE_MAX];
