@@ -1,6 +1,6 @@
 /*
  * Copyright 2012, The Android Open Source Project
- * Copyright (C) 2014 Freescale Semiconductor, Inc.
+ * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1023,14 +1023,14 @@ status_t WifiDisplaySource::sendM4(int32_t sessionID) {
                 "wfd_client_rtp_ports: %s\r\n", mWfdClientRtpPorts.c_str()));
     if (mSinkSupportsUIBC) {
         body.append(
-                StringPrintf(
+                AStringPrintf(
                     "wfd_uibc_capability: input_category_list=GENERIC;"
                     "generic_cap_list=Mouse,SingleTouch;"
                     "hidc_cap_list=none;"
                     "port=%d\r\n", DEFAULT_UIBC_PORT)
                 );
         body.append(
-                StringPrintf(
+                AStringPrintf(
                     "wfd_uibc_setting: %s\r\n", "enable")
                 );
 
