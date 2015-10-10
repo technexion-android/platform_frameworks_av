@@ -1,6 +1,7 @@
 /*
 **
 ** Copyright 2012, The Android Open Source Project
+** Copyright (C) 2013 Freescale Semiconductor, Inc.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -4680,6 +4681,8 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::DirectOutputThread::prep
                     // it will then automatically call start() when data is available
                     android_atomic_or(CBLK_DISABLED, &cblk->mFlags);
                 } else if (last) {
+                    android_atomic_or(CBLK_DISABLED, &cblk->mFlags);
+                } else if (i == (count -1)){
                     ALOGW("pause because of UNDERRUN, framesReady = %zu,"
                             "minFrames = %u, mFormat = %#x",
                             track->framesReady(), minFrames, mFormat);
