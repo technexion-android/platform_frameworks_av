@@ -982,6 +982,7 @@ void AudioPolicyService::AudioCommandThread::insertCommand_l(sp<AudioCommand>& c
             if (mAudioCommands[k].get() == removedCommands[j].get()) {
                 ALOGV("suppressing command: %d", mAudioCommands[k]->mCommand);
                 mAudioCommands.removeAt(k);
+                i = k - 1;
                 break;
             }
         }
