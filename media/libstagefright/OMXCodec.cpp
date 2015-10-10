@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
+ * Copyright (C) 2012-2015 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1857,6 +1858,10 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
     CODEC_LOGI("OMX-buffers: min=%u actual=%u undeq=%d+1",
             def.nBufferCountMin, def.nBufferCountActual, minUndequeuedBufs);
 
+    // XXX: Is this the right logic to use?  It's not clear to me what the OMX
+    // buffer counts refer to - how do they account for the renderer holding on
+    // to buffers?
+    minUndequeuedBufs = 0;
     for (OMX_U32 extraBuffers = 2 + 1; /* condition inside loop */; extraBuffers--) {
         OMX_U32 newBufferCount =
             def.nBufferCountMin + minUndequeuedBufs + extraBuffers;
@@ -1967,7 +1972,6 @@ OMXCodec::BufferInfo* OMXCodec::dequeueBufferFromNativeWindow() {
     if (err != 0) {
       CODEC_LOGE("dequeueBuffer failed w/ error 0x%08x", err);
 
-      setState(ERROR);
       return 0;
     }
 
@@ -2746,8 +2750,16 @@ bool OMXCodec::flushPortAsync(OMX_U32 portIndex) {
         return false;
     }
 
-    status_t err =
-        mOMX->sendCommand(mNode, OMX_CommandFlush, portIndex);
+    status_t err = UNKNOWN_ERROR;
+    OMX_U32 nCnt = 0;
+    while (err != OK) {
+        err = mOMX->sendCommand(mNode, OMX_CommandFlush, portIndex);
+        if (nCnt ++ == 100) {
+            break;
+        }
+
+        usleep(10000);
+    }
     CHECK_EQ(err, (status_t)OK);
 
     return true;

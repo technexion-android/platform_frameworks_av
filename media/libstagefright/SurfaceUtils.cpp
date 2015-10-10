@@ -1,5 +1,6 @@
 /*
  * Copyright 2015 The Android Open Source Project
+ * Copyright (C) 2015 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +20,7 @@
 #include <utils/Log.h>
 
 #include <media/stagefright/SurfaceUtils.h>
+#include <OMX_IVCommon.h>
 
 #include <gui/Surface.h>
 
@@ -33,7 +35,26 @@ status_t setNativeWindowSizeFormatAndUsage(
         return err;
     }
 
-    err = native_window_set_buffers_format(nativeWindow, format);
+    int color_fmt = HAL_PIXEL_FORMAT_YCbCr_420_SP;
+    switch(format) {
+        case OMX_COLOR_FormatYUV420SemiPlanar:
+            color_fmt = HAL_PIXEL_FORMAT_YCbCr_420_SP;
+            break;
+        case OMX_COLOR_FormatYUV420Planar:
+            color_fmt = HAL_PIXEL_FORMAT_YCbCr_420_P;
+            break;
+        case OMX_COLOR_Format16bitRGB565:
+            color_fmt = HAL_PIXEL_FORMAT_RGB_565;
+            break;
+        case OMX_COLOR_FormatYUV422Planar:
+            color_fmt = HAL_PIXEL_FORMAT_YCbCr_422_P;
+            break;
+        default:
+            ALOGE("Not supported color format %d by surface!", def.format.video.eC
+            return UNKNOWN_ERROR;
+    }
+
+    err = native_window_set_buffers_format(nativeWindow, color_fmt);
     if (err != NO_ERROR) {
         ALOGE("native_window_set_buffers_format failed: %s (%d)", strerror(-err), -err);
         return err;
