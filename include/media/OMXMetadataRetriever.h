@@ -15,7 +15,7 @@
 ** limitations under the License.
 */
 
-/* Copyright 2009-2014 Freescale Semiconductor, Inc. */
+/* Copyright 2009-2015 Freescale Semiconductor, Inc. */
 
 #ifndef ANDROID_OMXMETADATARETRIEVER_H
 #define ANDROID_OMXMETADATARETRIEVER_H
@@ -39,6 +39,7 @@ public:
     virtual             ~OMXMetadataRetriever();
 
     virtual status_t    setDataSource(const char *url);
+    virtual status_t    setDataSource(const sp<DataSource>& source);
     virtual status_t    setDataSource(const sp<IMediaHTTPService> &httpService, const char *url, const KeyedVector<String8, String8> *headers = NULL);
     virtual status_t    setDataSource(int fd, int64_t offset, int64_t length);
     virtual status_t    setMode(int mode);

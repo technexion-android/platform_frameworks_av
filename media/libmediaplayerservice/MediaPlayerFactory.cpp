@@ -129,7 +129,7 @@ void MediaPlayerFactory::unregisterFactory(player_type type) {
 player_type MediaPlayerFactory::getPlayerType(const sp<IMediaPlayer>& client,
                                               const char* url,
                                               const KeyedVector<String8, String8> *headers,
-                                              const IMediaHTTPService* httpService) {
+                                              const IMediaHTTPService* /*httpService*/) {
     GET_PLAYER_TYPE_IMPL(client, url, bestScore, headers);
 }
 
@@ -147,7 +147,7 @@ player_type MediaPlayerFactory::getPlayerType(const sp<IMediaPlayer>& client,
 
 player_type MediaPlayerFactory::getPlayerType(const sp<IMediaPlayer>& client,
                                               const sp<DataSource> &source) {
-    GET_PLAYER_TYPE_IMPL(client, source);
+    GET_PLAYER_TYPE_IMPL(client, source, bestScore);
 }
 
 #undef GET_PLAYER_TYPE_IMPL
@@ -209,7 +209,7 @@ bool isWVM(const char* url,
     KeyedVector<String8, String8> mUriHeaders;
     sp<HTTPBase> mConnectingDataSource;
     sp<NuCachedSource2> mCachedSource;
-    uint32_t mFlags;
+    uint32_t mFlags = 0;
 
     mUri = url;
 
@@ -335,7 +335,7 @@ bool isWVM(int fd,
 
 class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
     public:
-        virtual float scoreFactory(const sp<IMediaPlayer>& client,
+        virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                 const char* url,
                 float curScore,
                 const KeyedVector<String8, String8> *headers,
@@ -412,7 +412,7 @@ class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
             return 0.0;
         }
 
-        virtual float scoreFactory(const sp<IMediaPlayer>& client,
+        virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                 int fd,
                 int64_t offset,
                 int64_t length,
@@ -445,7 +445,7 @@ class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
             return 0.0;
         }
 
-        virtual sp<MediaPlayerBase> createPlayer() {
+        virtual sp<MediaPlayerBase> createPlayer(pid_t /*pid*/) {
             ALOGV(" create OMXPlayer");
             return new OMXPlayer();
         }
@@ -487,7 +487,9 @@ class StagefrightPlayerFactory :
 
     virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                const char* url,
-                               float /*curScore*/) {
+                               float /*curScore*/,
+                               const KeyedVector<String8, String8> *,
+                               const IMediaHTTPService*) {
         if (legacyDrm() && !strncasecmp("widevine://", url, 11)) {
             return 1.0;
         }
@@ -514,8 +516,8 @@ class NuPlayerFactory : public MediaPlayerFactory::IFactory {
     virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                const char* url,
                                float curScore,
-                               const KeyedVector<String8, String8> *headers,
-                               const IMediaHTTPService* httpService) {
+                               const KeyedVector<String8, String8> * /*headers*/,
+                               const IMediaHTTPService* /*httpService*/) {
         static const float kOurScore = 0.8;
 
         if (kOurScore <= curScore)
@@ -569,8 +571,8 @@ class TestPlayerFactory : public MediaPlayerFactory::IFactory {
     virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                const char* url,
                                float /*curScore*/,
-                               const KeyedVector<String8, String8> *headers,
-                               const IMediaHTTPService* httpService) {
+                               const KeyedVector<String8, String8> * /*headers*/,
+                               const IMediaHTTPService* /*httpService*/) {
         if (TestPlayerStub::canBeUsed(url)) {
             return 1.0;
         }

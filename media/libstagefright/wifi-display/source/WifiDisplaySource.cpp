@@ -74,22 +74,22 @@ WifiDisplaySource::WifiDisplaySource(
       mAbs_x_max(-1),
       mAbs_y_min(-1),
       mAbs_y_max(-1),
-      resolutionWidth(0),
-      resolutionHeigh(0),
-      uibc_calc_data_Ss(0),
-      uibc_calc_data_Wbs(0),
-      uibc_calc_data_Hbs(0),
-      mResolution_RealW(0),
-      mResolution_RealH(0),
-      mResolution_NativeW(0),
-      mResolution_NativeH(0),
-      mUibcMouseID(-1),
       mStopReplyID(NULL),
       mChosenRTPPort(-1),
       mUsingPCMAudio(false),
       mClientSessionID(0),
       mReaperPending(false),
       mNextCSeq(1),
+      resolutionWidth(0),
+      resolutionHeigh(0),
+      mResolution_RealW(0),
+      mResolution_RealH(0),
+      mResolution_NativeW(0),
+      mResolution_NativeH(0),
+      uibc_calc_data_Ss(0),
+      uibc_calc_data_Wbs(0),
+      uibc_calc_data_Hbs(0),
+      mUibcMouseID(-1),
       mUsingHDCP(false),
       mIsHDCP2_0(false),
       mHDCPPort(0),
@@ -195,7 +195,7 @@ status_t WifiDisplaySource::start(const char *iface) {
 status_t WifiDisplaySource::startUibc(const int32_t port) {
 
     status_t err = OK;
-    sp<AMessage> notify = new AMessage(kWhatUIBCNotify, id());
+    sp<AMessage> notify = new AMessage(kWhatUIBCNotify, this);
     ALOGI("source will create uibc channel");
     err = mNetSession->createTCPDatagramSession(
             mInterfaceAddr,
@@ -245,7 +245,7 @@ int WifiDisplaySource::write_event(int fd, int type, int code, int value)
     event.type = type;
     event.code = code;
     event.value = value;
-    if(write(fd, &event, sizeof(event)) < sizeof(event)) {
+    if(write(fd, &event, sizeof(event)) < (int)sizeof(event)) {
         ALOGI("write event failed[%d]: %s", errno, strerror(errno));
         return -1;
     }
@@ -255,7 +255,7 @@ int WifiDisplaySource::write_event(int fd, int type, int code, int value)
 int WifiDisplaySource::calc_uibc_parameter(size_t width, size_t height)
 {
     //scan and select touch input device
-    struct input_absinfo absinfo;
+    //struct input_absinfo absinfo;
     float this_w, this_h, dw, dh, vWidth = (float) width, vHeight = (float) height;
 
     this_w = mResolution_RealW;

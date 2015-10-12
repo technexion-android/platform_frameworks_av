@@ -36,7 +36,7 @@ class AudioPlayer;
 struct ClockEstimator;
 class IDataSource;
 class MediaBuffer;
-struct MediaExtractor;
+class MediaExtractor;
 struct MediaSource;
 struct NuCachedSource2;
 class IGraphicBufferProducer;

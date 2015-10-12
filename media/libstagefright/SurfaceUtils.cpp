@@ -50,7 +50,7 @@ status_t setNativeWindowSizeFormatAndUsage(
             color_fmt = HAL_PIXEL_FORMAT_YCbCr_422_P;
             break;
         default:
-            ALOGE("Not supported color format %d by surface!", def.format.video.eC
+            ALOGE("Not supported color format %d by surface!", format);
             return UNKNOWN_ERROR;
     }
 

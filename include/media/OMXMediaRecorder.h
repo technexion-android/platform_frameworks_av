@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* Copyright (C) 2011-2013 Freescale Semiconductor, Inc. */
+/* Copyright (C) 2011-2015 Freescale Semiconductor, Inc. */
 
 #ifndef OMX_RECORDER_H_
 #define OMX_RECORDER_H_
@@ -56,6 +56,7 @@ struct OMXRecorder : public MediaRecorderBase {
     virtual status_t dump(int fd, const Vector<String16>& args) const;
     status_t ProcessEvent(int msg, int ext1, int ext2);
     // Querying a SurfaceMediaSourcer
+    virtual status_t setInputSurface(const sp<IGraphicBufferConsumer>& surface);
     virtual sp<IGraphicBufferProducer> querySurfaceMediaSource() const;
 
 private:

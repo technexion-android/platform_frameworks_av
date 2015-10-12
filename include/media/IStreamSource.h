@@ -40,6 +40,9 @@ struct IStreamSource : public IInterface {
 
         // Timestamps are in ALooper::GetNowUs() units.
         kFlagIsRealTimeData   = 2,
+
+        // Will discard data if buffered too much data to keep low latency.
+        kFlagKeepLowLatency   = 4,
     };
     virtual uint32_t flags() const { return 0; }
 };

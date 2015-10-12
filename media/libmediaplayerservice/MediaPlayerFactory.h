@@ -33,8 +33,8 @@ class MediaPlayerFactory {
         virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                    const char* /*url*/,
                                    float /*curScore*/,
-                                   const KeyedVector<String8, String8> *headers = NULL,
-                                   const IMediaHTTPService* httpService = NULL) { return 0.0; }
+                                   const KeyedVector<String8, String8> * headers __unused = NULL,
+                                   const IMediaHTTPService* httpService __unused = NULL) { return 0.0; }
 
         virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
                                    int /*fd*/,
