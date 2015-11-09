@@ -260,7 +260,7 @@ bool isWVM(const char* url,
         }
 
         // The widevine extractor does its own caching.
-        mCachedSource = new NuCachedSource2(
+        mCachedSource = NuCachedSource2::Create(
                 mConnectingDataSource,
                 cacheConfig.isEmpty() ? NULL : cacheConfig.string(),
                 disconnectAtHighwatermark);
