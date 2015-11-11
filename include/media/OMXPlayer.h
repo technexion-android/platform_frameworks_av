@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* Copyright 2009-2014 Freescale Semiconductor, Inc. */
+/* Copyright 2009-2015 Freescale Semiconductor, Inc. */
 
 #ifndef ANDROID_OMXPLAYER_H
 #define ANDROID_OMXPLAYER_H
@@ -43,6 +43,9 @@ public:
     virtual status_t    stop();
     virtual status_t    pause();
     virtual bool        isPlaying();
+    virtual status_t    setSyncSettings(const AVSyncSettings &sync, float videoFpsHint);
+    virtual status_t    getSyncSettings(AVSyncSettings *sync, float *videoFps);
+
     virtual status_t    seekTo(int msec);
     virtual status_t    getCurrentPosition(int *msec);
     virtual status_t    getDuration(int *msec);
