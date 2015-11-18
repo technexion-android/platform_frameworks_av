@@ -45,6 +45,8 @@ public:
     virtual bool        isPlaying();
     virtual status_t    setSyncSettings(const AVSyncSettings &sync, float videoFpsHint);
     virtual status_t    getSyncSettings(AVSyncSettings *sync, float *videoFps);
+    virtual status_t    setPlaybackSettings(const AudioPlaybackRate &rate);
+    virtual status_t    getPlaybackSettings(AudioPlaybackRate *rate);
 
     virtual status_t    seekTo(int msec);
     virtual status_t    getCurrentPosition(int *msec);
