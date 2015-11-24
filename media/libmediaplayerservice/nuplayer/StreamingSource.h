@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/* Copyright (C) 2015 Freescale Semiconductor, Inc. */
 
 #ifndef STREAMING_SOURCE_H_
 
@@ -28,6 +29,24 @@ struct ATSParser;
 struct AnotherPacketSource;
 
 struct NuPlayer::StreamingSource : public NuPlayer::Source {
+    
+    // Continues drop should wait below time as pipeline isn't refresh.
+    static const int RESUME_DROP_CHECK = 100000;
+    // Remain data to avoid under run after drop.
+    static const int REMAIN_DATA_AFTER_DROP = 50000;
+    // Defautl drop threshold.
+    static const int LATENCY_THRESHOLD_DEFAULT = 120000;
+    // Maximum drop threshold.
+    static const int LATENCY_THRESHOLD_MAX = 2000000;
+    // Discard one time media data within this peroid.
+    static const int QUALITY_CATIRIA = 5*60*1000000;
+    // The invertal to statistic lowest latency.
+    static const int STATISTIC_PERIOD = 5000000;
+    // Drop video threshold.
+    static const int DROP_VIDEO_THRESHOLD = 1000000;
+    // Reset statistic lowest latency value.
+    static const int LOWEST_LATENCY_INIT = 60000000;
+
     StreamingSource(
             const sp<AMessage> &notify,
             const sp<IStreamSource> &source);
@@ -43,6 +62,7 @@ struct NuPlayer::StreamingSource : public NuPlayer::Source {
 
     virtual bool isAVCReorderDisabled() const;
 
+    virtual void setRenderPosition(int64_t positionUs);
 protected:
     virtual ~StreamingSource();
 
@@ -59,6 +79,17 @@ private:
     sp<NuPlayerStreamListener> mStreamListener;
     sp<ATSParser> mTSParser;
 
+    int64_t mLatencyLowest;
+    int64_t mStasticPeroid;
+    int64_t mLatencyThreshold;
+    int64_t mTunnelRenderLatency;
+    int64_t mPositionUs;
+    int64_t mAnchorTimeRealUs;
+    int64_t mDropEndTimeUs;
+    int64_t mPipeLineLatencyUs;
+    int64_t mResumeCheckTimeUs;
+    int64_t mPrevDropTimeUs;
+
     bool mBuffering;
     Mutex mBufferingLock;
     sp<ALooper> mLooper;
@@ -68,6 +99,8 @@ private:
     bool haveSufficientDataOnAllTracks();
     status_t postReadBuffer();
     void onReadBuffer();
+
+    bool discardMediaDate(bool audio, int64_t timeUs, sp<ABuffer> *accessUnit);
 
     DISALLOW_EVIL_CONSTRUCTORS(StreamingSource);
 };
