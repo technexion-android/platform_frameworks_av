@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2015 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -615,6 +616,8 @@ audio_devices_t Engine::getDeviceForInputSource(audio_source_t inputSource) cons
         device = AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET;
     } else if (availableDeviceTypes & AUDIO_DEVICE_IN_WIRED_HEADSET) {
         device = AUDIO_DEVICE_IN_WIRED_HEADSET;
+    } else if (availableDeviceTypes & AUDIO_DEVICE_IN_AUX_DIGITAL) {
+            device = AUDIO_DEVICE_IN_AUX_DIGITAL;
     } else if (availableDeviceTypes & AUDIO_DEVICE_IN_USB_DEVICE) {
         device = AUDIO_DEVICE_IN_USB_DEVICE;
     } else if (availableDeviceTypes & AUDIO_DEVICE_IN_BUILTIN_MIC) {
@@ -676,7 +679,9 @@ audio_devices_t Engine::getDeviceForInputSource(audio_source_t inputSource) cons
         }
         break;
     case AUDIO_SOURCE_CAMCORDER:
-        if (availableDeviceTypes & AUDIO_DEVICE_IN_BACK_MIC) {
+        if (availableDeviceTypes & AUDIO_DEVICE_IN_AUX_DIGITAL) {
+            device = AUDIO_DEVICE_IN_AUX_DIGITAL;
+        } else if (availableDeviceTypes & AUDIO_DEVICE_IN_BACK_MIC) {
             device = AUDIO_DEVICE_IN_BACK_MIC;
         } else if (availableDeviceTypes & AUDIO_DEVICE_IN_BUILTIN_MIC) {
             device = AUDIO_DEVICE_IN_BUILTIN_MIC;
