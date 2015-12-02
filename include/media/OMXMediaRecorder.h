@@ -72,6 +72,7 @@ private:
     sp<IGraphicBufferProducer> mPreviewSurface;
     String16 mClientName;
     uid_t mClientUid;
+    sp<IGraphicBufferConsumer> mBufferConsumer;
 
     OMXRecorder(const OMXRecorder &);
     OMXRecorder &operator=(const OMXRecorder &);
