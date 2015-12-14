@@ -118,6 +118,9 @@ status_t Parameters::initialize(const CameraMetadata *info, int deviceVersion) {
 
     params.setPreviewSize(previewWidth, previewHeight);
     params.setVideoSize(videoWidth, videoHeight);
+    params.set(CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO,
+            String8::format("%dx%d",
+                    previewWidth, previewHeight));
     {
         String8 supportedPreviewSizes;
         for (size_t i = 0; i < availablePreviewSizes.size(); i++) {
