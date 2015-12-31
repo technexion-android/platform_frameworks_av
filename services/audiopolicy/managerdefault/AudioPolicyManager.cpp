@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
- *
+ * Copyright (C) 2015 Freescale Semiconductor, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -609,6 +609,8 @@ sp<IOProfile> AudioPolicyManager::getProfileForDirectOutput(
     // if explicitly requested
     static const uint32_t kRelevantFlags =
             (AUDIO_OUTPUT_FLAG_HW_AV_SYNC | AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD);
+
+    audio_output_flags_t saveFlag = flags;
     flags =
         (audio_output_flags_t)((flags & kRelevantFlags) | AUDIO_OUTPUT_FLAG_DIRECT);
 
@@ -627,6 +629,14 @@ sp<IOProfile> AudioPolicyManager::getProfileForDirectOutput(
                     flags)) {
                 continue;
             }
+
+            // if hdmi, also assure the application enable direct output
+            if(((saveFlag & AUDIO_OUTPUT_FLAG_DIRECT) == 0) &&
+               (strncmp(curProfile->mName.string(), "hdmi", 4) == 0)) {
+               ALOGI("Application not enable direct output");
+               continue;
+            }
+
             // reject profiles not corresponding to a device currently available
             if ((mAvailableOutputDevices.types() & curProfile->mSupportedDevices.types()) == 0) {
                 continue;
