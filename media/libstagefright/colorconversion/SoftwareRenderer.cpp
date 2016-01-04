@@ -38,6 +38,11 @@ static int ALIGN(int x, int y) {
     return (x + y - 1) & ~(y - 1);
 }
 
+static bool supportYUVComposer() {
+    char prop[PROPERTY_VALUE_MAX];
+    return !(property_get("sys.composer.no-yuv-support", prop, NULL) > 0);
+}
+
 SoftwareRenderer::SoftwareRenderer(
         const sp<ANativeWindow> &nativeWindow, int32_t rotation)
     : mColorFormat(OMX_COLOR_FormatUnused),
@@ -112,9 +117,11 @@ void SoftwareRenderer::resetFormatIfChanged(const sp<AMessage> &format) {
             case OMX_COLOR_FormatYUV420SemiPlanar:
             case OMX_TI_COLOR_FormatYUV420PackedSemiPlanar:
             {
-                halFormat = HAL_PIXEL_FORMAT_YV12;
-                bufWidth = (mCropWidth + 1) & ~1;
-                bufHeight = (mCropHeight + 1) & ~1;
+                if(supportYUVComposer()){
+                    halFormat = HAL_PIXEL_FORMAT_YV12;
+                    bufWidth = (mCropWidth + 1) & ~1;
+                    bufHeight = (mCropHeight + 1) & ~1;
+                }
                 break;
             }
             case OMX_COLOR_Format24bitRGB888:
