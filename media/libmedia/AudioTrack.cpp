@@ -1,6 +1,7 @@
 /*
 **
 ** Copyright 2007, The Android Open Source Project
+** Copyright (C) 2016 Freescale Semiconductor, Inc.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -1290,6 +1291,8 @@ status_t AudioTrack::createTrack_l()
         goto release;
     }
     ALOG_ASSERT(track != 0);
+    if (trackFlags & IAudioFlinger::TRACK_DIRECT)
+        mFlags = (audio_output_flags_t)(mFlags | AUDIO_OUTPUT_FLAG_DIRECT);
 
     // AudioFlinger now owns the reference to the I/O handle,
     // so we are no longer responsible for releasing it.
