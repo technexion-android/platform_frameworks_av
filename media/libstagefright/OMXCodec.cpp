@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
- * Copyright (C) 2012-2015 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2016 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@
 #include <OMX_AsString.h>
 
 #include "include/avc_utils.h"
+#include <cutils/properties.h>
 
 namespace android {
 
@@ -210,6 +211,16 @@ void OMXCodec::findMatchingCodecs(
     }
 
     size_t index = 0;
+
+    bool use_fsl_video = false;
+    bool use_fsl_audio = false;
+    int value;
+    value = property_get_int32("media.fsl_codec.flag", 2);
+    if(value & 0x02)
+        use_fsl_video = true;
+    if(value & 0x04)
+        use_fsl_audio = true;
+
     for (;;) {
         ssize_t matchIndex =
             list->findCodecByType(mime, createEncoder, index);
@@ -228,6 +239,12 @@ void OMXCodec::findMatchingCodecs(
         if (matchComponentName && strcmp(componentName, matchComponentName)) {
             continue;
         }
+
+        if(!strncmp(componentName, "OMX.Freescale.std.video_decoder", 30) && !use_fsl_video)
+            continue;
+
+        if(!strncmp(componentName, "OMX.Freescale.std.audio_decoder", 30) && !use_fsl_audio)
+            continue;
 
         // When requesting software-only codecs, only push software codecs
         // When requesting hardware-only codecs, only push hardware codecs
@@ -577,6 +594,9 @@ status_t OMXCodec::configureCodec(const sp<MetaData> &meta) {
             addCodecSpecificData(data, size);
             CHECK(meta->findData(kKeyOpusSeekPreRoll, &type, &data, &size));
             addCodecSpecificData(data, size);
+        }else if(meta->findData(kKeyCodecData, &type, &data, &size)){
+            addCodecSpecificData(data, size);
+            ALOGE("add addCodecSpecificData size=%u",size);
         }
     }
 

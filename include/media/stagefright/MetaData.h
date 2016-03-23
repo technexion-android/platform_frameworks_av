@@ -143,6 +143,7 @@ enum {
     kKeyRequiresSecureBuffers = 'secu',  // bool (int32_t)
 
     kKeyIsADTS            = 'adts',  // bool (int32_t)
+    kKeyIsADIF            = 'adif',  // bool (int32_t)
     kKeyAACAOT            = 'aaot',  // int32_t
 
     // If a MediaBuffer's data represents (at least partially) encrypted
@@ -181,6 +182,12 @@ enum {
 
     // H264 supplemental enhancement information offsets/sizes
     kKeySEI               = 'sei ', // raw data
+
+    kKeySubFormat         = 'sFmt', // (int32_t)
+    kKeyCodecData         = 'cCdd', // raw data
+    kKeyBitPerSample         = 'bPsp', // (int32_t)
+    kKeyAudioBlockAlign         = 'aBan', // (int32_t)
+    kKeyBitsPerFrame            = 'bPfm',
 };
 
 enum {

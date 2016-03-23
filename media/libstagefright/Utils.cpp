@@ -112,6 +112,11 @@ status_t convertMetaDataToMessage(
         msg->setInt32("is-sync-frame", 1);
     }
 
+    int32_t subType;
+    if (meta->findInt32(kKeySubFormat, &subType)) {
+        msg->setInt32("sub-format", subType);
+    }
+
     if (!strncasecmp("video/", mime, 6)) {
         int32_t width, height;
         CHECK(meta->findInt32(kKeyWidth, &width));
@@ -145,6 +150,7 @@ status_t convertMetaDataToMessage(
         if (meta->findInt32(kKeyRotation, &rotationDegrees)) {
             msg->setInt32("rotation-degrees", rotationDegrees);
         }
+
     } else if (!strncasecmp("audio/", mime, 6)) {
         int32_t numChannels, sampleRate;
         CHECK(meta->findInt32(kKeyChannelCount, &numChannels));
@@ -172,10 +178,31 @@ status_t convertMetaDataToMessage(
             msg->setInt32("is-adts", true);
         }
 
+        int32_t isADIF;
+        if (meta->findInt32(kKeyIsADIF, &isADIF)) {
+            msg->setInt32("is-adif", true);
+        }
+
         int32_t aacProfile = -1;
         if (meta->findInt32(kKeyAACAOT, &aacProfile)) {
             msg->setInt32("aac-profile", aacProfile);
         }
+
+        int32_t bitPerSample;
+        if (meta->findInt32(kKeyBitPerSample, &bitPerSample)) {
+            msg->setInt32("bit-per-sample", bitPerSample);
+        }
+
+        int32_t audioBlockAlign = -1;
+        if (meta->findInt32(kKeyAudioBlockAlign, &audioBlockAlign)) {
+            msg->setInt32("audio-block-align", audioBlockAlign);
+        }
+
+        int32_t bitsPerFrame = 0;
+        if (meta->findInt32(kKeyBitsPerFrame, &bitsPerFrame)) {
+            msg->setInt32("bits-per-frame", bitsPerFrame);
+        }
+
     }
 
     int32_t maxInputSize;
@@ -451,6 +478,12 @@ status_t convertMetaDataToMessage(
         buffer->meta()->setInt32("csd", true);
         buffer->meta()->setInt64("timeUs", 0);
         msg->setBuffer("csd-2", buffer);
+    }else if(meta->findData(kKeyCodecData, &type, &data, &size)){
+        sp<ABuffer> buffer = new (std::nothrow) ABuffer(size);
+        memcpy(buffer->data(), data, size);
+        buffer->meta()->setInt32("csd", true);
+        buffer->meta()->setInt64("timeUs", 0);
+        msg->setBuffer("csd-0", buffer);
     }
 
     *format = msg;
@@ -645,6 +678,11 @@ void convertMessageToMetaData(const sp<AMessage> &msg, sp<MetaData> &meta) {
         int32_t isADTS;
         if (msg->findInt32("is-adts", &isADTS)) {
             meta->setInt32(kKeyIsADTS, isADTS);
+        }
+
+        int32_t isADIF;
+        if (msg->findInt32("is-adif", &isADIF)) {
+            meta->setInt32(kKeyIsADIF, isADIF);
         }
     }
 

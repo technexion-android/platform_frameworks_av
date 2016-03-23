@@ -72,6 +72,28 @@ extern const char *MEDIA_MIMETYPE_DATA_TIMED_ID3;
 
 #define OMX_BUFFERFLAG_FRAMEDROP 0xbeafdeed
 
+extern const char *MEDIA_MIMETYPE_CONTAINER_FLV;
+extern const char *MEDIA_MIMETYPE_CONTAINER_ASF;
+extern const char *MEDIA_MIMETYPE_CONTAINER_RMVB;
+
+extern const char *MEDIA_MIMETYPE_VIDEO_DIV3;
+extern const char *MEDIA_MIMETYPE_VIDEO_DIV4;
+extern const char *MEDIA_MIMETYPE_VIDEO_DIVX;
+
+extern const char *MEDIA_MIMETYPE_VIDEO_XVID;
+extern const char *MEDIA_MIMETYPE_VIDEO_WMV;
+extern const char *MEDIA_MIMETYPE_VIDEO_WMV9;
+
+extern const char *MEDIA_MIMETYPE_VIDEO_JPEG;
+extern const char *MEDIA_MIMETYPE_VIDEO_MJPEG;
+extern const char *MEDIA_MIMETYPE_VIDEO_REAL;
+extern const char *MEDIA_MIMETYPE_VIDEO_SORENSON;
+
+extern const char *MEDIA_MIMETYPE_AUDIO_WMA;
+extern const char *MEDIA_MIMETYPE_AUDIO_ADPCM;
+extern const char *MEDIA_MIMETYPE_AUDIO_REAL;
+extern const char *MEDIA_MIMETYPE_AUDIO_APE;
+
 }  // namespace android
 
 #endif  // MEDIA_DEFS_H_

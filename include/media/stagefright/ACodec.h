@@ -268,6 +268,12 @@ private:
 
     bool mTunneled;
 
+    int64_t mFrameRendered;
+    int64_t mFrameDropped;
+    uint64_t mStartTime;
+    uint64_t mEndTime;
+
+
     status_t setCyclicIntraMacroblockRefresh(const sp<AMessage> &msg, int32_t mode);
     status_t allocateBuffersOnPort(OMX_U32 portIndex);
     status_t freeBuffersOnPort(OMX_U32 portIndex);
@@ -339,6 +345,10 @@ private:
             int32_t aacProfile, bool isADTS, int32_t sbrMode,
             int32_t maxOutputChannelCount, const drcParams_t& drc,
             int32_t pcmLimiterEnable);
+    status_t setupAACADIFCodec(
+            bool encoder,
+            int32_t numChannels, int32_t sampleRate, int32_t maxOutputChannelCount,
+            const drcParams_t& drc, int32_t pcmLimiterEnable);
 
     status_t setupAC3Codec(bool encoder, int32_t numChannels, int32_t sampleRate);
 
@@ -421,6 +431,10 @@ private:
 
     status_t requestIDRFrame();
     status_t setParameters(const sp<AMessage> &params);
+    status_t setupWMVDecoderParameters(const sp<AMessage> &msg);
+    status_t setupWMACodec(bool encoder, const sp<AMessage> &msg);
+    status_t setupAPECodec(bool encoder, const sp<AMessage> &msg);
+    status_t setupRACodec(bool encoder, const sp<AMessage> &msg);
 
     // Send EOS on input stream.
     void onSignalEndOfInputStream();

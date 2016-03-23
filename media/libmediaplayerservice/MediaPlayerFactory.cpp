@@ -1,6 +1,7 @@
 /*
 **
 ** Copyright 2012, The Android Open Source Project
+** Copyright (C) 2013-2016 Freescale Semiconductor, Inc.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -15,7 +16,6 @@
 ** limitations under the License.
 */
 
-/* Copyright (C) 2013-2015 Freescale Semiconductor, Inc. */
 
 //#define LOG_NDEBUG 0
 
@@ -378,7 +378,9 @@ class OMXPlayerFactory : public MediaPlayerFactory::IFactory {
             char value[PROPERTY_VALUE_MAX];
             if (!(property_get("media.omxgm.enable-player", value, NULL)
                     && (!strcmp("1", value) || !strcasecmp("true", value)))) {
-                return 0.0;
+
+                if(strncasecmp(url, "udp://", 6) && strncasecmp(url, "rtp://", 6))
+                    return 0.0;
             }
 
             if (kOurScore <= curScore)

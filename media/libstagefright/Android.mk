@@ -69,6 +69,8 @@ LOCAL_SRC_FILES:=                         \
         WVMExtractor.cpp                  \
         XINGSeeker.cpp                    \
         avc_utils.cpp                     \
+        FslInspector.cpp                  \
+        FslExtractor.cpp
 
 LOCAL_C_INCLUDES:= \
         $(TOP)/frameworks/av/include/media/ \
@@ -79,6 +81,8 @@ LOCAL_C_INCLUDES:= \
         $(TOP)/external/tremolo \
         $(TOP)/external/libvpx/libwebm \
         $(TOP)/system/netd/include \
+        $(TOP)/device/fsl-codec/ghdr/common \
+
 
 LOCAL_SHARED_LIBRARIES := \
         libbinder \

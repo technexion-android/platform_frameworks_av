@@ -1019,7 +1019,12 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
                         finishFlushIfPossible();  // Should not occur.
                         break;                    // Finish anyways.
                 }
-                notifyListener(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN, err);
+                if(mVideoDecoder != NULL && audio){
+                    notifyListener(MEDIA_INFO, MEDIA_INFO_UNKNOWN, err);
+                    ALOGE("do not send out media error if audio is not supported");
+                }else{
+                    notifyListener(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN, err);
+                }
             } else {
                 ALOGV("Unhandled decoder notification %d '%c%c%c%c'.",
                       what,
