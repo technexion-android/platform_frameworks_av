@@ -519,7 +519,8 @@ ACodec::ACodec()
       mTimePerFrameUs(-1ll),
       mTimePerCaptureUs(-1ll),
       mCreateInputBuffersSuspended(false),
-      mTunneled(false) {
+      mTunneled(false),
+      mSetStartTime(false){
     mUninitializedState = new UninitializedState(this);
     mLoadedState = new LoadedState(this);
     mLoadedToIdleState = new LoadedToIdleState(this);
@@ -5354,6 +5355,11 @@ void ACodec::BaseState::onInputBufferFilled(const sp<AMessage> &msg) {
                     flags |= OMX_BUFFERFLAG_EOS;
                 }
 
+                if (mCodec->mSetStartTime && !(flags & OMX_BUFFERFLAG_CODECCONFIG)){
+                    flags |= OMX_BUFFERFLAG_STARTTIME;
+                    mCodec->mSetStartTime = false;
+                }
+
                 if (buffer != info->mData) {
                     ALOGV("[%s] Needs to copy input data for buffer %u. (%p != %p)",
                          mCodec->mComponentName.c_str(),
@@ -7320,6 +7326,8 @@ void ACodec::FlushingState::changeStateIfWeOwnAllBuffers() {
 
         mCodec->mPortEOS[kPortIndexInput] =
             mCodec->mPortEOS[kPortIndexOutput] = false;
+
+        mCodec->mSetStartTime = true;
 
         mCodec->mInputEOSResult = OK;
 
