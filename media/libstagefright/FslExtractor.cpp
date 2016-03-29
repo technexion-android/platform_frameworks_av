@@ -6,7 +6,7 @@
  *  and contain its proprietary and confidential information.
  *
  */
-#define LOG_NDEBUG 2
+//#define LOG_NDEBUG 2
 #define LOG_TAG "FslExtractor"
 #include <utils/Log.h>
 
@@ -527,7 +527,7 @@ static uint32  appGetFlag( FslFileHandle file_handle, void * context)
     if(h->isStreaming())
         flag |= FILE_FLAG_READ_IN_SEQUENCE;
 
-    ALOGV("appLocalGetFlag %lx", flag);
+    ALOGV("appLocalGetFlag %x", flag);
 
     return flag;
 }
@@ -599,7 +599,7 @@ static uint8* appRequestBuffer(   uint32 streamNum,
     if (!size || !bufContext || !parserContext)
         return NULL;
 
-    ALOGV("appRequestBuffer streamNum=%lu",streamNum);
+    ALOGV("appRequestBuffer streamNum=%u",streamNum);
 
     h = (FslDataSourceReader *)parserContext;
 
@@ -625,7 +625,7 @@ static void appReleaseBuffer(uint32 streamNum, uint8 * pBuffer, void * bufContex
     FslDataSourceReader *h;
     sp<ABuffer> buffer = NULL;
 
-    ALOGV("appReleaseBuffer streamNum=%lu",streamNum);
+    ALOGV("appReleaseBuffer streamNum=%u",streamNum);
 
     if (!pBuffer || !bufContext || !parserContext)
         return;
@@ -1171,7 +1171,7 @@ status_t FslExtractor::CreateParserInterface()
 
 
     if(err){
-        ALOGW("FslExtractor::CreateParserInterface parser err=%ld",err);
+        ALOGW("FslExtractor::CreateParserInterface parser err=%d",err);
         ret = UNKNOWN_ERROR;
     }
 
@@ -1210,7 +1210,7 @@ status_t FslExtractor::ParseFromParser()
                 &outputBufferOps,
                 (void *)mReader,
                 &parserHandle);
-        ALOGD("createParser2 flag=%lx,err=%ld\n",flag,err);
+        ALOGD("createParser2 flag=%x,err=%d\n",flag,err);
     }else{
         err = IParser->createParser(bLive,
                 &fileOps,
@@ -1218,12 +1218,12 @@ status_t FslExtractor::ParseFromParser()
                 &outputBufferOps,
                 (void *)mReader,
                 &parserHandle);
-        ALOGD("createParser flag=%lx,err=%ld\n",flag,err);
+        ALOGD("createParser flag=%x,err=%d\n",flag,err);
     }
 
     if(PARSER_SUCCESS !=  err)
     {
-        ALOGE("fail to create the parser: %ld\n", err);
+        ALOGE("fail to create the parser: %d\n", err);
         return UNKNOWN_ERROR;
     }
     if(mReader->isStreaming() || !strcasecmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG2TS)
@@ -1346,7 +1346,7 @@ status_t FslExtractor::ParseMetaData()
             value += *(metaData+3);
             data = *(float *)&value;
             len = sprintf((char*)&tmp, "%f", data);
-            ALOGI("get fps=%s,len=%lu",tmp,len);
+            ALOGI("get fps=%s,len=%u",tmp,len);
             mFileMetaData->setFloat(kKeyCaptureFramerate, data);
         }
 
@@ -1359,6 +1359,8 @@ status_t FslExtractor::ParseMetaData()
 
         }
 
+        metaData = NULL;
+        metaDataSize = 0;
         //pssh
         userDataFormat = USER_DATA_FORMAT_UTF8;
         IParser->getMetaData(parserHandle, USER_DATA_PSSH, &userDataFormat, &metaData, \
@@ -1438,7 +1440,7 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     uint32 fps = 30;
     uint32 bitrate = 0;
     size_t sourceIndex = 0;
-    ALOGD("ParseVideo index=%lu,type=%lu,subtype=%lu",index,type,subtype);
+    ALOGD("ParseVideo index=%u,type=%u,subtype=%u",index,type,subtype);
     for(i = 0; i < sizeof(video_mime_table)/sizeof(codec_mime_struct); i++){
         if (type == video_mime_table[i].type){
             if((video_mime_table[i].subtype > 0) && (subtype == (video_mime_table[i].subtype))){
@@ -1491,26 +1493,26 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
             return UNKNOWN_ERROR;
         }
     }
-    ALOGI("ParseVideo width=%lu,height=%lu",width,height);
+    ALOGI("ParseVideo width=%u,height=%u",width,height);
 
     sp<MetaData> meta = new MetaData;
     meta->setCString(kKeyMIMEType, mime);
     meta->setInt32(kKeyTrackID, index);
 
     if(decoderSpecificInfoSize > 0 && decoderSpecificInfo != NULL){
-        ALOGI("video codec data size=%lu",decoderSpecificInfoSize);
+        ALOGI("video codec data size=%u",decoderSpecificInfoSize);
         if(type == VIDEO_H264){
             meta->setData(kKeyAVCC, 0, decoderSpecificInfo, decoderSpecificInfoSize);
-            ALOGI("add avcc metadata for h264 video size=%lu",decoderSpecificInfoSize);
+            ALOGI("add avcc metadata for h264 video size=%u",decoderSpecificInfoSize);
         }else if(type == VIDEO_HEVC){
             //stagefright will check the first bytes, so modify to pass it.
             if(decoderSpecificInfo[0] != 1)
                 decoderSpecificInfo[0] = 1;
             meta->setData(kKeyHVCC, 0, decoderSpecificInfo, decoderSpecificInfoSize);
-            ALOGI("add hvcc metadata for hevc video size=%lu",decoderSpecificInfoSize);
+            ALOGI("add hvcc metadata for hevc video size=%u",decoderSpecificInfoSize);
         }else if(type == VIDEO_MPEG4){
             addESDSFromCodecPrivate(meta,false,decoderSpecificInfo,decoderSpecificInfoSize);
-            ALOGI("add esds metadata for mpeg4 video size=%lu",decoderSpecificInfoSize);
+            ALOGI("add esds metadata for mpeg4 video size=%u",decoderSpecificInfoSize);
         }else{
             meta->setData(kKeyCodecData, 0, decoderSpecificInfo, decoderSpecificInfoSize);
         }
@@ -1561,7 +1563,7 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     trackInfo->mMeta = meta;
     trackInfo->mSource = NULL;
     mReader->AddBufferReadLimitation(index,MAX_VIDEO_BUFFER_SIZE);
-    ALOGI("add video track index=%lu,source index=%zu,mime=%s",index,sourceIndex,mime);
+    ALOGI("add video track index=%u,source index=%zu,mime=%s",index,sourceIndex,mime);
     return OK;
 }
 
@@ -1584,7 +1586,7 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     size_t sourceIndex = 0;
     int32_t encoderDelay = 0;
     int32_t encoderPadding = 0;
-    ALOGD("ParseAudio index=%lu,type=%lu,subtype=%lu",index,type,subtype);
+    ALOGD("ParseAudio index=%u,type=%u,subtype=%u",index,type,subtype);
     for(i = 0; i < sizeof(audio_mime_table)/sizeof(codec_mime_struct); i++){
         if (type == audio_mime_table[i].type){
             if((audio_mime_table[i].subtype > 0) && (subtype == (audio_mime_table[i].subtype))){
@@ -1646,7 +1648,7 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     }
     if(IParser->getLanguage) {
         err = IParser->getLanguage(parserHandle, index, &language[0]);
-        ALOGI("audio track %lu, lanuage: %s\n", index, language);
+        ALOGI("audio track %u, lanuage: %s\n", index, language);
     }
     else
         strcpy((char*)&language, "unknown");
@@ -1656,10 +1658,10 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     meta->setInt32(kKeyTrackID, index);
 
     if(decoderSpecificInfoSize > 0 && decoderSpecificInfo != NULL){
-        ALOGI("audio codec data size=%lu",decoderSpecificInfoSize);
+        ALOGI("audio codec data size=%u",decoderSpecificInfoSize);
         if(type == AUDIO_AAC){
             addESDSFromCodecPrivate(meta,true,decoderSpecificInfo,decoderSpecificInfoSize);
-            ALOGI("add esds metadata for aac audio size=%lu",decoderSpecificInfoSize);
+            ALOGI("add esds metadata for aac audio size=%u",decoderSpecificInfoSize);
         }else if(type == AUDIO_VORBIS){
             //TODO:
             //meta->setData(kKeyVorbisInfo, 0, decoderSpecificInfo, decoderSpecificInfoSize);
@@ -1743,7 +1745,7 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     trackInfo->syncFrame = 0;
     trackInfo->mSource = NULL;
     mReader->AddBufferReadLimitation(index,MAX_AUDIO_BUFFER_SIZE);
-    ALOGI("add audio track index=%lu,sourceIndex=%zu,mime=%s",index,sourceIndex,mime);
+    ALOGI("add audio track index=%u,sourceIndex=%zu,mime=%s",index,sourceIndex,mime);
     return OK;
 }
 status_t FslExtractor::ParseText(uint32 index, uint32 type,uint32 subtype)
@@ -1754,7 +1756,7 @@ status_t FslExtractor::ParseText(uint32 index, uint32 type,uint32 subtype)
     uint32 width = 0;
     uint32 height = 0;
     const char* mime = NULL;
-    ALOGD("ParseText index=%lu,type=%lu,subtype=%lu",index,type,subtype);
+    ALOGD("ParseText index=%u,type=%u,subtype=%u",index,type,subtype);
     switch(type){
         case TXT_3GP_STREAMING_TEXT:
         case TXT_SUBTITLE_TEXT:
@@ -1782,7 +1784,7 @@ status_t FslExtractor::ParseText(uint32 index, uint32 type,uint32 subtype)
 
     if(IParser->getLanguage) {
         err = IParser->getLanguage(parserHandle, index, &language[0]);
-        ALOGI("test track %lu, lanuage: %s\n", index, language);
+        ALOGI("test track %u, lanuage: %s\n", index, language);
     }
     else
         strcpy((char*)&language, "unknown");
@@ -1972,7 +1974,7 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
     track_num_got = pInfo->mTrackNum;
     pInfo = NULL;
 
-    ALOGV("GetNextSample readmode=%u index=%lu BEGIN",mReadMode,track_num_got);
+    ALOGV("GetNextSample readmode=%u index=%u BEGIN",mReadMode,track_num_got);
     do{
 
         if(mReadMode == PARSER_READ_MODE_TRACK_BASED){
@@ -2031,7 +2033,7 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
         if(PARSER_SUCCESS != err){
             return ERROR_END_OF_STREAM;
         }else if (tmp && buffer_context){
-            ALOGV("GetNextSample get track num=%lu ts=%lld,size=%lu,flag=%lx",track_num_got,ts,datasize,sampleFlag);
+            ALOGV("GetNextSample get track num=%u ts=%lld,size=%u,flag=%x",track_num_got,ts,datasize,sampleFlag);
 
             pInfo = &mTracks.editItemAt(index);
             if(pInfo->mTrackNum != track_num_got){
