@@ -454,10 +454,10 @@ static int32   appSeekFile( FslFileHandle file_handle, int64 offset, int32 whenc
         break;
         case SEEK_END:
         {
-            if(offset > h->mLength || h->isLiveStreaming())
+            if(offset > 0 ||  h->mLength + offset < 0 || h->isLiveStreaming())
                 nContentPipeResult = -1;
             else
-                h->mOffset = h->mLength - offset;
+                h->mOffset = h->mLength + offset;
         }
         break;
         default:
@@ -1193,7 +1193,7 @@ status_t FslExtractor::CreateParserInterface()
 status_t FslExtractor::ParseFromParser()
 {
     int32 err = (int32)PARSER_SUCCESS;
-    uint32 flag = FLAG_H264_NO_CONVERT | FLAG_OUTPUT_PTS;
+    uint32 flag = FLAG_H264_NO_CONVERT | FLAG_OUTPUT_PTS | FLAG_ID3_FORMAT_NON_UTF8;
 
     uint32 trackCnt = 0;
     bool bLive = mReader->isLiveStreaming();
