@@ -27,7 +27,7 @@
 #include <OMX_Audio.h>
 #include <OMX_Implement.h>
 namespace android {
-#define MAX_USER_DATA_STRING_LENGTH 512
+#define MAX_USER_DATA_STRING_LENGTH 1024
 #define MAX_FRAME_BUFFER_LENGTH 10000000
 #define MAX_VIDEO_BUFFER_SIZE (512*1024)
 #define MAX_AUDIO_BUFFER_SIZE (16*1024)
@@ -1301,7 +1301,7 @@ status_t FslExtractor::ParseMetaData()
         { kKeyAlbumArtist, USER_DATA_ALBUMARTIST},
         { kKeyAuthor, USER_DATA_AUTHOR},
         { kKeyEncoderDelay,USER_DATA_AUD_ENC_DELAY},
-        { kKeyEncoderPadding,USER_DATA_AUD_ENC_PADDING}
+        { kKeyEncoderPadding,USER_DATA_AUD_ENC_PADDING},
     };
     uint32_t kNumMapEntries = sizeof(kKeyMap) / sizeof(kKeyMap[0]);
 
@@ -1357,6 +1357,15 @@ status_t FslExtractor::ParseMetaData()
         {
             mFileMetaData->setData(kKeyAlbumArt, MetaData::TYPE_NONE,metaData, metaDataSize);
 
+        }
+
+        //pssh
+        userDataFormat = USER_DATA_FORMAT_UTF8;
+        IParser->getMetaData(parserHandle, USER_DATA_PSSH, &userDataFormat, &metaData, \
+            &metaDataSize);
+        if(metaData && metaDataSize)
+        {
+            mFileMetaData->setData(kKeyPssh, 'pssh', metaData, metaDataSize);
         }
     }
     return OK;

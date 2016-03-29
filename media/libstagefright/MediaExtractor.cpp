@@ -101,6 +101,9 @@ sp<MediaExtractor> MediaExtractor::Create(
     if(value & 0x01)
         use_fsl = true;
 
+    if(isDrm)
+        use_fsl = false;
+
     if (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MPEG4)
             || !strcasecmp(mime, "audio/mp4")) {
         if(use_fsl)
