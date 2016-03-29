@@ -419,7 +419,7 @@ static uint32  appReadFile( FslFileHandle file_handle, void * buffer, uint32 nb,
     else
     {
         ALOGE("appLocalReadFile 0");
-        return 0;
+        return 0xffffffff;
     }
 }
 
@@ -1193,7 +1193,7 @@ status_t FslExtractor::CreateParserInterface()
 status_t FslExtractor::ParseFromParser()
 {
     int32 err = (int32)PARSER_SUCCESS;
-    uint32 flag = FLAG_H264_NO_CONVERT | 0x08;
+    uint32 flag = FLAG_H264_NO_CONVERT | FLAG_OUTPUT_PTS;
 
     uint32 trackCnt = 0;
     bool bLive = mReader->isLiveStreaming();
@@ -2031,7 +2031,10 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
             return OK;
 
         if(PARSER_SUCCESS != err){
-            return ERROR_END_OF_STREAM;
+            if(err == PARSER_READ_ERROR)
+                return ERROR_IO;
+            else
+                return ERROR_END_OF_STREAM;
         }else if (tmp && buffer_context){
             ALOGV("GetNextSample get track num=%u ts=%lld,size=%u,flag=%x",track_num_got,ts,datasize,sampleFlag);
 
