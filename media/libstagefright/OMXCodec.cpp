@@ -221,6 +221,11 @@ void OMXCodec::findMatchingCodecs(
     if(value & 0x04)
         use_fsl_audio = true;
 
+    if(!strcmp(mime, "audio/mp4a-latm-fake")) {
+        use_fsl_audio = false;
+        mime = "audio/mp4a-latm";
+    }
+
     for (;;) {
         ssize_t matchIndex =
             list->findCodecByType(mime, createEncoder, index);

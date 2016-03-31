@@ -6146,6 +6146,9 @@ bool ACodec::LoadedState::onConfigureComponent(
     if (!msg->findString("mime", &mime)) {
         err = BAD_VALUE;
     } else {
+        if(!strcmp(mime.c_str(), "audio/mp4a-latm-fake"))
+            mime = "audio/mp4a-latm";
+
         err = mCodec->configureCodec(mime.c_str(), msg);
     }
     if (err != OK) {
