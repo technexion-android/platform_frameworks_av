@@ -439,7 +439,7 @@ private:
 
     // Send EOS on input stream.
     void onSignalEndOfInputStream();
-
+    status_t setMediaTime(int64_t time);
     DISALLOW_EVIL_CONSTRUCTORS(ACodec);
 };
 

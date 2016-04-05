@@ -193,6 +193,7 @@ NuPlayer::NuPlayer(pid_t pid)
       mPaused(false),
       mPausedByClient(false),
       mPausedForBuffering(false) {
+      mSetVideoTimeGeneration = 0;
     clearFlushComplete();
 }
 
@@ -1099,6 +1100,8 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
                 notifyListener(MEDIA_INFO, MEDIA_INFO_RENDERING_START, 0);
             } else if (what == Renderer::kWhatMediaRenderingStart) {
                 ALOGV("media rendering started");
+                if(mVideoDecoder != NULL)
+                    scheduleSetVideoDecoderTime();
                 notifyListener(MEDIA_STARTED, 0, 0);
             } else if (what == Renderer::kWhatAudioTearDown) {
                 int32_t reason;
@@ -1225,7 +1228,25 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
             onClosedCaptionNotify(msg);
             break;
         }
+        case kWhatSetTime:
+        {
+            int64_t ts = 0;
+            int32_t generation;
+            CHECK(msg->findInt32("generation", &generation));
 
+            if (generation != mSetVideoTimeGeneration) {
+                break;
+            }
+
+            sp<AMessage> params = new AMessage();
+            if(OK == mRenderer->getCurrentPosition(&ts)){
+                params->setInt64("media-time", ts);
+                mVideoDecoder->setParameters(params);
+            }
+
+            msg->post(1000000ll);  // poll again in a second.
+            break;
+        }
         default:
             TRESPASS();
             break;
@@ -1252,6 +1273,7 @@ void NuPlayer::onResume() {
     } else {
         ALOGW("resume called when renderer is gone or not set");
     }
+    scheduleSetVideoDecoderTime();
 }
 
 status_t NuPlayer::onInstantiateSecureDecoders() {
@@ -1349,6 +1371,9 @@ void NuPlayer::onStart(int64_t startPositionUs) {
         mAudioDecoder->setRenderer(mRenderer);
     }
 
+    if(mVideoDecoder != NULL){
+        scheduleSetVideoDecoderTime();
+    }
     postScanSources();
 }
 
@@ -1367,6 +1392,7 @@ void NuPlayer::onPause() {
     } else {
         ALOGW("pause called when renderer is gone or not set");
     }
+    cancelSetVideoDecoderTime();
 }
 
 bool NuPlayer::audioDecoderStillNeeded() {
@@ -1940,6 +1966,7 @@ void NuPlayer::performReset() {
         }
     }
 
+    cancelSetVideoDecoderTime();
     mStarted = false;
     mSourceStarted = false;
 }
@@ -2339,6 +2366,15 @@ void NuPlayer::sendTimedTextData(const sp<ABuffer> &buffer) {
     } else {  // send an empty timed text
         notifyListener(MEDIA_TIMED_TEXT, 0, 0);
     }
+}
+
+void NuPlayer::scheduleSetVideoDecoderTime() {
+    sp<AMessage> msg = new AMessage(kWhatSetTime, this);
+    msg->setInt32("generation", mSetVideoTimeGeneration);
+    msg->post();
+}
+void NuPlayer::cancelSetVideoDecoderTime() {
+    ++mSetVideoTimeGeneration;
 }
 ////////////////////////////////////////////////////////////////////////////////
 

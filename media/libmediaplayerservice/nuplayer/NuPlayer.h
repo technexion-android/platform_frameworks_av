@@ -134,6 +134,7 @@ private:
         kWhatGetTrackInfo               = 'gTrI',
         kWhatGetSelectedTrack           = 'gSel',
         kWhatSelectTrack                = 'selT',
+        kWhatSetTime                    = 'setT',
     };
 
     wp<NuPlayerDriver> mDriver;
@@ -166,7 +167,7 @@ private:
 
     int32_t mPollDurationGeneration;
     int32_t mTimedTextGeneration;
-
+    int32_t mSetVideoTimeGeneration;
     enum FlushStatus {
         NONE,
         FLUSHING_DECODER,
@@ -274,7 +275,8 @@ private:
     void sendTimedTextData(const sp<ABuffer> &buffer);
 
     void writeTrackInfo(Parcel* reply, const sp<AMessage> format) const;
-
+    void scheduleSetVideoDecoderTime();
+    void cancelSetVideoDecoderTime();
     DISALLOW_EVIL_CONSTRUCTORS(NuPlayer);
 };
 

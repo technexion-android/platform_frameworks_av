@@ -2862,6 +2862,24 @@ status_t ACodec::setupRACodec(
             &def,
             sizeof(def));
 }
+status_t ACodec::setMediaTime(int64_t time) {
+
+    if(!mComponentName.startsWith("OMX.Freescale.std.video_decoder")){
+        return OK;
+    }
+
+    OMX_CONFIG_VIDEO_MEDIA_TIME def;
+    InitOMXParams(&def);
+    def.nTime = time;
+    status_t err = mOMX->setConfig(
+            mNode, (OMX_INDEXTYPE)OMX_IndexConfigVideoMediaTime,
+            &def, sizeof(def));
+
+    if (err != OK) {
+        ALOGE("codec does not support set media time %lld (err %d)",time, err);
+    }
+    return OK;
+}
 
 static OMX_AUDIO_AMRBANDMODETYPE pickModeFromBitRate(
         bool isAMRWB, int32_t bps) {
@@ -6810,6 +6828,14 @@ status_t ACodec::setParameters(const sp<AMessage> &params) {
         }
     }
 
+    int64_t mediaTime;
+    if (params->findInt64("media-time", &mediaTime)) {
+        status_t err = setMediaTime(mediaTime);
+        if (err != OK) {
+            ALOGE("Failed to set parameter 'media-time' (err %d)", err);
+            return err;
+        }
+    }
     return OK;
 }
 
