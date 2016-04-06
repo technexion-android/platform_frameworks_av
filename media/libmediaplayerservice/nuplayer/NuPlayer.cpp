@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* Copyright (C) 2015 Freescale Semiconductor, Inc. */
+/* Copyright (C) 2015-2016 Freescale Semiconductor, Inc. */
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "NuPlayer"
@@ -1175,6 +1175,13 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
 
             ALOGV("kWhatSeek seekTimeUs=%lld us, needNotify=%d",
                     (long long)seekTimeUs, needNotify);
+
+            if(!(mSourceFlags & Source::FLAG_CAN_SEEK) && (seekTimeUs > 0)){
+                if (needNotify)
+                    notifyDriverSeekComplete();
+                ALOGW("Unseekable stream!");
+                break;
+            }
 
             if (!mStarted) {
                 // Seek before the player is started. In order to preview video,

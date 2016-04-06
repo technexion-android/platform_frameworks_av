@@ -411,6 +411,8 @@ static uint32  appReadFile( FslFileHandle file_handle, void * buffer, uint32 nb,
 
     ret = h->mDataSource->readAt(h->mOffset, buffer, nb);
 
+    //ALOGD("appReadFile at %lld nb %u, result %d", h->mOffset, (unsigned int)nb, ret);
+
     if(ret > 0)
     {
         h->mOffset += ret;
@@ -487,6 +489,8 @@ static int64   appFileSize( FslFileHandle file_handle, void * context)
         return -1;
 
     FslDataSourceReader *h = (FslDataSourceReader *)context;
+
+    ALOGV("appFileSize %lld", h->mLength);
 
     return h->mLength;
 }
@@ -894,7 +898,7 @@ sp<MetaData> FslExtractor::getMetaData()
 uint32_t FslExtractor::flags() const
 {
     uint32_t x = CAN_PAUSE;
-    if (!mReader->isLiveStreaming()) {
+    if (!mReader->isLiveStreaming() && bSeekable) {
         x |= CAN_SEEK_BACKWARD | CAN_SEEK_FORWARD | CAN_SEEK;
     }
 
@@ -1264,6 +1268,8 @@ status_t FslExtractor::ParseFromParser()
     err = IParser->isSeekable(parserHandle,(bool *)&bSeekable);
     if(err)
         return UNKNOWN_ERROR;
+
+    ALOGI("bSeekable %d", bSeekable);
 
     err = IParser->getMovieDuration(parserHandle, (uint64 *)&mMovieDuration);
     if(err)

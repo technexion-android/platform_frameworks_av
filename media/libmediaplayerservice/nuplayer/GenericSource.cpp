@@ -179,6 +179,8 @@ status_t NuPlayer::GenericSource::initFromDataSource() {
         return UNKNOWN_ERROR;
     }
 
+    mExtractor = extractor;
+
     if (extractor->getDrmFlag()) {
         checkDrmStatus(mDataSource);
     }
@@ -421,13 +423,22 @@ void NuPlayer::GenericSource::onPrepareAsync() {
         notifyVideoSizeChanged(msg);
     }
 
-    notifyFlagsChanged(
-            (mIsSecure ? FLAG_SECURE : 0)
-            | (mDecryptHandle != NULL ? FLAG_PROTECTED : 0)
-            | FLAG_CAN_PAUSE
-            | FLAG_CAN_SEEK_BACKWARD
-            | FLAG_CAN_SEEK_FORWARD
-            | FLAG_CAN_SEEK);
+    uint32_t flags =
+        (mIsSecure ? FLAG_SECURE : 0)
+        | (mDecryptHandle != NULL ? FLAG_PROTECTED : 0)
+        | FLAG_CAN_PAUSE ;
+
+    uint32_t extractor_flags = mExtractor->flags();
+    if(extractor_flags & MediaExtractor::CAN_SEEK)
+        flags |= FLAG_CAN_SEEK;
+    if(extractor_flags & MediaExtractor::CAN_SEEK_FORWARD)
+        flags |= FLAG_CAN_SEEK_FORWARD;
+    if(extractor_flags & MediaExtractor::CAN_SEEK_BACKWARD)
+        flags |= FLAG_CAN_SEEK_BACKWARD;
+
+    ALOGV("flags %x", flags);
+
+    notifyFlagsChanged(flags);
 
     if (mIsSecure) {
         // secure decoders must be instantiated before starting widevine source
