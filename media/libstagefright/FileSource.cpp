@@ -58,6 +58,10 @@ FileSource::FileSource(int fd, int64_t offset, int64_t length)
       mDrmBuf(NULL){
     CHECK(offset >= 0);
     CHECK(length >= 0);
+
+    if (mFd >= 0 && mLength >= 0x7ffffffffffffffL) {
+        mLength = lseek64(mFd, 0, SEEK_END);
+    }
 }
 
 FileSource::~FileSource() {
