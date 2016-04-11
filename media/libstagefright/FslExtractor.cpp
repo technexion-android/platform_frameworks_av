@@ -6,7 +6,7 @@
  *  and contain its proprietary and confidential information.
  *
  */
-//#define LOG_NDEBUG 2
+//#define LOG_NDEBUG 0
 #define LOG_TAG "FslExtractor"
 #include <utils/Log.h>
 
@@ -420,7 +420,7 @@ static uint32  appReadFile( FslFileHandle file_handle, void * buffer, uint32 nb,
     }
     else
     {
-        ALOGE("appLocalReadFile 0");
+        ALOGV("appLocalReadFile 0");
         return 0xffffffff;
     }
 }
@@ -470,7 +470,7 @@ static int32   appSeekFile( FslFileHandle file_handle, int64 offset, int32 whenc
     if( 0 == nContentPipeResult) /* success */
         return 0;
 
-    ALOGE("appSeekFile fail %d", nContentPipeResult);
+    ALOGV("appSeekFile fail %d", nContentPipeResult);
     return -1;
 }
 static int64  appGetCurrentFilePos( FslFileHandle file_handle, void * context)
@@ -1446,6 +1446,7 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     uint32 fps = 30;
     uint32 bitrate = 0;
     size_t sourceIndex = 0;
+    size_t max_size = 0;
     ALOGD("ParseVideo index=%u,type=%u,subtype=%u",index,type,subtype);
     for(i = 0; i < sizeof(video_mime_table)/sizeof(codec_mime_struct); i++){
         if (type == video_mime_table[i].type){
@@ -1524,6 +1525,21 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
         }
     }
 
+    if (type == VIDEO_H264) {
+        // AVC requires compression ratio of at least 2, and uses
+        // macroblocks
+        max_size = ((width + 15) / 16) * ((height + 15) / 16) * 192;
+    } else {
+        // For all other formats there is no minimum compression
+        // ratio. Use compression ratio of 1.
+        max_size = width * height * 3 / 2;
+    }
+    if(0 == max_size)
+        max_size = MAX_VIDEO_BUFFER_SIZE;
+    max_size += 20;
+
+    meta->setInt32(kKeyMaxInputSize, max_size);
+
     if(type == VIDEO_WMV){
         int32_t wmvType = 0;
         switch(subtype){
@@ -1556,6 +1572,8 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     if(rotation > 0)
         meta->setInt32(kKeyRotation, rotation);
 
+    meta->setInt64(kKeyThumbnailTime, duration / 4);
+
     mTracks.push();
     sourceIndex = mTracks.size() - 1;
     TrackInfo *trackInfo = &mTracks.editItemAt(sourceIndex);
@@ -1568,7 +1586,8 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     trackInfo->syncFrame = 0;
     trackInfo->mMeta = meta;
     trackInfo->mSource = NULL;
-    mReader->AddBufferReadLimitation(index,MAX_VIDEO_BUFFER_SIZE);
+    trackInfo->max_input_size = max_size;
+    mReader->AddBufferReadLimitation(index,max_size);
     ALOGI("add video track index=%u,source index=%zu,mime=%s",index,sourceIndex,mime);
     return OK;
 }
@@ -1761,6 +1780,7 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     trackInfo->outTs = 0;
     trackInfo->syncFrame = 0;
     trackInfo->mSource = NULL;
+    trackInfo->max_input_size = MAX_AUDIO_BUFFER_SIZE;
     mReader->AddBufferReadLimitation(index,MAX_AUDIO_BUFFER_SIZE);
     ALOGI("add audio track index=%u,sourceIndex=%zu,mime=%s",index,sourceIndex,mime);
     return OK;
@@ -1823,6 +1843,7 @@ status_t FslExtractor::ParseText(uint32 index, uint32 type,uint32 subtype)
     trackInfo->outTs = 0;
     trackInfo->syncFrame = 0;
     trackInfo->mSource = NULL;
+    trackInfo->max_input_size = MAX_TEXT_BUFFER_SIZE;
     mReader->AddBufferReadLimitation(index,MAX_TEXT_BUFFER_SIZE);
     ALOGD("add text track");
     return OK;
@@ -2107,9 +2128,9 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
                 buffer->setRange(0,datasize);
             }
         }
-    }while((sampleFlag & FLAG_SAMPLE_NOT_FINISHED) && (pInfo->buffer->size() < mReader->GetBufferReadLimitation(pInfo->mTrackNum)));
+    }while((sampleFlag & FLAG_SAMPLE_NOT_FINISHED) && (pInfo->buffer->size() < pInfo->max_input_size));
 
-    if(pInfo && pInfo->buffer != NULL){
+    if(pInfo && pInfo->buffer != NULL ){
         sp<FslMediaSource> source = pInfo->mSource;
         if(source != NULL  && source->started()){
             MediaBuffer *mbuf = new MediaBuffer(pInfo->buffer);

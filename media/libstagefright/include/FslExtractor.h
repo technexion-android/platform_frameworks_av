@@ -148,7 +148,7 @@ private:
 
         int64_t outTs = 0;
         int32_t syncFrame = 0;
-
+        uint32_t max_input_size;
     };
     Vector<TrackInfo> mTracks;
 
