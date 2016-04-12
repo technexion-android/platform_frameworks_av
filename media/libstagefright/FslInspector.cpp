@@ -91,7 +91,7 @@ static bool TryFlvType(char* buffer,size_t len,String8 *mimeType,float *confiden
 
     if (buffer[0] == 'F' && buffer[1] == 'L' && buffer[2] == 'V'){
         mimeType->setTo(MEDIA_MIMETYPE_CONTAINER_FLV);
-        *confidence = 0.2f;
+        *confidence = 0.25f; // shall larger than SniffMP3's confidence
         ALOGI("TryFlvType SUCCESS");
         return true;
     }
