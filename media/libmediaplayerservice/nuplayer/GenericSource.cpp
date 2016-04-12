@@ -1531,6 +1531,8 @@ void NuPlayer::GenericSource::readBuffer(
         options.setNonBlocking();
     }
 
+    int64_t videoSeekTimeResultUs = -1;
+
     for (size_t numBuffers = 0; numBuffers < maxBuffers; ) {
         MediaBuffer *mbuf;
         status_t err = track->mSource->read(&mbuf, &options);
@@ -1544,6 +1546,8 @@ void NuPlayer::GenericSource::readBuffer(
                 mAudioTimeUs = timeUs;
             } else if (trackType == MEDIA_TRACK_TYPE_VIDEO) {
                 mVideoTimeUs = timeUs;
+                if(seeking == true && numBuffers == 0)
+                    videoSeekTimeResultUs = timeUs; //save the first frame timestamp after seek in order to seek audio.
             }
 
             queueDiscontinuityIfNeeded(seeking, formatChange, trackType, track);
@@ -1569,6 +1573,9 @@ void NuPlayer::GenericSource::readBuffer(
             break;
         }
     }
+
+    if(videoSeekTimeResultUs > 0)
+        *actualTimeUs = videoSeekTimeResultUs;
 }
 
 void NuPlayer::GenericSource::queueDiscontinuityIfNeeded(

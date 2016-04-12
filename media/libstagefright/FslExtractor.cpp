@@ -1984,10 +1984,9 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
     IParser->seek(parserHandle, pInfo->mTrackNum, (uint64*)ts, flag);
     //clear temp buffer
 
-    sp<ABuffer> buffer = pInfo->buffer;
-    if(buffer != NULL){
-        buffer.clear();
-        buffer = NULL;
+    if(pInfo->buffer != NULL){
+        pInfo->buffer.clear();
+        pInfo->buffer = NULL;
     }
     pInfo->bPartial = false;
     ALOGD("HandleSeekOperation index=%d,ts=%lld,flag=%x",index,*ts,flag);
