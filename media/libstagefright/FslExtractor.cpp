@@ -768,6 +768,8 @@ FslExtractor::FslExtractor(const sp<DataSource> &source,const char *mime)
 {
     memset(&mLibName,0,255);
     mLibHandle = NULL;
+    IParser = NULL;
+    parserHandle = NULL;
     mFileMetaData->setCString(kKeyMIMEType, mime);
     ALOGD("FslExtractor::FslExtractor mime=%s",mMime);
 }
