@@ -1020,7 +1020,7 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
                         finishFlushIfPossible();  // Should not occur.
                         break;                    // Finish anyways.
                 }
-                if(mVideoDecoder != NULL && audio){
+                if(mSurface != NULL && audio){
                     notifyListener(MEDIA_INFO, MEDIA_INFO_UNKNOWN, err);
                     ALOGE("do not send out media error if audio is not supported");
                 }else{
