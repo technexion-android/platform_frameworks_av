@@ -1713,6 +1713,12 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
         }
     }
 
+    size_t max_size = MAX_AUDIO_BUFFER_SIZE;//16*1024
+    if(type == AUDIO_APE) {
+        max_size = 262144; //enlarge buffer size to 256*1024 for ape audio
+        meta->setInt32(kKeyMaxInputSize, max_size);
+    }
+
     if(type == AUDIO_WMA){
         int32_t wmaType = 0;
         switch(subtype){
@@ -1780,8 +1786,8 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     trackInfo->outTs = 0;
     trackInfo->syncFrame = 0;
     trackInfo->mSource = NULL;
-    trackInfo->max_input_size = MAX_AUDIO_BUFFER_SIZE;
-    mReader->AddBufferReadLimitation(index,MAX_AUDIO_BUFFER_SIZE);
+    trackInfo->max_input_size = max_size;
+    mReader->AddBufferReadLimitation(index,max_size);
     ALOGI("add audio track index=%u,sourceIndex=%zu,mime=%s",index,sourceIndex,mime);
     return OK;
 }
