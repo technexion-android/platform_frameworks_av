@@ -350,6 +350,13 @@ static VideoFrame *extractVideoFrame(
     CHECK(outputFormat->findInt32("width", &width));
     CHECK(outputFormat->findInt32("height", &height));
 
+    int32_t stride, slice_height;
+    if(outputFormat->findInt32("stride", &stride) && stride > 0)
+        width = stride;
+
+    if(outputFormat->findInt32("slice-height", &slice_height) && slice_height > 0)
+        height = slice_height;
+
     int32_t crop_left, crop_top, crop_right, crop_bottom;
     if (!outputFormat->findRect("crop", &crop_left, &crop_top, &crop_right, &crop_bottom)) {
         crop_left = crop_top = 0;
