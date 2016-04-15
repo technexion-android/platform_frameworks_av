@@ -63,6 +63,9 @@ const char *MEDIA_MIMETYPE_TEXT_SUBRIP = "application/x-subrip";
 const char *MEDIA_MIMETYPE_TEXT_VTT = "text/vtt";
 const char *MEDIA_MIMETYPE_TEXT_CEA_608 = "text/cea-608";
 const char *MEDIA_MIMETYPE_DATA_TIMED_ID3 = "application/x-id3v4";
+const char *MEDIA_MIMETYPE_TEXT_SRT = "text/srt";
+const char *MEDIA_MIMETYPE_TEXT_SSA = "text/ssa";
+const char *MEDIA_MIMETYPE_TEXT_ASS = "text/ass";
 
 const char *MEDIA_MIMETYPE_CONTAINER_FLV = "video/flv";
 const char *MEDIA_MIMETYPE_CONTAINER_ASF = "video/x-ms-wmv";

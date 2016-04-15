@@ -123,7 +123,7 @@ protected:
 private:
     sp<DataSource> mDataSource;
     FslDataSourceReader *mReader;
-    const char *mMime;
+    char *mMime;
     bool bInit;
     char mLibName[255];
     void *mLibHandle;
@@ -149,6 +149,7 @@ private:
         int64_t outTs = 0;
         int32_t syncFrame = 0;
         uint32_t max_input_size;
+        uint32_t type;
     };
     Vector<TrackInfo> mTracks;
 
@@ -157,6 +158,8 @@ private:
     FslParserHandle  parserHandle;
 
     Mutex mLock;
+    int64_t currentVideoTs;
+    int64_t currentAudioTs;
 
     bool isLiveStreaming() const;
     status_t GetLibraryName();
@@ -176,7 +179,7 @@ private:
             const sp<MetaData> &meta,
             const void *_codecPrivate, size_t codecPrivateSize);
 
-
+    bool isTrackSeekable(uint32_t type);
     FslExtractor(const FslExtractor &);
     FslExtractor &operator=(const FslExtractor &);
 };

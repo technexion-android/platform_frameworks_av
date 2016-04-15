@@ -762,7 +762,7 @@ codec_mime_struct audio_mime_table[]={
 FslExtractor::FslExtractor(const sp<DataSource> &source,const char *mime)
     : mDataSource(source),
     mReader(new FslDataSourceReader(mDataSource)),
-    mMime(mime),
+    mMime(strdup(mime)),
     bInit(false),
     mFileMetaData(new MetaData)
 {
@@ -771,6 +771,9 @@ FslExtractor::FslExtractor(const sp<DataSource> &source,const char *mime)
     IParser = NULL;
     parserHandle = NULL;
     mFileMetaData->setCString(kKeyMIMEType, mime);
+    currentVideoTs = 0;
+    currentAudioTs = 0;
+
     ALOGD("FslExtractor::FslExtractor mime=%s",mMime);
 }
 FslExtractor::~FslExtractor()
@@ -795,6 +798,8 @@ FslExtractor::~FslExtractor()
         dlclose(mLibHandle);
         mLibHandle = NULL;
     }
+    free(mMime);
+    mMime = NULL;
     ALOGD("FslExtractor::~FslExtractor");
 }
 status_t FslExtractor::Init()
@@ -1589,6 +1594,7 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     trackInfo->mMeta = meta;
     trackInfo->mSource = NULL;
     trackInfo->max_input_size = max_size;
+    trackInfo->type = MEDIA_VIDEO;
     mReader->AddBufferReadLimitation(index,max_size);
     ALOGI("add video track index=%u,source index=%zu,mime=%s",index,sourceIndex,mime);
     return OK;
@@ -1789,6 +1795,7 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     trackInfo->syncFrame = 0;
     trackInfo->mSource = NULL;
     trackInfo->max_input_size = max_size;
+    trackInfo->type = MEDIA_AUDIO;
     mReader->AddBufferReadLimitation(index,max_size);
     ALOGI("add audio track index=%u,sourceIndex=%zu,mime=%s",index,sourceIndex,mime);
     return OK;
@@ -1805,13 +1812,13 @@ status_t FslExtractor::ParseText(uint32 index, uint32 type,uint32 subtype)
     switch(type){
         case TXT_3GP_STREAMING_TEXT:
         case TXT_SUBTITLE_TEXT:
-            mime = MEDIA_MIMETYPE_TEXT_3GPP;
+            mime = MEDIA_MIMETYPE_TEXT_SRT;
             break;
         case TXT_SUBTITLE_SSA:
-            mime = "application/x-ssa";
+            mime = MEDIA_MIMETYPE_TEXT_SSA;
             break;
         case TXT_SUBTITLE_ASS:
-            mime = "application/x-ass";
+            mime = MEDIA_MIMETYPE_TEXT_ASS;
             break;
         default:
             break;
@@ -1852,6 +1859,7 @@ status_t FslExtractor::ParseText(uint32 index, uint32 type,uint32 subtype)
     trackInfo->syncFrame = 0;
     trackInfo->mSource = NULL;
     trackInfo->max_input_size = MAX_TEXT_BUFFER_SIZE;
+    trackInfo->type = MEDIA_TEXT;
     mReader->AddBufferReadLimitation(index,MAX_TEXT_BUFFER_SIZE);
     ALOGD("add text track");
     return OK;
@@ -1962,8 +1970,19 @@ status_t FslExtractor::ActiveTrack(uint32 index)
     if(trackInfo == NULL)
         return UNKNOWN_ERROR;
     trackInfo->bCodecInfoSent = false;
+    if(trackInfo->type == MEDIA_VIDEO)
+        seekPos = currentVideoTs;
+    else if(trackInfo->type == MEDIA_AUDIO)
+        seekPos = currentAudioTs;
+    else if(currentVideoTs > 0)
+        seekPos = currentVideoTs;
+    else
+        seekPos = currentAudioTs;
 
     IParser->enableTrack(parserHandle,trackInfo->mTrackNum, TRUE);
+    if(!isTrackSeekable(trackInfo->type))
+        return OK;
+
     IParser->seek(parserHandle, trackInfo->mTrackNum, &seekPos, SEEK_FLAG_NO_LATER);
     ALOGD("start track %d",trackInfo->mTrackNum);
     return OK;
@@ -1989,6 +2008,7 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
 
     if(pInfo == NULL)
         return UNKNOWN_ERROR;
+
     IParser->seek(parserHandle, pInfo->mTrackNum, (uint64*)ts, flag);
     //clear temp buffer
 
@@ -1997,6 +2017,12 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
         pInfo->buffer = NULL;
     }
     pInfo->bPartial = false;
+
+    if(pInfo->type == MEDIA_VIDEO)
+        currentVideoTs = *ts;
+    else if(pInfo->type == MEDIA_AUDIO)
+        currentAudioTs = *ts;
+
     ALOGD("HandleSeekOperation index=%d,ts=%lld,flag=%x",index,*ts,flag);
     return OK;
 }
@@ -2072,8 +2098,9 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
             }
         }
 
-        if(PARSER_NOT_READY == err)
-            return OK;
+        if(PARSER_NOT_READY == err){
+            return WOULD_BLOCK;
+        }
 
         if(PARSER_SUCCESS != err){
             if(err == PARSER_READ_ERROR)
@@ -2134,6 +2161,7 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
                 pInfo->buffer = buffer;
                 buffer->setRange(0,datasize);
             }
+
         }
     }while((sampleFlag & FLAG_SAMPLE_NOT_FINISHED) && (pInfo->buffer->size() < pInfo->max_input_size));
 
@@ -2145,6 +2173,10 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
             mbuf->meta_data()->setInt32(kKeyIsSyncFrame, pInfo->syncFrame);
             ALOGV("addMediaBuffer ts=%lld,size=%d",pInfo->outTs,pInfo->buffer->size());
             source->addMediaBuffer(mbuf);
+            if(pInfo->type == MEDIA_VIDEO)
+                currentVideoTs = pInfo->outTs;
+            else if(pInfo->type == MEDIA_AUDIO)
+                currentAudioTs = pInfo->outTs;
         }else{
             ALOGE("drop buffer");
         }
@@ -2188,5 +2220,15 @@ status_t FslExtractor::ClearTrackSource(uint32_t index)
         trackInfo->mSource = NULL;
     }
     return OK;
+}
+bool FslExtractor::isTrackSeekable(uint32_t type)
+{
+    if(type == MEDIA_TEXT){
+        if(mReadMode == PARSER_READ_MODE_TRACK_BASED && (!strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG4)))
+            return true;
+        else
+            return false;
+    }
+    return true;
 }
 }// namespace android

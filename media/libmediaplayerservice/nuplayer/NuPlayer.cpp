@@ -2352,10 +2352,15 @@ void NuPlayer::sendTimedTextData(const sp<ABuffer> &buffer) {
     size_t size = 0;
     int64_t timeUs;
     int32_t flag = TextDescriptions::LOCAL_DESCRIPTIONS;
+    bool srt = false;
 
     AString mime;
     CHECK(buffer->meta()->findString("mime", &mime));
-    CHECK(strcasecmp(mime.c_str(), MEDIA_MIMETYPE_TEXT_3GPP) == 0);
+
+    //if mime typs is not 3gpp, it means fsl extended format.
+    if(strcasecmp(mime.c_str(), MEDIA_MIMETYPE_TEXT_3GPP)){
+        srt = true;
+    }
 
     data = buffer->data();
     size = buffer->size();
@@ -2363,7 +2368,10 @@ void NuPlayer::sendTimedTextData(const sp<ABuffer> &buffer) {
     Parcel parcel;
     if (size > 0) {
         CHECK(buffer->meta()->findInt64("timeUs", &timeUs));
-        flag |= TextDescriptions::IN_BAND_TEXT_3GPP;
+        if(srt)
+            flag |= TextDescriptions::OUT_OF_BAND_TEXT_SRT;
+        else
+            flag |= TextDescriptions::IN_BAND_TEXT_3GPP;
         TextDescriptions::getParcelOfDescriptions(
                 (const uint8_t *)data, size, flag, timeUs / 1000, &parcel);
     }

@@ -73,6 +73,7 @@ NuPlayer::GenericSource::GenericSource(
       mPrevBufferPercentage(-1) {
     resetDataSource();
     DataSource::RegisterDefaultSniffers();
+    fslTextTrack = 0;
 }
 
 void NuPlayer::GenericSource::resetDataSource() {
@@ -768,7 +769,6 @@ void NuPlayer::GenericSource::onMessageReceived(const sp<AMessage> &msg) {
                   mFetchTimedTextDataGeneration, mTimedTextTrack.mPackets, msg);
           break;
       }
-
       case kWhatSendSubtitleData:
       {
           sendTextData(kWhatSubtitleData, MEDIA_TRACK_TYPE_SUBTITLE,
@@ -909,6 +909,7 @@ void NuPlayer::GenericSource::fetchTextData(
         sp<AnotherPacketSource> packets,
         sp<AMessage> msg) {
     int32_t msgGeneration;
+    int32_t fsl = 0;
     CHECK(msg->findInt32("generation", &msgGeneration));
     if (msgGeneration != curGen) {
         // stale
@@ -923,16 +924,22 @@ void NuPlayer::GenericSource::fetchTextData(
     int64_t timeUs;
     CHECK(msg->findInt64("timeUs", &timeUs));
 
+    if(msg->findInt32("fslTextTrack", &fsl) && fsl > 0)
+        timeUs = -1;
+
     int64_t subTimeUs;
     readBuffer(type, timeUs, &subTimeUs);
 
     int64_t delayUs = subTimeUs - timeUs;
+    if(fsl > 0)
+        delayUs = 0;
     if (msg->what() == kWhatFetchSubtitleData) {
         const int64_t oneSecUs = 1000000ll;
         delayUs -= oneSecUs;
     }
     sp<AMessage> msg2 = new AMessage(sendWhat, this);
     msg2->setInt32("generation", msgGeneration);
+    msg2->setInt32("fslTextTrack", fsl);
     msg2->post(delayUs < 0 ? 0 : delayUs);
 }
 
@@ -943,6 +950,7 @@ void NuPlayer::GenericSource::sendTextData(
         sp<AnotherPacketSource> packets,
         sp<AMessage> msg) {
     int32_t msgGeneration;
+    int32_t fsl = 0;
     CHECK(msg->findInt32("generation", &msgGeneration));
     if (msgGeneration != curGen) {
         // stale
@@ -953,6 +961,7 @@ void NuPlayer::GenericSource::sendTextData(
     if (packets->nextBufferTime(&subTimeUs) != OK) {
         return;
     }
+    msg->findInt32("fslTextTrack", &fsl);
 
     int64_t nextSubTimeUs;
     readBuffer(type, -1, &nextSubTimeUs);
@@ -964,9 +973,11 @@ void NuPlayer::GenericSource::sendTextData(
         notify->setInt32("what", what);
         notify->setBuffer("buffer", buffer);
         notify->post();
-
-        const int64_t delayUs = nextSubTimeUs - subTimeUs;
+        int64_t delayUs = nextSubTimeUs - subTimeUs;
+        if(fsl > 0)
+            delayUs = 0LL;
         msg->post(delayUs < 0 ? 0 : delayUs);
+
     }
 }
 
@@ -1071,6 +1082,7 @@ status_t NuPlayer::GenericSource::dequeueAccessUnit(
     if (mTimedTextTrack.mSource != NULL
             && !mTimedTextTrack.mPackets->hasBufferAvailable(&eosResult)) {
         sp<AMessage> msg = new AMessage(kWhatFetchTimedTextData, this);
+        msg->setInt32("fslTextTrack", fslTextTrack);
         msg->setInt64("timeUs", timeUs);
         msg->setInt32("generation", mFetchTimedTextDataGeneration);
         msg->post();
@@ -1108,7 +1120,9 @@ sp<AMessage> NuPlayer::GenericSource::getTrackInfo(size_t trackIndex) const {
         trackType = MEDIA_TRACK_TYPE_AUDIO;
     } else if (!strcasecmp(mime, MEDIA_MIMETYPE_TEXT_3GPP)) {
         trackType = MEDIA_TRACK_TYPE_TIMEDTEXT;
-    } else {
+    } else if (!strncasecmp(mime,"text/", 5)){
+        trackType = MEDIA_TRACK_TYPE_TIMEDTEXT;
+    } else{
         trackType = MEDIA_TRACK_TYPE_UNKNOWN;
     }
     format->setInt32("type", trackType);
@@ -1247,8 +1261,16 @@ status_t NuPlayer::GenericSource::doSelectTrack(size_t trackIndex, bool select, 
     sp<MetaData> meta = source->getFormat();
     const char *mime;
     CHECK(meta->findCString(kKeyMIMEType, &mime));
+
     if (!strncasecmp(mime, "text/", 5)) {
         bool isSubtitle = strcasecmp(mime, MEDIA_MIMETYPE_TEXT_3GPP);
+        if(!strcasecmp(mime, MEDIA_MIMETYPE_TEXT_SRT) || !strcasecmp(mime, MEDIA_MIMETYPE_TEXT_SSA)
+            || !strcasecmp(mime, MEDIA_MIMETYPE_TEXT_ASS)){
+            isSubtitle = false;
+            fslTextTrack = 1;
+        }else
+            fslTextTrack = 0;
+
         Track *track = isSubtitle ? &mSubtitleTrack : &mTimedTextTrack;
         if (track->mSource != NULL && track->mIndex == trackIndex) {
             return OK;
@@ -1284,7 +1306,9 @@ status_t NuPlayer::GenericSource::doSelectTrack(size_t trackIndex, bool select, 
 
         if (mTimedTextTrack.mSource != NULL
                 && !mTimedTextTrack.mPackets->hasBufferAvailable(&eosResult)) {
+
             sp<AMessage> msg = new AMessage(kWhatFetchTimedTextData, this);
+            msg->setInt32("fslTextTrack", fslTextTrack);
             msg->setInt64("timeUs", timeUs);
             msg->setInt32("generation", mFetchTimedTextDataGeneration);
             msg->post();
@@ -1347,10 +1371,15 @@ status_t NuPlayer::GenericSource::doSeek(int64_t seekTimeUs) {
         mVideoLastDequeueTimeUs = seekTimeUs;
     }
 
+    if (mTimedTextTrack.mSource != NULL && fslTextTrack > 0) {
+        readBuffer(MEDIA_TRACK_TYPE_TIMEDTEXT, seekTimeUs);
+    }
+
     if (mAudioTrack.mSource != NULL) {
         readBuffer(MEDIA_TRACK_TYPE_AUDIO, seekTimeUs);
         mAudioLastDequeueTimeUs = seekTimeUs;
     }
+
 
     setDrmPlaybackStatusIfNeeded(Playback::START, seekTimeUs / 1000);
     if (!mStarted) {

@@ -158,7 +158,7 @@ private:
 
     sp<ALooper> mLooper;
     sp<MediaExtractor> mExtractor;
-
+    int32_t fslTextTrack;
     void resetDataSource();
 
     status_t initFromDataSource();
