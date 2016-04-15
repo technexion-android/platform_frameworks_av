@@ -158,7 +158,13 @@ private:
 
     sp<ALooper> mLooper;
     sp<MediaExtractor> mExtractor;
-    int32_t fslTextTrack;
+
+    enum {
+    TextTrackType_3GPP = 0,
+    TextTrackType_SRT,
+    };
+    int32_t mTextTrackType;
+
     void resetDataSource();
 
     status_t initFromDataSource();

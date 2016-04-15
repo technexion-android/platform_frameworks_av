@@ -2357,8 +2357,8 @@ void NuPlayer::sendTimedTextData(const sp<ABuffer> &buffer) {
     AString mime;
     CHECK(buffer->meta()->findString("mime", &mime));
 
-    //if mime typs is not 3gpp, it means fsl extended format.
-    if(strcasecmp(mime.c_str(), MEDIA_MIMETYPE_TEXT_3GPP)){
+    //if mime typs is srt, use srt parsing method
+    if(!strcasecmp(mime.c_str(), MEDIA_MIMETYPE_TEXT_SRT)){
         srt = true;
     }
 
