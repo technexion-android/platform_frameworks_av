@@ -1120,7 +1120,7 @@ sp<AMessage> NuPlayer::GenericSource::getTrackInfo(size_t trackIndex) const {
         trackType = MEDIA_TRACK_TYPE_AUDIO;
     } else if (!strcasecmp(mime, MEDIA_MIMETYPE_TEXT_3GPP)) {
         trackType = MEDIA_TRACK_TYPE_TIMEDTEXT;
-    } else if (!strncasecmp(mime,"text/", 5)){
+    } else if (!strcasecmp(mime,MEDIA_MIMETYPE_TEXT_SRT)){
         trackType = MEDIA_TRACK_TYPE_TIMEDTEXT;
     } else{
         trackType = MEDIA_TRACK_TYPE_UNKNOWN;
