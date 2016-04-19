@@ -1563,7 +1563,8 @@ void NuPlayer::GenericSource::readBuffer(
     }
 
     int64_t videoSeekTimeResultUs = -1;
-
+    int64_t startUs = ALooper::GetNowUs();
+    int64_t nowUs = startUs;
     for (size_t numBuffers = 0; numBuffers < maxBuffers; ) {
         MediaBuffer *mbuf;
         status_t err = track->mSource->read(&mbuf, &options);
@@ -1603,6 +1604,10 @@ void NuPlayer::GenericSource::readBuffer(
             track->mPackets->signalEOS(err);
             break;
         }
+        //quit from loop when reading too many audio buffer
+        nowUs = ALooper::GetNowUs();
+        if(nowUs - startUs > 250000LL)
+            break;
     }
 
     if(videoSeekTimeResultUs > 0)
