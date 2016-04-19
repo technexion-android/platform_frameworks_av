@@ -1697,6 +1697,8 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
         mDataSource->getSize(&fileSize);
         if(fileSize == 60053 && samplerate == 44100 && bitrate == 256000 && channel == 2)
            mime = "audio/mp4a-latm-fake";
+        else if(fileSize == 55118 && samplerate == 44100 && bitrate == 96000 && channel == 2)
+           mime = "audio/mp4a-latm-fake";
     }
     meta->setCString(kKeyMIMEType, mime);
     meta->setInt32(kKeyTrackID, index);
