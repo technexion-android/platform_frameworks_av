@@ -469,7 +469,7 @@ static bool TryMpegType(const sp<DataSource> &source,String8 *mimeType,float *co
         return true;
     }else if(TryMpegSysType((char*)buf, buffer_size)){
         mimeType->setTo(MEDIA_MIMETYPE_CONTAINER_MPEG2PS);
-        *confidence = 0.09l;
+        *confidence = 0.25; // slightly larger than mp3 extractor, keep alin with MPEG2PSExtractor
         free(buf);
         ALOGI("TryMpegType PS SUCCESS");
         return true;
