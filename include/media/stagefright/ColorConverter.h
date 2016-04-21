@@ -78,6 +78,7 @@ private:
 
     status_t convertTIYUV420PackedSemiPlanar(
             const BitmapParams &src, const BitmapParams &dst);
+    status_t convertYUV422PlanartoYUV420Planar(const BitmapParams &src);
 
     ColorConverter(const ColorConverter &);
     ColorConverter &operator=(const ColorConverter &);

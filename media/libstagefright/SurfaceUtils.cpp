@@ -49,6 +49,9 @@ status_t setNativeWindowSizeFormatAndUsage(
         case OMX_COLOR_FormatYUV422Planar:
             color_fmt = HAL_PIXEL_FORMAT_YCbCr_422_P;
             break;
+        case OMX_COLOR_FormatYUV422SemiPlanar:
+            color_fmt = HAL_PIXEL_FORMAT_YCbCr_422_SP;
+            break;
         default:
             ALOGE("Not supported color format %d by surface!", format);
             return UNKNOWN_ERROR;

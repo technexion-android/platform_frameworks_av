@@ -274,6 +274,10 @@ void NuPlayer::Decoder::onConfigure(const sp<AMessage> &format) {
 
     mCodec->getName(&mComponentName);
 
+    if (mComponentName.startsWith("OMX.Freescale.std.video_decoder") && mComponentName.endsWith("hw-based")){
+        format->setInt32("color-format", 21);//OMX_COLOR_FormatYUV420SemiPlanar
+    }
+
     status_t err;
     if (mSurface != NULL) {
         // disconnect from surface as MediaCodec will reconnect
