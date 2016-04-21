@@ -221,10 +221,12 @@ void OMXCodec::findMatchingCodecs(
     if(value & 0x04)
         use_fsl_audio = true;
 
-    if(!strcmp(mime, "audio/mp4a-latm-fake")) {
+    // workaround for MA-8032, check media.disable_fsl_audio_codec, if the value is "1" or "true",
+    // temporary disable fsl audio codec, after codec is loaded, this value must be reset to 0.
+    char temp[128];
+    if(property_get("media.disable_fsl_audio_codec",temp, NULL) && \
+        (!strcmp(temp,"1") || !strcasecmp(temp, "true")))
         use_fsl_audio = false;
-        mime = "audio/mp4a-latm";
-    }
 
     for (;;) {
         ssize_t matchIndex =

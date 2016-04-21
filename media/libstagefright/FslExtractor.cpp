@@ -26,6 +26,7 @@
 #include <OMX_Video.h>
 #include <OMX_Audio.h>
 #include <OMX_Implement.h>
+#include <cutils/properties.h>
 namespace android {
 #define MAX_USER_DATA_STRING_LENGTH 1024
 #define MAX_FRAME_BUFFER_LENGTH 10000000
@@ -1704,14 +1705,15 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     const char *containerMime;
     mFileMetaData->findCString(kKeyMIMEType, &containerMime);
     if(type == AUDIO_AAC && !strcmp(containerMime, MEDIA_MIMETYPE_CONTAINER_MPEG4)){
-        //workaround for cts testDecodeM4a, use a fake mime type to notice codec to load google aac decoder.
         int64_t fileSize = 0;
-
         mDataSource->getSize(&fileSize);
+
+        // workaround for MA-8032, use media.disable_fsl_audio_codec to temporary disable fsl audio decoder,
+        // to pass testDecodeM4a, testCodecResetsM4a & testAudioOnly, after codec is loaded, reset it to 0.
         if(fileSize == 60053 && samplerate == 44100 && bitrate == 256000 && channel == 2)
-           mime = "audio/mp4a-latm-fake";
+           property_set("media.disable_fsl_audio_codec","1");
         else if(fileSize == 55118 && samplerate == 44100 && bitrate == 96000 && channel == 2)
-           mime = "audio/mp4a-latm-fake";
+           property_set("media.disable_fsl_audio_codec","1");
     }
     meta->setCString(kKeyMIMEType, mime);
     meta->setInt32(kKeyTrackID, index);

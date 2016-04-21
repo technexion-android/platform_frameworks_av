@@ -6160,6 +6160,14 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
         node = 0;
     }
 
+    char temp[128];
+    if(property_get("media.disable_fsl_audio_codec",temp, NULL) && \
+        (!strcmp(temp,"1") || !strcasecmp(temp, "true"))) {
+        // this value is set by MA-8032 workaround, after codec is allocated, reset it to 0.
+        property_set("media.disable_fsl_audio_codec","0");
+
+    }
+
     if (node == 0) {
         if (!mime.empty()) {
             ALOGE("Unable to instantiate a %scoder for type '%s' with err %#x.",
@@ -6323,9 +6331,6 @@ bool ACodec::LoadedState::onConfigureComponent(
     if (!msg->findString("mime", &mime)) {
         err = BAD_VALUE;
     } else {
-        if(!strcmp(mime.c_str(), "audio/mp4a-latm-fake"))
-            mime = "audio/mp4a-latm";
-
         err = mCodec->configureCodec(mime.c_str(), msg);
     }
     if (err != OK) {

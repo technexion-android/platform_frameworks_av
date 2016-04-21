@@ -78,12 +78,6 @@ ssize_t MediaMuxer::addTrack(const sp<AMessage> &format) {
     sp<MetaData> trackMeta = new MetaData;
     convertMessageToMetaData(format, trackMeta);
 
-    const char *mime;
-    if(trackMeta->findCString(kKeyMIMEType, &mime)){
-        if(!strcmp(mime, "audio/mp4a-latm-fake"))
-            trackMeta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_AUDIO_AAC);
-    }
-
     sp<MediaAdapter> newTrack = new MediaAdapter(trackMeta);
     status_t result = mWriter->addSource(newTrack);
     if (result == OK) {
