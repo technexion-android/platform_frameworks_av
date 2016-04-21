@@ -435,12 +435,12 @@ static int32   appSeekFile( FslFileHandle file_handle, int64 offset, int32 whenc
         return -1;
 
     Mutex::Autolock autoLock(h->mLock);
-    //ALOGV("appSeekFile current location=%lld,offset %lld, whence %ld",h->mOffset, offset, whence);
+    //ALOGV("appSeekFile current location=%lld,offset %lld, whence %d",h->mOffset, offset, whence);
 
     switch(whence) {
         case SEEK_CUR:
         {
-            if(h->mOffset + offset > h->mLength){
+            if(h->mLength > 0 && h->mOffset + offset > h->mLength){
                 nContentPipeResult = -1;
             }else
                 h->mOffset += offset;
@@ -448,7 +448,7 @@ static int32   appSeekFile( FslFileHandle file_handle, int64 offset, int32 whenc
         break;
         case SEEK_SET:
         {
-            if(offset > h->mLength)
+            if(h->mLength > 0 && offset > h->mLength)
                 nContentPipeResult = -1;
             else
                 h->mOffset = offset;
@@ -642,7 +642,8 @@ static void appReleaseBuffer(uint32 streamNum, uint8 * pBuffer, void * bufContex
 
 FslDataSourceReader::FslDataSourceReader(const sp<DataSource> &source)
     :mDataSource(source),
-    mOffset(0)
+    mOffset(0),
+    mLength(0)
 {
     off64_t size = 0;
     mIsLiveStreaming =
@@ -661,6 +662,8 @@ FslDataSourceReader::FslDataSourceReader(const sp<DataSource> &source)
     }else{
         mLength = 0;
     }
+
+    ALOGV("FslDataSourceReader: mLength is %lld", mLength);
 
     bStopReading = false;
     memset(&mMaxBufferSize[0],0,MAX_TRACK_COUNT*sizeof(uint32_t));
@@ -2104,13 +2107,14 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
             return WOULD_BLOCK;
         }
 
+        ALOGV("GetNextSample err %d get track num=%u ts=%lld,size=%u,flag=%x",err, track_num_got,ts,datasize,sampleFlag);
+
         if(PARSER_SUCCESS != err){
             if(err == PARSER_READ_ERROR)
                 return ERROR_IO;
             else
                 return ERROR_END_OF_STREAM;
         }else if (tmp && buffer_context){
-            ALOGV("GetNextSample get track num=%u ts=%lld,size=%u,flag=%x",track_num_got,ts,datasize,sampleFlag);
 
             pInfo = &mTracks.editItemAt(index);
             if(pInfo->mTrackNum != track_num_got){
