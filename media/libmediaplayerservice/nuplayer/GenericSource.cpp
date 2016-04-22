@@ -821,7 +821,10 @@ void NuPlayer::GenericSource::onMessageReceived(const sp<AMessage> &msg) {
               timeUs = mVideoLastDequeueTimeUs;
           }
           readBuffer(trackType, timeUs, &actualTimeUs, formatChange);
-          readBuffer(counterpartType, -1, NULL, formatChange);
+          if(counterpartType == MEDIA_TRACK_TYPE_VIDEO)
+              readBuffer(counterpartType, -1, NULL, 0); //Don't invoke video format change if only switch audio track
+          else
+              readBuffer(counterpartType, -1, NULL, formatChange);
           ALOGV("timeUs %lld actualTimeUs %lld", (long long)timeUs, (long long)actualTimeUs);
 
           break;
