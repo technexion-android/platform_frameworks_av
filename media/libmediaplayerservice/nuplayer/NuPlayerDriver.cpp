@@ -692,15 +692,23 @@ status_t NuPlayerDriver::dump(
 
             int64_t numFramesTotal = 0;
             int64_t numFramesDropped = 0;
-
+            int64_t numFramesInputDropped = 0;
             stats->findInt64("frames-total", &numFramesTotal);
             stats->findInt64("frames-dropped-output", &numFramesDropped);
+            stats->findInt64("frames-dropped-input", &numFramesInputDropped);
             snprintf(buf, sizeof(buf), "    numFramesTotal(%lld), numFramesDropped(%lld), "
                      "percentageDropped(%.2f%%)\n",
                      (long long)numFramesTotal,
                      (long long)numFramesDropped,
                      numFramesTotal == 0
                             ? 0.0 : (double)(numFramesDropped * 100) / numFramesTotal);
+            logString.append(buf);
+            snprintf(buf, sizeof(buf), "    play_time(%lld), numFramesDropped(%lld), "
+                     "fps(%.2f)\n",
+                     (long long)mDurationUs,
+                     (long long)numFramesDropped+numFramesInputDropped,
+                     (double)(numFramesTotal - numFramesDropped-numFramesInputDropped)
+                     /(mDurationUs/1000000));
             logString.append(buf);
         }
     }

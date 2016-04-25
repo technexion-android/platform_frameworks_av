@@ -537,11 +537,6 @@ ACodec::ACodec()
     mPortEOS[kPortIndexInput] = mPortEOS[kPortIndexOutput] = false;
     mInputEOSResult = OK;
 
-    mFrameRendered = 0;
-    mFrameDropped = 0;
-    mStartTime = 0;
-    mEndTime = 0;
-
     changeState(mUninitializedState);
 }
 
@@ -1977,12 +1972,6 @@ status_t ACodec::configureCodec(
         if (haveNativeWindow && mComponentName.startsWith("OMX.google.")) {
             usingSwRenderer = true;
             haveNativeWindow = false;
-        }
-
-        if(mComponentName.endsWith("sw-based")){
-            usingSwRenderer = true;
-            haveNativeWindow = false;
-            ALOGI("use software render.");
         }
 
         if (encoder) {
@@ -5758,17 +5747,7 @@ void ACodec::BaseState::onOutputBufferDrained(const sp<AMessage> &msg) {
             info->mIsReadFence = false;
         }
 
-    {
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-        mCodec->mFrameRendered++;
-        if(mCodec->mStartTime == 0)
-            mCodec->mStartTime = tv.tv_sec*1000000 + tv.tv_usec;
-        mCodec->mEndTime = tv.tv_sec*1000000 + tv.tv_usec;
-    }
-
     } else {
-        mCodec->mFrameDropped++;
         if (mCodec->mNativeWindow != NULL &&
             (info->mData == NULL || info->mData->size() != 0)) {
             // move read fence into write fence to avoid clobbering
@@ -7190,18 +7169,7 @@ bool ACodec::IdleToLoadedState::onMessageReceived(const sp<AMessage> &msg) {
 }
 
 void ACodec::IdleToLoadedState::stateEntered() {
-    bool printFps = false;
-    char value[256];
-    if ((property_get("media.acodec.fps.enable", value, NULL)
-            && (!strcmp("1", value) || !strcasecmp("true", value)))) {
-        printFps = true;
-    }
     ALOGV("[%s] Now Idle->Loaded", mCodec->mComponentName.c_str());
-    if(printFps){
-        ALOGE("render frame=%lld,drop=%lld,time=%lld,fps=%f", mCodec->mFrameRendered, mCodec->mFrameDropped
-            , mCodec->mEndTime- mCodec->mStartTime,
-            (float) mCodec->mFrameRendered/(( mCodec->mEndTime- mCodec->mStartTime)/1000000));
-    }
 }
 
 bool ACodec::IdleToLoadedState::onOMXEvent(

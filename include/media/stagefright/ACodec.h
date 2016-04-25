@@ -268,11 +268,6 @@ private:
 
     bool mTunneled;
 
-    int64_t mFrameRendered;
-    int64_t mFrameDropped;
-    uint64_t mStartTime;
-    uint64_t mEndTime;
-
     bool mSetStartTime;
 
     status_t setCyclicIntraMacroblockRefresh(const sp<AMessage> &msg, int32_t mode);
