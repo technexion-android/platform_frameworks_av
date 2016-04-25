@@ -1457,6 +1457,7 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     uint32 bitrate = 0;
     size_t sourceIndex = 0;
     size_t max_size = 0;
+    int64_t thumbnail_ts = -1;
     ALOGD("ParseVideo index=%u,type=%u,subtype=%u",index,type,subtype);
     for(i = 0; i < sizeof(video_mime_table)/sizeof(codec_mime_struct); i++){
         if (type == video_mime_table[i].type){
@@ -1533,7 +1534,13 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
         }else{
             meta->setData(kKeyCodecData, 0, decoderSpecificInfo, decoderSpecificInfoSize);
         }
-    }
+    }else if(type == VIDEO_H264 || type == VIDEO_HEVC || type == VIDEO_MPEG4)
+        thumbnail_ts = 0;
+
+    if(!strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG2TS) || !strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG2PS))
+        thumbnail_ts = -1;
+    else if(!strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_FLV))
+        thumbnail_ts = 0;
 
     if (type == VIDEO_H264) {
         // AVC requires compression ratio of at least 2, and uses
@@ -1582,7 +1589,10 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     if(rotation > 0)
         meta->setInt32(kKeyRotation, rotation);
 
-    meta->setInt64(kKeyThumbnailTime, duration / 4);
+    if(thumbnail_ts < 0)
+        thumbnail_ts = duration > 5000000 ? 5000000:duration;
+
+    meta->setInt64(kKeyThumbnailTime, thumbnail_ts);
 
     mTracks.push();
     sourceIndex = mTracks.size() - 1;

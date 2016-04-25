@@ -2867,6 +2867,9 @@ status_t ACodec::setMediaTime(int64_t time) {
     if(!mComponentName.startsWith("OMX.Freescale.std.video_decoder")){
         return OK;
     }
+    //only enable for hardware decoder and soft_hevc decoder.
+    if(!(mComponentName.endsWith("hw-based") || mComponentName.endsWith("soft_hevc.sw-based")))
+        return OK;
 
     OMX_CONFIG_VIDEO_MEDIA_TIME def;
     InitOMXParams(&def);
