@@ -1663,6 +1663,7 @@ status_t ACodec::configureCodec(
     sp<AMessage> outputFormat = mNotify->dup(); // will use this for kWhatOutputFormatChanged
 
     mIsEncoder = encoder;
+    mSetStartTime = true;
 
     mInputMetadataType = kMetadataBufferTypeInvalid;
     mOutputMetadataType = kMetadataBufferTypeInvalid;
