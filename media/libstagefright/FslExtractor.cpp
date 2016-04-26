@@ -1775,8 +1775,18 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
             meta->setInt32(kKeyIsADTS, true);
         else if (subtype == AUDIO_AAC_ADIF)
             meta->setInt32(kKeyIsADIF, true);
-    }else
+    }else if(bitrate > 0)
         meta->setInt32(kKeyBitRate, bitrate);
+
+    if(type == AUDIO_AMR){
+        if(subtype == AUDIO_AMR_NB){
+            channel = 1;
+            samplerate = 8000;
+        }else if(subtype == AUDIO_AMR_WB){
+            channel = 1;
+            samplerate = 16000;
+        }
+    }
 
     meta->setInt64(kKeyDuration, duration);
     meta->setInt32(kKeyChannelCount, channel);
@@ -2193,6 +2203,7 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
                 currentVideoTs = pInfo->outTs;
             else if(pInfo->type == MEDIA_AUDIO)
                 currentAudioTs = pInfo->outTs;
+
         }else{
             ALOGE("drop buffer");
         }
