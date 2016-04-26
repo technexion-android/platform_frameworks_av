@@ -64,6 +64,13 @@ struct ACodec : public AHierarchicalStateMachine, public CodecBase {
         handleMessage(msg);
     }
 
+    void cleanCropContent(
+        uint32_t nFrameWidth,
+        uint32_t nFrameHeight,
+        OMX_CONFIG_RECTTYPE sRectIn,
+        void * base,
+        PixelFormat eColorFormat);
+
     struct PortDescription : public CodecBase::PortDescription {
         size_t countBuffers();
         IOMX::buffer_id bufferIDAt(size_t index) const;
@@ -269,6 +276,8 @@ private:
     bool mTunneled;
 
     bool mSetStartTime;
+    android_native_rect_t mOutCrop;
+    int32_t mFrameCleanCrop;
 
     status_t setCyclicIntraMacroblockRefresh(const sp<AMessage> &msg, int32_t mode);
     status_t allocateBuffersOnPort(OMX_U32 portIndex);

@@ -520,7 +520,8 @@ ACodec::ACodec()
       mTimePerCaptureUs(-1ll),
       mCreateInputBuffersSuspended(false),
       mTunneled(false),
-      mSetStartTime(false){
+      mSetStartTime(false),
+      mFrameCleanCrop(0){
     mUninitializedState = new UninitializedState(this);
     mLoadedState = new LoadedState(this);
     mLoadedToIdleState = new LoadedToIdleState(this);
@@ -536,6 +537,8 @@ ACodec::ACodec()
 
     mPortEOS[kPortIndexInput] = mPortEOS[kPortIndexOutput] = false;
     mInputEOSResult = OK;
+
+    mOutCrop = {0,0,0,0};
 
     changeState(mUninitializedState);
 }
@@ -4932,6 +4935,146 @@ void ACodec::signalError(OMX_ERRORTYPE error, status_t internalError) {
     notify->post();
 }
 
+
+void ACodec::cleanCropContent(
+    uint32_t nFrameWidth,
+    uint32_t nFrameHeight,
+    OMX_CONFIG_RECTTYPE sRectIn,
+    void * base,
+    PixelFormat eColorFormat)
+{
+    if(strncmp(mComponentName.c_str(), "OMX.Freescale.std.video_decoder", 31))
+        return;
+
+    uint32_t y_length = nFrameWidth * nFrameHeight;
+
+    ALOGV("color format is %x" ,eColorFormat );
+
+    switch(eColorFormat ){
+        case HAL_PIXEL_FORMAT_YCbCr_420_SP:
+        {
+            if(nFrameWidth > sRectIn.nLeft + sRectIn.nWidth){
+                for(uint32_t i = 0; i < sRectIn.nTop + sRectIn.nHeight ; i++){
+                    uint32_t crop_start_y = nFrameWidth * i + sRectIn.nLeft + sRectIn.nWidth;
+                    uint32_t crop_len_y = nFrameWidth - (sRectIn.nLeft + sRectIn.nWidth);
+                    memset((uint8_t*)base + crop_start_y , 0x10, crop_len_y);
+                }
+                for(uint32_t i = 0; i < (sRectIn.nTop + sRectIn.nHeight)/2 ; i++){
+                    uint32_t crop_start_uv = nFrameWidth * i + sRectIn.nLeft + sRectIn.nWidth;
+                    uint32_t crop_len_uv = nFrameWidth - (sRectIn.nLeft + sRectIn.nWidth);
+                    memset((uint8_t*)base + y_length + crop_start_uv , 0x80, crop_len_uv);
+                }
+            }
+            if(nFrameHeight > sRectIn.nTop + sRectIn.nHeight){
+                uint32_t crop_start_y = (sRectIn.nTop + sRectIn.nHeight) * nFrameWidth;
+                uint32_t crop_start_uv = y_length + crop_start_y/2;
+                memset((uint8_t*)base + crop_start_y , 0x10, y_length - crop_start_y);
+                memset((uint8_t*)base + crop_start_uv, 0x80, (y_length - crop_start_y)/2);
+            }
+            break;
+        }
+
+        case HAL_PIXEL_FORMAT_YCbCr_420_P:
+        {
+            if(nFrameWidth > sRectIn.nLeft + sRectIn.nWidth){
+                for(uint32_t i = 0; i < sRectIn.nTop + sRectIn.nHeight ; i++){
+                    uint32_t crop_start_y = nFrameWidth * i + sRectIn.nLeft + sRectIn.nWidth;
+                    uint32_t crop_len_y = nFrameWidth - (sRectIn.nLeft + sRectIn.nWidth);
+                    memset((uint8_t*)base + crop_start_y , 0x10, crop_len_y);
+                }
+                for(OMX_U32 i = 0; i < (sRectIn.nTop + sRectIn.nHeight)/ 2 ; i++){
+                    OMX_U32 crop_start_uv = (nFrameWidth * i + sRectIn.nLeft + sRectIn.nWidth ) / 2;
+                    OMX_U32 crop_len_uv = (nFrameWidth - (sRectIn.nLeft + sRectIn.nWidth) ) / 2;
+                    memset((uint8_t*)base + y_length + crop_start_uv , 0x80, crop_len_uv);
+                    memset((uint8_t*)base + y_length /4 * 5 + crop_start_uv , 0x80, crop_len_uv);
+                }
+            }
+            if(nFrameHeight > sRectIn.nTop + sRectIn.nHeight){
+                uint32_t crop_start_y = (sRectIn.nTop + sRectIn.nHeight) * nFrameWidth;
+                uint32_t crop_start_u = y_length + crop_start_y/4;
+                uint32_t crop_start_v = y_length / 4 * 5 + crop_start_y/4;
+                memset((uint8_t*)base + crop_start_y , 0x10, y_length - crop_start_y);
+                memset((uint8_t*)base + crop_start_u, 0x80, (y_length - crop_start_y)/4);
+                memset((uint8_t*)base + crop_start_v, 0x80, (y_length - crop_start_y)/4);
+            }
+            break;
+        }
+
+        case HAL_PIXEL_FORMAT_RGB_565:
+        {
+            if(nFrameWidth > sRectIn.nLeft + sRectIn.nWidth){
+                for(uint32_t i = 0; i < sRectIn.nTop + sRectIn.nHeight ; i++){
+                    uint32_t crop_start = (nFrameWidth * i + sRectIn.nLeft + sRectIn.nWidth) * 2;
+                    uint32_t crop_len = (nFrameWidth - (sRectIn.nLeft + sRectIn.nWidth)) * 2;
+                    memset((uint8_t*)base + crop_start , 0, crop_len);
+                }
+            }
+            if(nFrameHeight > sRectIn.nTop + sRectIn.nHeight){
+                uint32_t crop_start = ((sRectIn.nTop + sRectIn.nHeight) * nFrameWidth) * 2;
+                memset((uint8_t*)base + crop_start , 0, y_length *2 - crop_start);
+            }
+            break;
+        }
+
+        case HAL_PIXEL_FORMAT_YCbCr_422_P:
+        {
+            if(nFrameWidth > sRectIn.nLeft + sRectIn.nWidth){
+                for(uint32_t i = 0; i < sRectIn.nTop + sRectIn.nHeight ; i++){
+                    uint32_t crop_start_y = nFrameWidth * i + sRectIn.nLeft + sRectIn.nWidth;
+                    uint32_t crop_len_y = nFrameWidth - (sRectIn.nLeft + sRectIn.nWidth);
+                    memset((uint8_t*)base + crop_start_y , 0x10, crop_len_y);
+                }
+                for(uint32_t i = 0; i < (sRectIn.nTop + sRectIn.nHeight) ; i++){
+                    uint32_t crop_start_uv = (nFrameWidth * i + sRectIn.nLeft + sRectIn.nWidth ) / 2;
+                    uint32_t crop_len_uv = (nFrameWidth - (sRectIn.nLeft + sRectIn.nWidth) ) / 2;
+                    memset((uint8_t*)base + y_length + crop_start_uv , 0x80, crop_len_uv);
+                    memset((uint8_t*)base + y_length /2 * 3 + crop_start_uv , 0x80, crop_len_uv);
+                }
+            }
+            if(nFrameHeight > sRectIn.nTop + sRectIn.nHeight){
+                uint32_t crop_start_y = (sRectIn.nTop + sRectIn.nHeight) * nFrameWidth;
+                uint32_t crop_start_u = y_length + crop_start_y/2;
+                uint32_t crop_start_v = y_length / 2 * 3 + crop_start_y/2;
+                memset((uint8_t*)base + crop_start_y , 0x10, y_length - crop_start_y);
+                memset((uint8_t*)base + crop_start_u, 0x80, (y_length - crop_start_y)/2);
+                memset((uint8_t*)base + crop_start_v, 0x80, (y_length - crop_start_y)/2);
+            }
+            break;
+        }
+
+        case HAL_PIXEL_FORMAT_YCbCr_422_SP:
+        {
+            if(nFrameWidth > sRectIn.nLeft + sRectIn.nWidth){
+                for(uint32_t i = 0; i < sRectIn.nTop + sRectIn.nHeight ; i++){
+                    uint32_t crop_start_y = nFrameWidth * i + sRectIn.nLeft + sRectIn.nWidth;
+                    uint32_t crop_len_y = nFrameWidth - (sRectIn.nLeft + sRectIn.nWidth);
+                    memset((uint8_t*)base + crop_start_y , 0x10, crop_len_y);
+                }
+                for(uint32_t i = 0; i < (sRectIn.nTop + sRectIn.nHeight); i++){
+                    uint32_t crop_start_uv = nFrameWidth * i + sRectIn.nLeft + sRectIn.nWidth;
+                    uint32_t crop_len_uv = nFrameWidth - (sRectIn.nLeft + sRectIn.nWidth);
+                    memset((uint8_t*)base + y_length + crop_start_uv , 0x80, crop_len_uv);
+                }
+            }
+            if(nFrameHeight > sRectIn.nTop + sRectIn.nHeight){
+                uint32_t crop_start_y = (sRectIn.nTop + sRectIn.nHeight) * nFrameWidth;
+                uint32_t crop_start_uv = y_length + crop_start_y;
+                memset((uint8_t*)base + crop_start_y , 0x10, y_length - crop_start_y);
+                memset((uint8_t*)base + crop_start_uv, 0x80, y_length - crop_start_y);
+            }
+            break;
+        }
+
+        default:
+            ALOGE("Not supported color format %d by surface!", eColorFormat);
+            break;
+    }
+
+    return;
+
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 ACodec::PortDescription::PortDescription() {
@@ -5702,6 +5845,7 @@ void ACodec::BaseState::onOutputBufferDrained(const sp<AMessage> &msg) {
 
     android_native_rect_t crop;
     if (msg->findRect("crop", &crop.left, &crop.top, &crop.right, &crop.bottom)) {
+        mCodec->mOutCrop = crop;
         status_t err = native_window_set_crop(mCodec->mNativeWindow.get(), &crop);
         ALOGW_IF(err != NO_ERROR, "failed to set crop: %d", err);
     }
@@ -5733,6 +5877,37 @@ void ACodec::BaseState::onOutputBufferDrained(const sp<AMessage> &msg) {
         status_t err;
         err = native_window_set_buffers_timestamp(mCodec->mNativeWindow.get(), timestampNs);
         ALOGW_IF(err != NO_ERROR, "failed to set buffer timestamp: %d", err);
+
+        if((mCodec->mFrameCleanCrop++ <= 8)
+            && (info->mGraphicBuffer != NULL)
+            && (mCodec->mOutCrop.right > 0 && mCodec->mOutCrop.bottom > 0))
+        {
+            uint32_t w = info->mGraphicBuffer->getStride();
+            uint32_t h = info->mGraphicBuffer->getHeight();
+
+            if(w > (uint32_t)mCodec->mOutCrop.right || h > (uint32_t)mCodec->mOutCrop.bottom){
+                //ALOGI("onOutputBufferDrained clean crop content w %d, h %d, crop %d/%d", w, h, mCodec->mOutCrop.right, mCodec->mOutCrop.bottom);
+
+                void *vaddr = NULL;
+                if(!info->mGraphicBuffer->lock(GRALLOC_USAGE_SW_WRITE_OFTEN, &vaddr)){
+                    if(vaddr != NULL){
+                        uint32_t format = info->mGraphicBuffer->getPixelFormat();
+
+                        OMX_CONFIG_RECTTYPE rect;
+                        rect.nLeft = mCodec->mOutCrop.left;
+                        rect.nTop = mCodec->mOutCrop.top;
+                        rect.nWidth = mCodec->mOutCrop.right - mCodec->mOutCrop.left;
+                        rect.nHeight = mCodec->mOutCrop.bottom - mCodec->mOutCrop.top;
+
+                        mCodec->cleanCropContent(w, h, rect, vaddr, format);
+                    }
+                    info->mGraphicBuffer->unlock();
+                }
+                else
+                    ALOGE("graphic buffer lock fail!");
+            }
+
+        }
 
         info->checkReadFence("onOutputBufferDrained before queueBuffer");
         err = mCodec->mNativeWindow->queueBuffer(
