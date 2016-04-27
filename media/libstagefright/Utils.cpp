@@ -203,6 +203,11 @@ status_t convertMetaDataToMessage(
             msg->setInt32("bits-per-frame", bitsPerFrame);
         }
 
+        int32_t isEndianBig = 0;
+        if (meta->findInt32(kKeyIsEndianBig, &isEndianBig)) {
+            msg->setInt32("is-endian-big", isEndianBig);
+        }
+
     }
 
     int32_t maxInputSize;
@@ -684,6 +689,12 @@ void convertMessageToMetaData(const sp<AMessage> &msg, sp<MetaData> &meta) {
         if (msg->findInt32("is-adif", &isADIF)) {
             meta->setInt32(kKeyIsADIF, isADIF);
         }
+
+        int32_t isEndianBig;
+        if (msg->findInt32("is-endian-big", &isEndianBig)) {
+            meta->setInt32(kKeyIsEndianBig, isEndianBig);
+        }
+
     }
 
     int32_t maxInputSize;

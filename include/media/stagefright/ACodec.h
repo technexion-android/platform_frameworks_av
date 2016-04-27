@@ -276,6 +276,7 @@ private:
     bool mTunneled;
 
     bool mSetStartTime;
+    OMX_ENDIANTYPE eEndian;
     android_native_rect_t mOutCrop;
     int32_t mFrameCleanCrop;
 

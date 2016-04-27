@@ -1738,6 +1738,9 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
         }
     }
 
+    if(type == AUDIO_PCM && (subtype == AUDIO_PCM_S16BE || subtype == AUDIO_PCM_S24BE || subtype == AUDIO_PCM_S32BE ))
+        meta->setInt32(kKeyIsEndianBig, 1);
+
     size_t max_size = MAX_AUDIO_BUFFER_SIZE;//16*1024
     if(type == AUDIO_APE) {
         max_size = 262144; //enlarge buffer size to 256*1024 for ape audio

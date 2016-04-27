@@ -50,6 +50,7 @@ private:
 
     int32_t mChannelCount;
     int32_t mSampleRate;
+    OMX_ENDIANTYPE mEndian;
 
     void initPorts();
     status_t initDecoder();

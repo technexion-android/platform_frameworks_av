@@ -188,6 +188,7 @@ enum {
     kKeyBitPerSample         = 'bPsp', // (int32_t)
     kKeyAudioBlockAlign         = 'aBan', // (int32_t)
     kKeyBitsPerFrame            = 'bPfm',
+    kKeyIsEndianBig             = 'edbg', //bool (int32_t)
 };
 
 enum {

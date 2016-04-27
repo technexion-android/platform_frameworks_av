@@ -539,6 +539,7 @@ ACodec::ACodec()
     mInputEOSResult = OK;
 
     mOutCrop = {0,0,0,0};
+    eEndian = OMX_EndianLittle;
 
     changeState(mUninitializedState);
 }
@@ -2179,6 +2180,10 @@ status_t ACodec::configureCodec(
                 || !msg->findInt32("sample-rate", &sampleRate)) {
             err = INVALID_OPERATION;
         } else {
+            int32_t isEndianBig = 0;
+            if(msg->findInt32("is-endian-big", &isEndianBig) && isEndianBig) {
+                eEndian = OMX_EndianBig;
+            }
             err = setupRawAudioFormat(kPortIndexInput, sampleRate, numChannels);
         }
     } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AC3)) {
@@ -3026,6 +3031,7 @@ status_t ACodec::setupRawAudioFormat(
     pcmParams.nBitPerSample = 16;
     pcmParams.nSamplingRate = sampleRate;
     pcmParams.ePCMMode = OMX_AUDIO_PCMModeLinear;
+    pcmParams.eEndian = eEndian;
 
     if (getOMXChannelMapping(numChannels, pcmParams.eChannelMapping) != OK) {
         return OMX_ErrorNone;
