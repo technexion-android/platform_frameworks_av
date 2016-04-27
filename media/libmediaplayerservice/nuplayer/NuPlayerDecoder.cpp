@@ -1032,7 +1032,14 @@ void NuPlayer::Decoder::rememberCodecSpecificData(const sp<AMessage> &format) {
     if (format == NULL) {
         return;
     }
+
+    //freescale video decoder will keep codec data, so do not need to submit again
+    if (mComponentName.startsWith("OMX.Freescale.std.video_decoder")){
+        return;
+    }
+
     mCSDsForCurrentFormat.clear();
+
     for (int32_t i = 0; ; ++i) {
         AString tag = "csd-";
         tag.append(i);
