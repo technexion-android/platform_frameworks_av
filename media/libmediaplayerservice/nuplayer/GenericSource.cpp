@@ -407,6 +407,21 @@ void NuPlayer::GenericSource::onPrepareAsync() {
     // init extractor from data source
     status_t err = initFromDataSource();
 
+    off64_t size;
+    if(mCachedSource != NULL && mCachedSource->getSize(&size) == OK && mDurationUs > 0){
+        ALOGV("file size is %lld, duration is %lld", size, mDurationUs);
+        int64_t bitrate = size * 8000000ll / mDurationUs;
+        // When bitrate is larger than 15Mbps, use calculated watermarks.
+        if(bitrate > 15 * 1024 * 1024){
+            size_t lowWaterMark = bitrate / 8 * (kLowWaterMarkUs / 1000000 + 3) ;
+            size_t highWaterMark = bitrate / 8 * (kHighWaterMarkUs / 1000000 + 3);
+            ALOGI("bitrate is %lld, set new cache watermark to %d - %d", bitrate, lowWaterMark, highWaterMark);
+            char s[30];
+            sprintf(s,"%zd/%zd/%d", lowWaterMark/1000, highWaterMark/1000, -1);
+            mCachedSource->updateCacheParamsFromString(s);
+        }
+    }
+
     if (err != OK) {
         ALOGE("Failed to init from data source!");
         notifyPreparedAndCleanup(err);
