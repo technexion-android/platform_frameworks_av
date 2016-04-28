@@ -1454,7 +1454,7 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     uint32 rotation = 0;
     uint32 rate = 0;
     uint32 scale = 0;
-    uint32 fps = 30;
+    uint32 fps = 0;
     uint32 bitrate = 0;
     size_t sourceIndex = 0;
     size_t max_size = 0;
@@ -1506,13 +1506,16 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     if(rate > 0 && scale > 0)
         fps = rate/scale;
 
+    if(fps > 250)
+        fps = 0;
+
     if(IParser->getVideoFrameRotation){
         err = IParser->getVideoFrameRotation(parserHandle,index,&rotation);
         if(err){
             return UNKNOWN_ERROR;
         }
     }
-    ALOGI("ParseVideo width=%u,height=%u",width,height);
+    ALOGI("ParseVideo width=%u,height=%u,fps=%u,rotate=%u",width,height,fps,rotation);
 
     sp<MetaData> meta = new MetaData;
     meta->setCString(kKeyMIMEType, mime);
@@ -1586,7 +1589,9 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     meta->setInt32(kKeyWidth, width);
     meta->setInt32(kKeyHeight, height);
     meta->setInt64(kKeyDuration, duration);
-    meta->setInt32(kKeyFrameRate, fps);
+
+    if(fps > 0)
+        meta->setInt32(kKeyFrameRate, fps);
     if(rotation > 0)
         meta->setInt32(kKeyRotation, rotation);
 
