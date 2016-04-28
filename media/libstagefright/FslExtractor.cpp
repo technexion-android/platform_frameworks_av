@@ -2031,9 +2031,11 @@ status_t FslExtractor::DisableTrack(uint32 index)
 status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t flag)
 {
     TrackInfo *pInfo = NULL;
+    int64_t target;
     if(ts == NULL)
         return UNKNOWN_ERROR;
 
+    target = *ts;
     pInfo = &mTracks.editItemAt(index);
 
     if(pInfo == NULL)
@@ -2049,9 +2051,9 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
     pInfo->bPartial = false;
 
     if(pInfo->type == MEDIA_VIDEO)
-        currentVideoTs = *ts;
+        currentVideoTs = target;
     else if(pInfo->type == MEDIA_AUDIO)
-        currentAudioTs = *ts;
+        currentAudioTs = target;
 
     ALOGD("HandleSeekOperation index=%d,ts=%lld,flag=%x",index,*ts,flag);
     return OK;
@@ -2198,20 +2200,30 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
 
     if(pInfo && pInfo->buffer != NULL ){
         sp<FslMediaSource> source = pInfo->mSource;
+        bool add = false;
         if(source != NULL  && source->started()){
+            add = true;
+            if(pInfo->type == MEDIA_AUDIO){
+                if(pInfo->outTs >= 0 && pInfo->outTs < currentAudioTs){
+                    ALOGV("drop audio after seek");
+                    add = false;
+                }
+            }
+        }
+        if(add){
             MediaBuffer *mbuf = new MediaBuffer(pInfo->buffer);
             mbuf->meta_data()->setInt64(kKeyTime, pInfo->outTs);
             mbuf->meta_data()->setInt32(kKeyIsSyncFrame, pInfo->syncFrame);
             ALOGV("addMediaBuffer ts=%lld,size=%d",pInfo->outTs,pInfo->buffer->size());
+
             source->addMediaBuffer(mbuf);
             if(pInfo->type == MEDIA_VIDEO)
                 currentVideoTs = pInfo->outTs;
             else if(pInfo->type == MEDIA_AUDIO)
                 currentAudioTs = pInfo->outTs;
 
-        }else{
-            ALOGE("drop buffer");
         }
+
         pInfo->buffer.clear();
         pInfo->buffer = NULL;
     }
@@ -2255,7 +2267,7 @@ status_t FslExtractor::ClearTrackSource(uint32_t index)
 }
 bool FslExtractor::isTrackSeekable(uint32_t type)
 {
-    if(type == MEDIA_TEXT){
+    if(type == MEDIA_TEXT || type == MEDIA_AUDIO){
         if(mReadMode == PARSER_READ_MODE_TRACK_BASED && (!strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG4)))
             return true;
         else
