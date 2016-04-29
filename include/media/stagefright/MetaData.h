@@ -189,6 +189,8 @@ enum {
     kKeyAudioBlockAlign         = 'aBan', // (int32_t)
     kKeyBitsPerFrame            = 'bPfm',
     kKeyIsEndianBig             = 'edbg', //bool (int32_t)
+    kKeySpecialThumbnail            = 'sThb',//int32_t
+
 };
 
 enum {

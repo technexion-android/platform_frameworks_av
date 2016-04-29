@@ -1538,12 +1538,19 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
         }else{
             meta->setData(kKeyCodecData, 0, decoderSpecificInfo, decoderSpecificInfoSize);
         }
-    }else if(type == VIDEO_H264 || type == VIDEO_HEVC || type == VIDEO_MPEG4)
+    }else if(type == VIDEO_H264 || type == VIDEO_HEVC || type == VIDEO_MPEG4){
         thumbnail_ts = 0;
+    }
 
     if(!strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG2TS) || !strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG2PS))
         thumbnail_ts = -1;
-    else if(!strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_FLV))
+
+    if(0 == thumbnail_ts){
+        meta->setInt32(kKeySpecialThumbnail, 1);
+        thumbnail_ts = -1;
+    }
+
+    if(!strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_FLV))
         thumbnail_ts = 0;
 
     if (type == VIDEO_H264) {
@@ -1599,6 +1606,7 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
         thumbnail_ts = duration > 5000000 ? 5000000:duration;
 
     meta->setInt64(kKeyThumbnailTime, thumbnail_ts);
+
 
     mTracks.push();
     sourceIndex = mTracks.size() - 1;

@@ -143,6 +143,7 @@ static VideoFrame *extractVideoFrame(
         int64_t frameTimeUs,
         int seekMode) {
 
+    int decodeTwice = 0;
     sp<MetaData> format = source->getFormat();
 
     sp<AMessage> videoFormat;
@@ -180,6 +181,7 @@ static VideoFrame *extractVideoFrame(
     }
 
     MediaSource::ReadOptions options;
+    MediaSource::ReadOptions options_first;
     if (seekMode < MediaSource::ReadOptions::SEEK_PREVIOUS_SYNC ||
         seekMode > MediaSource::ReadOptions::SEEK_CLOSEST) {
 
@@ -202,6 +204,8 @@ static VideoFrame *extractVideoFrame(
         thumbNailTime = -1;
         options.setSeekTo(frameTimeUs, mode);
     }
+
+    trackMeta->findInt32(kKeySpecialThumbnail, &decodeTwice);
 
     err = source->start();
     if (err != OK) {
@@ -232,7 +236,12 @@ static VideoFrame *extractVideoFrame(
     int64_t timeUs;
     size_t retriesLeft = kRetryCount;
     bool done = false;
-
+    bool firstInput = false;
+    bool firstOutput = false;
+    if(decodeTwice > 0){
+        firstInput = true;
+        firstOutput = true;
+    }
     do {
         size_t inputIndex = -1;
         int64_t ptsUs = 0ll;
@@ -252,8 +261,14 @@ static VideoFrame *extractVideoFrame(
 
             MediaBuffer *mediaBuffer = NULL;
 
-            err = source->read(&mediaBuffer, &options);
-            options.clearSeekTo();
+            if(firstInput){
+                err = source->read(&mediaBuffer, &options_first);
+                options_first.clearSeekTo();
+                firstInput = false;
+            }else{
+                err = source->read(&mediaBuffer, &options);
+                options.clearSeekTo();
+            }
             if (err != OK) {
                 ALOGW("Input Error or EOS");
                 haveMoreInputs = false;
@@ -315,7 +330,12 @@ static VideoFrame *extractVideoFrame(
                     err = OK;
                 } else if (err == OK) {
                     ALOGV("Received an output buffer");
-                    done = true;
+                    if(firstOutput){
+                        ALOGV("Drop First Frame");
+                        decoder->releaseOutputBuffer(index);
+                        firstOutput = false;
+                    }else
+                        done = true;
                 } else {
                     ALOGW("Received error %d (%s) instead of output", err, asString(err));
                     done = true;
