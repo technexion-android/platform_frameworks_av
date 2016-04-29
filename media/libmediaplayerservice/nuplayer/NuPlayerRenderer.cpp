@@ -102,6 +102,7 @@ NuPlayer::Renderer::Renderer(
       mVideoLateByUs(0ll),
       mHasAudio(false),
       mHasVideo(false),
+      mAudioEOS(false),
       mNotifyCompleteAudio(false),
       mNotifyCompleteVideo(false),
       mSyncQueues(false),
@@ -1046,7 +1047,7 @@ void NuPlayer::Renderer::postDrainVideoQueue() {
                 realTimeUs = getRealTimeUs(mediaTimeUs, nowUs);
             }
         }
-        if (!mHasAudio) {
+        if (!mHasAudio || mAudioEOS) {
             // smooth out videos >= 10fps
             mMediaClock->updateMaxTimeMedia(mediaTimeUs + 100000);
         }
@@ -1189,6 +1190,7 @@ void NuPlayer::Renderer::onQueueBuffer(const sp<AMessage> &msg) {
 
     if (audio) {
         mHasAudio = true;
+        mAudioEOS = false;
     } else {
         mHasVideo = true;
     }
@@ -1299,6 +1301,7 @@ void NuPlayer::Renderer::onQueueEOS(const sp<AMessage> &msg) {
         }
         mAudioQueue.push_back(entry);
         postDrainAudioQueue_l();
+        mAudioEOS = true;
     } else {
         if (mVideoQueue.empty() && getSyncQueues()) {
             Mutex::Autolock autoLock(mLock);
