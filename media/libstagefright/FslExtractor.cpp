@@ -2045,6 +2045,7 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
 {
     TrackInfo *pInfo = NULL;
     int64_t target;
+    bool seek = true;
     if(ts == NULL)
         return UNKNOWN_ERROR;
 
@@ -2054,13 +2055,24 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
     if(pInfo == NULL)
         return UNKNOWN_ERROR;
 
-    IParser->seek(parserHandle, pInfo->mTrackNum, (uint64*)ts, flag);
-    //clear temp buffer
-
-    if(pInfo->buffer != NULL){
-        pInfo->buffer.clear();
-        pInfo->buffer = NULL;
+    if(mReadMode == PARSER_READ_MODE_FILE_BASED){
+        if(pInfo->type == MEDIA_AUDIO && currentVideoTs > 0){
+            seek = false;
+        }else if(pInfo->type == MEDIA_TEXT && currentVideoTs > 0){
+            seek = false;
+        }
     }
+
+    if(seek){
+        IParser->seek(parserHandle, pInfo->mTrackNum, (uint64*)ts, flag);
+        //clear temp buffer
+
+        if(pInfo->buffer != NULL){
+            pInfo->buffer.clear();
+            pInfo->buffer = NULL;
+        }
+    }
+
     pInfo->bPartial = false;
 
     if(pInfo->type == MEDIA_VIDEO)
