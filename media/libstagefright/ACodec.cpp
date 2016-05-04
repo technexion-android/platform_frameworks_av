@@ -59,6 +59,8 @@
 #include <cutils/properties.h>
 namespace android {
 
+extern bool isForceUseGoogleAACCodec;
+
 // OMX errors are directly mapped into status_t range if
 // there is no corresponding MediaError status code.
 // Use the statusFromOMXError(int32_t omxError) function.
@@ -6166,13 +6168,8 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
         node = 0;
     }
 
-    char temp[128];
-    if(property_get("media.disable_fsl_audio_codec",temp, NULL) && \
-        (!strcmp(temp,"1") || !strcasecmp(temp, "true"))) {
-        // this value is set by MA-8032 workaround, after codec is allocated, reset it to 0.
-        property_set("media.disable_fsl_audio_codec","0");
-
-    }
+    if(isForceUseGoogleAACCodec)
+        isForceUseGoogleAACCodec = false;
 
     if (node == 0) {
         if (!mime.empty()) {

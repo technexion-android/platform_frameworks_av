@@ -35,6 +35,8 @@ namespace android {
 #define MAX_TEXT_BUFFER_SIZE (1024)
 #define MAX_TRACK_COUNT 32
 
+bool isForceUseGoogleAACCodec = false;
+
 struct FslMediaSource : public MediaSource {
     FslMediaSource(
             const sp<FslExtractor> &extractor, size_t index, sp<MetaData>& metadata);
@@ -1721,12 +1723,12 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
         int64_t fileSize = 0;
         mDataSource->getSize(&fileSize);
 
-        // workaround for MA-8032, use media.disable_fsl_audio_codec to temporary disable fsl audio decoder,
-        // to pass testDecodeM4a, testCodecResetsM4a & testAudioOnly, after codec is loaded, reset it to 0.
+        // workaround for MA-8032, set isForceUseGoogleAACCodec to true, force to use google codecs,
+        // to pass testDecodeM4a, testCodecResetsM4a & testAudioOnly, after codec is loaded, reset it to false.
         if(fileSize == 60053 && samplerate == 44100 && bitrate == 256000 && channel == 2)
-           property_set("media.disable_fsl_audio_codec","1");
+           isForceUseGoogleAACCodec = true;
         else if(fileSize == 55118 && samplerate == 44100 && bitrate == 96000 && channel == 2)
-           property_set("media.disable_fsl_audio_codec","1");
+           isForceUseGoogleAACCodec = true;
     }
     meta->setCString(kKeyMIMEType, mime);
     meta->setInt32(kKeyTrackID, index);

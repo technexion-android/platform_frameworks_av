@@ -60,6 +60,8 @@
 
 namespace android {
 
+extern bool isForceUseGoogleAACCodec;
+
 // Treat time out as an error if we have not received any output
 // buffers after 3 seconds.
 const static int64_t kBufferFilledEventTimeOutNs = 3000000000LL;
@@ -221,11 +223,9 @@ void OMXCodec::findMatchingCodecs(
     if(value & 0x04)
         use_fsl_audio = true;
 
-    // workaround for MA-8032, check media.disable_fsl_audio_codec, if the value is "1" or "true",
+    // workaround for MA-8032, if isForceUseGoogleAACCodec is true,
     // temporary disable fsl audio codec, after codec is loaded, this value must be reset to 0.
-    char temp[128];
-    if(property_get("media.disable_fsl_audio_codec",temp, NULL) && \
-        (!strcmp(temp,"1") || !strcasecmp(temp, "true")))
+    if(isForceUseGoogleAACCodec)
         use_fsl_audio = false;
 
     for (;;) {
