@@ -662,6 +662,7 @@ status_t CameraSource::start(MetaData *meta) {
         int64_t startTimeUs;
         if (meta->findInt64(kKeyTime, &startTimeUs)) {
             mStartTimeUs = startTimeUs;
+            ALOGD("start() meta set mStartTimsUs to %lld", startTimeUs);
         }
 
         int32_t nBuffers;
@@ -873,7 +874,7 @@ status_t CameraSource::read(
 
 void CameraSource::dataCallbackTimestamp(int64_t timestampUs,
         int32_t msgType __unused, const sp<IMemory> &data) {
-    ALOGV("dataCallbackTimestamp: timestamp %lld us", (long long)timestampUs);
+    ALOGV("dataCallbackTimestamp: timestamp %lld us, mStartTimeUs %lld", (long long)timestampUs, mStartTimeUs);
     Mutex::Autolock autoLock(mLock);
     if (!mStarted || (mNumFramesReceived == 0 && timestampUs < mStartTimeUs)) {
         ALOGV("Drop frame at %lld/%lld us", (long long)timestampUs, (long long)mStartTimeUs);
@@ -902,6 +903,8 @@ void CameraSource::dataCallbackTimestamp(int64_t timestampUs,
 
     mLastFrameTimestampUs = timestampUs;
     if (mNumFramesReceived == 0) {
+        ALOGD("dataCallbackTimestamp: first frame timestamp %lld us, mStartTimeUs %lld",
+            (long long)timestampUs, mStartTimeUs);
         mFirstFrameTimeUs = timestampUs;
         // Initial delay
         if (mStartTimeUs > 0) {
@@ -912,6 +915,7 @@ void CameraSource::dataCallbackTimestamp(int64_t timestampUs,
                 return;
             }
             mStartTimeUs = timestampUs - mStartTimeUs;
+            ALOGD("dataCallbackTimestamp mStartTimeUs changed to %lld", mStartTimeUs);
         }
     }
     ++mNumFramesReceived;
@@ -919,6 +923,9 @@ void CameraSource::dataCallbackTimestamp(int64_t timestampUs,
     CHECK(data != NULL && data->size() > 0);
     mFramesReceived.push_back(data);
     int64_t timeUs = mStartTimeUs + (timestampUs - mFirstFrameTimeUs);
+    if(mNumFramesReceived < 5)
+        ALOGD("frame %d, mStartTimeUs %lld, timestampUs %lld, mFirstFrameTimeUs %lld, timeUs %lld",
+        mNumFramesReceived, mStartTimeUs,timestampUs, mFirstFrameTimeUs, timeUs);
     mFrameTimes.push_back(timeUs);
     ALOGV("initial delay: %" PRId64 ", current time stamp: %" PRId64,
         mStartTimeUs, timeUs);
