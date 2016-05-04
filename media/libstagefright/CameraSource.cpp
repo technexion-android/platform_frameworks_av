@@ -923,7 +923,7 @@ void CameraSource::dataCallbackTimestamp(int64_t timestampUs,
     CHECK(data != NULL && data->size() > 0);
     mFramesReceived.push_back(data);
     int64_t timeUs = mStartTimeUs + (timestampUs - mFirstFrameTimeUs);
-    if(mNumFramesReceived < 5)
+    if(mNumFramesReceived < 5 && mStartTimeUs > 10000000) // error occurs
         ALOGD("frame %d, mStartTimeUs %lld, timestampUs %lld, mFirstFrameTimeUs %lld, timeUs %lld",
         mNumFramesReceived, mStartTimeUs,timestampUs, mFirstFrameTimeUs, timeUs);
     mFrameTimes.push_back(timeUs);
