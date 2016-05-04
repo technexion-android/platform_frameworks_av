@@ -754,7 +754,7 @@ status_t NuPlayer::Decoder::fetchInputData(sp<AMessage> &reply) {
         }
     } while (dropAccessUnit);
 
-    // ALOGV("returned a valid buffer of %s data", mIsAudio ? "mIsAudio" : "video");
+    // ALOGV("returned a valid buffer of %s data", mIsAudio ? "audio" : "video");
 #if 0
     int64_t mediaTimeUs;
     CHECK(accessUnit->meta()->findInt64("timeUs", &mediaTimeUs));
