@@ -1808,6 +1808,9 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
         }
     }
 
+    if(type == AUDIO_AC3 && samplerate == 0)
+        samplerate = 44100; // invalid samplerate will lead to findMatchingCodecs fail
+
     meta->setInt64(kKeyDuration, duration);
     meta->setInt32(kKeyChannelCount, channel);
     meta->setInt32(kKeySampleRate, samplerate);
@@ -2168,7 +2171,7 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
                 return ERROR_IO;
             else
                 return ERROR_END_OF_STREAM;
-        }else if (tmp && buffer_context){
+        }else {
 
             pInfo = &mTracks.editItemAt(index);
             if(pInfo->mTrackNum != track_num_got){
@@ -2198,7 +2201,7 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
                     buffer->setRange(0,datasize);
                     pInfo->buffer = buffer;
                     ALOGV("bPartial first buffer");
-                }else{
+                }else if(tmp && buffer_context){
                     sp<ABuffer> lastBuf = buffer;
                     sp<ABuffer> currBuf = (ABuffer *)buffer_context;
                     size_t tempLen = lastBuf->size();
