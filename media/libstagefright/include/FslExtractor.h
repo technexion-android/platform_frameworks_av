@@ -161,7 +161,7 @@ private:
     Mutex mLock;
     int64_t currentVideoTs;
     int64_t currentAudioTs;
-
+    bool mVideoActived;
     bool isLiveStreaming() const;
     status_t GetLibraryName();
     status_t CreateParserInterface();

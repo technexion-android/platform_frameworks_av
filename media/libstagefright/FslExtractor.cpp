@@ -779,6 +779,7 @@ FslExtractor::FslExtractor(const sp<DataSource> &source,const char *mime)
     mFileMetaData->setCString(kKeyMIMEType, mime);
     currentVideoTs = 0;
     currentAudioTs = 0;
+    mVideoActived = false;
 
     ALOGD("FslExtractor::FslExtractor mime=%s",mMime);
 }
@@ -1626,6 +1627,7 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     trackInfo->type = MEDIA_VIDEO;
     trackInfo->bIsNeedConvert = false;
     mReader->AddBufferReadLimitation(index,max_size);
+
     ALOGI("add video track index=%u,source index=%zu,mime=%s",index,sourceIndex,mime);
     return OK;
 }
@@ -2020,9 +2022,10 @@ status_t FslExtractor::ActiveTrack(uint32 index)
     if(trackInfo == NULL)
         return UNKNOWN_ERROR;
     trackInfo->bCodecInfoSent = false;
-    if(trackInfo->type == MEDIA_VIDEO)
+    if(trackInfo->type == MEDIA_VIDEO){
         seekPos = currentVideoTs;
-    else if(trackInfo->type == MEDIA_AUDIO)
+        mVideoActived = true;
+    }else if(trackInfo->type == MEDIA_AUDIO)
         seekPos = currentAudioTs;
     else if(currentVideoTs > 0)
         seekPos = currentVideoTs;
@@ -2044,6 +2047,10 @@ status_t FslExtractor::DisableTrack(uint32 index)
     if(trackInfo == NULL)
         return UNKNOWN_ERROR;
 
+    if(trackInfo->type == MEDIA_VIDEO){
+        mVideoActived = false;
+    }
+
     IParser->enableTrack(parserHandle,trackInfo->mTrackNum, FALSE);
     ALOGD("close track %d",trackInfo->mTrackNum);
     return OK;
@@ -2063,9 +2070,9 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
         return UNKNOWN_ERROR;
 
     if(mReadMode == PARSER_READ_MODE_FILE_BASED){
-        if(pInfo->type == MEDIA_AUDIO && currentVideoTs > 0){
+        if(pInfo->type == MEDIA_AUDIO && mVideoActived){
             seek = false;
-        }else if(pInfo->type == MEDIA_TEXT && currentVideoTs > 0){
+        }else if(pInfo->type == MEDIA_TEXT && mVideoActived){
             seek = false;
         }
     }
@@ -2078,6 +2085,7 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
             pInfo->buffer.clear();
             pInfo->buffer = NULL;
         }
+        ALOGD("HandleSeekOperation do seek");
     }
 
     pInfo->bPartial = false;
