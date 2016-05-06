@@ -150,6 +150,7 @@ private:
         int32_t syncFrame = 0;
         uint32_t max_input_size;
         uint32_t type;
+        bool bIsNeedConvert;
     };
     Vector<TrackInfo> mTracks;
 
@@ -180,6 +181,7 @@ private:
             const void *_codecPrivate, size_t codecPrivateSize);
 
     bool isTrackSeekable(uint32_t type);
+    status_t convertPCMData(sp<ABuffer> inBuffer, sp<ABuffer> outBuffer, int32_t bitPerSample);
     FslExtractor(const FslExtractor &);
     FslExtractor &operator=(const FslExtractor &);
 };

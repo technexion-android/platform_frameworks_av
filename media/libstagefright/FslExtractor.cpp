@@ -1624,6 +1624,7 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     trackInfo->mSource = NULL;
     trackInfo->max_input_size = max_size;
     trackInfo->type = MEDIA_VIDEO;
+    trackInfo->bIsNeedConvert = false;
     mReader->AddBufferReadLimitation(index,max_size);
     ALOGI("add video track index=%u,source index=%zu,mime=%s",index,sourceIndex,mime);
     return OK;
@@ -1844,6 +1845,7 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     trackInfo->mSource = NULL;
     trackInfo->max_input_size = max_size;
     trackInfo->type = MEDIA_AUDIO;
+    trackInfo->bIsNeedConvert = (bitPerSample!= 16 && !strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_RAW));
     mReader->AddBufferReadLimitation(index,max_size);
     ALOGI("add audio track index=%u,sourceIndex=%zu,mime=%s",index,sourceIndex,mime);
     return OK;
@@ -2241,6 +2243,16 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
             }
         }
         if(add){
+            if(pInfo->bIsNeedConvert) {
+                int32_t bitPerSample = 16;
+                pInfo->mMeta->findInt32(kKeyBitPerSample, &bitPerSample);
+                sp<ABuffer> buffer = pInfo->buffer;
+                sp<ABuffer> tmp = new ABuffer(2 * buffer->size());
+                convertPCMData(buffer, tmp, bitPerSample);
+                pInfo->buffer = tmp;
+                buffer.clear();
+            }
+
             MediaBuffer *mbuf = new MediaBuffer(pInfo->buffer);
             mbuf->meta_data()->setInt64(kKeyTime, pInfo->outTs);
             mbuf->meta_data()->setInt32(kKeyIsSyncFrame, pInfo->syncFrame);
@@ -2305,4 +2317,38 @@ bool FslExtractor::isTrackSeekable(uint32_t type)
     }
     return true;
 }
+
+status_t FslExtractor::convertPCMData(sp<ABuffer> inBuffer, sp<ABuffer> outBuffer, int32_t bitPerSample)
+{
+    if(bitPerSample == 8) {
+        // Convert 8-bit unsigned samples to 16-bit signed.
+        ssize_t numBytes = inBuffer->size();
+
+        int16_t *dst = (int16_t *)outBuffer->data();
+        const uint8_t *src = (const uint8_t *)inBuffer->data();
+
+        while (numBytes-- > 0) {
+            *dst++ = ((int16_t)(*src) - 128) * 256;
+            ++src;
+        }
+        outBuffer->setRange(0, 2 * inBuffer->size());
+
+    }else if (bitPerSample == 24) {
+        // Convert 24-bit signed samples to 16-bit signed.
+        const uint8_t *src = (const uint8_t *)inBuffer->data();
+        int16_t *dst = (int16_t *)outBuffer->data();
+        size_t numSamples = inBuffer->size() / 3;
+        for (size_t i = 0; i < numSamples; i++) {
+            int32_t x = (int32_t)(src[0] | src[1] << 8 | src[2] << 16);
+            x = (x << 8) >> 8;  // sign extension
+            x = x >> 8;
+            *dst++ = (int16_t)x;
+            src += 3;
+        }
+        outBuffer->setRange(0, 2 * numSamples);
+    }
+
+    return OK;
+}
+
 }// namespace android
