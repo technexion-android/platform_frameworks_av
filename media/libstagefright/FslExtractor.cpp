@@ -2318,7 +2318,8 @@ status_t FslExtractor::ClearTrackSource(uint32_t index)
 bool FslExtractor::isTrackSeekable(uint32_t type)
 {
     if(type == MEDIA_TEXT || type == MEDIA_AUDIO){
-        if(mReadMode == PARSER_READ_MODE_TRACK_BASED && (!strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG4)))
+        if(mReadMode == PARSER_READ_MODE_TRACK_BASED &&
+             (!strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG4) || !strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_AVI)))
             return true;
         else
             return false;
