@@ -1847,7 +1847,7 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     trackInfo->mSource = NULL;
     trackInfo->max_input_size = max_size;
     trackInfo->type = MEDIA_AUDIO;
-    trackInfo->bIsNeedConvert = (bitPerSample!= 16 && !strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_RAW));
+    trackInfo->bIsNeedConvert = (type == AUDIO_PCM && bitPerSample!= 16);
     mReader->AddBufferReadLimitation(index,max_size);
     ALOGI("add audio track index=%u,sourceIndex=%zu,mime=%s",index,sourceIndex,mime);
     return OK;
@@ -1912,6 +1912,7 @@ status_t FslExtractor::ParseText(uint32 index, uint32 type,uint32 subtype)
     trackInfo->mSource = NULL;
     trackInfo->max_input_size = MAX_TEXT_BUFFER_SIZE;
     trackInfo->type = MEDIA_TEXT;
+    trackInfo->bIsNeedConvert = false;
     mReader->AddBufferReadLimitation(index,MAX_TEXT_BUFFER_SIZE);
     ALOGD("add text track");
     return OK;
