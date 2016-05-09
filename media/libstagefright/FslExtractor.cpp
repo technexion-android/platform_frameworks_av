@@ -2181,22 +2181,23 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
                 return ERROR_IO;
             else
                 return ERROR_END_OF_STREAM;
-        }else {
+        }
 
-            pInfo = &mTracks.editItemAt(index);
-            if(pInfo->mTrackNum != track_num_got){
+        pInfo = &mTracks.editItemAt(index);
+        if(pInfo->mTrackNum != track_num_got){
 
-                size_t trackCount = mTracks.size();
-                for (size_t index = 0; index < trackCount; index++) {
-                    pInfo = &mTracks.editItemAt(index);
-                    if(pInfo->mTrackNum == track_num_got)
-                        break;
-                    pInfo = NULL;
-                }
-                if(pInfo == NULL)
-                    continue;
+            size_t trackCount = mTracks.size();
+            for (size_t index = 0; index < trackCount; index++) {
+                pInfo = &mTracks.editItemAt(index);
+                if(pInfo->mTrackNum == track_num_got)
+                    break;
+                pInfo = NULL;
             }
+            if(pInfo == NULL)
+                continue;
+        }
 
+        if(tmp && buffer_context) {
             sp<ABuffer> buffer = pInfo->buffer;
 
             if(sampleFlag & FLAG_SAMPLE_NOT_FINISHED)
@@ -2211,7 +2212,7 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
                     buffer->setRange(0,datasize);
                     pInfo->buffer = buffer;
                     ALOGV("bPartial first buffer");
-                }else if(tmp && buffer_context){
+                }else {
                     sp<ABuffer> lastBuf = buffer;
                     sp<ABuffer> currBuf = (ABuffer *)buffer_context;
                     size_t tempLen = lastBuf->size();
@@ -2234,8 +2235,12 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
                 pInfo->buffer = buffer;
                 buffer->setRange(0,datasize);
             }
-
+        }else {
+            // mpg2 parser often send an empty buffer as the last partial frame.
+            if(pInfo->bPartial && !(sampleFlag & FLAG_SAMPLE_NOT_FINISHED))
+                pInfo->bPartial = false;
         }
+
     }while((sampleFlag & FLAG_SAMPLE_NOT_FINISHED) && (pInfo->buffer->size() < pInfo->max_input_size));
 
     if(pInfo && pInfo->buffer != NULL ){
