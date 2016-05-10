@@ -2250,7 +2250,7 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
         if(source != NULL  && source->started()){
             add = true;
             if(pInfo->type == MEDIA_AUDIO){
-                if(pInfo->outTs >= 0 && pInfo->outTs < currentAudioTs){
+                if(pInfo->outTs >= 0 && pInfo->outTs < currentAudioTs && mVideoActived == true){
                     ALOGV("drop audio after seek");
                     add = false;
                 }
