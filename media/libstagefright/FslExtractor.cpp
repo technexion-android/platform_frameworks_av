@@ -65,6 +65,7 @@ private:
     bool mIsHEVC;
     size_t mNALLengthSize;
     size_t mBufferSize;
+    uint32 mFrameSent;
 
     void clearPendingFrames();
     FslMediaSource(const FslMediaSource &);
@@ -85,6 +86,7 @@ FslMediaSource::FslMediaSource(const sp<FslExtractor> &extractor, size_t index,s
 
     mNALLengthSize = 0;
     mBufferSize = 0;
+    mFrameSent = 0;
 
     if (mIsAVC) {
         uint32_t type;
@@ -170,6 +172,8 @@ status_t FslMediaSource::read(
     int64_t seekTimeUs;
     ReadOptions::SeekMode mode;
     int64_t outTs = 0;
+    const char *containerMime = NULL;
+    const char *mime = NULL;
 
     if (options && options->getSeekTo(&seekTimeUs, &mode)) {
         switch (mode) {
@@ -187,7 +191,39 @@ status_t FslMediaSource::read(
                 seekFlag = SEEK_FLAG_NEAREST;
                 break;
         }
+
         clearPendingFrames();
+
+        sp<MetaData> meta = mExtractor->getMetaData();
+        if(meta != NULL){
+            meta->findCString(kKeyMIMEType, &containerMime);
+            mFormat->findCString(kKeyMIMEType, &mime);
+
+            if(mFrameSent < 10 && containerMime && !strcasecmp(containerMime, MEDIA_MIMETYPE_CONTAINER_FLV)
+                        && mime && !strcasecmp(mime,MEDIA_MIMETYPE_VIDEO_SORENSON))
+            {
+                ALOGV("read first frame before seeking track, mFrameSent %d", mFrameSent);
+                int64_t time = 0;
+                int32_t j=0;
+                ret = mExtractor->HandleSeekOperation(mSourceIndex,&time,seekFlag);
+                while (mPendingFrames.empty()) {
+                    status_t err = mExtractor->GetNextSample(mSourceIndex,false);
+                    if (err != OK) {
+                        clearPendingFrames();
+                        return err;
+                    }
+                    j++;
+                    if(j > 1 && OK != mExtractor->CheckInterleaveEos(mSourceIndex)){
+                        ALOGE("get interleave eos");
+                        return ERROR_END_OF_STREAM;
+                    }
+                }
+                MediaBuffer *frame = *mPendingFrames.begin();
+                frame->meta_data()->setInt64(kKeyTime, seekTimeUs);
+            }
+
+        }
+
         ret = mExtractor->HandleSeekOperation(mSourceIndex,&seekTimeUs,seekFlag);
     }
 
@@ -211,6 +247,8 @@ status_t FslMediaSource::read(
 
     *out = frame;
     mBufferSize -= frame->size();
+
+    mFrameSent++;
     //frame->meta_data()->findInt64(kKeyTime, &outTs);
     ALOGV("FslMediaSource::read mSourceIndex=%d size=%d,time %lld",mSourceIndex,frame->size(),outTs);
 
@@ -2286,7 +2324,7 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
 
     return OK;
 }
-status_t FslExtractor::CheckInterleaveEos(uint32_t index)
+status_t FslExtractor::CheckInterleaveEos(__unused uint32_t index)
 {
     bool bTrackFull = false;
 
@@ -2297,7 +2335,7 @@ status_t FslExtractor::CheckInterleaveEos(uint32_t index)
         return OK;
 
     for(size_t i = 0; i < mTracks.size(); i++){
-        TrackInfo *pInfo = &mTracks.editItemAt(index);
+        TrackInfo *pInfo = &mTracks.editItemAt(i);
         sp<FslMediaSource> source = pInfo->mSource;
         if(source->started() && source->full()){
             bTrackFull = true;
