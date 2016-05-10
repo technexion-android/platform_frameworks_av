@@ -15,7 +15,7 @@
  */
 
  /*
-  * Copyright (C) 2013 Freescale Semiconductor, Inc.
+  * Copyright (C) 2013-2016 Freescale Semiconductor, Inc.
   */
 
 #define LOG_TAG "Camera2-StreamingProcessor"
@@ -557,9 +557,11 @@ status_t StreamingProcessor::startStream(StreamType type,
 
     Mutex::Autolock m(mMutex);
 
-    //Force-freed buffer will make status chaos.
-    //So a buffer maybe updated while it's under encoding.
-#if 0
+    //Use stagefright to record, after many times of start/stop record,
+    //the releaseRecordingFrame count will not match with dataCallbackTimestamp count.
+    //Also, do snapshot test overnight, on this point, all buffers are released.
+    //So it's ok to force-freed buffer.
+
     // If a recording stream is being started up and no recording
     // stream is active yet, free up any outstanding buffers left
     // from the previous recording session. There should never be
@@ -569,7 +571,6 @@ status_t StreamingProcessor::startStream(StreamType type,
     if (startRecordingStream && isRecordingStreamIdle) {
         releaseAllRecordingFramesLocked();
     }
-#endif
 
     ALOGV("%s: Camera %d: %s started, recording heap has %zu free of %zu",
             __FUNCTION__, mId, (type == PREVIEW) ? "preview" : "recording",
@@ -1003,6 +1004,8 @@ void StreamingProcessor::releaseAllRecordingFramesLocked() {
 
     mRecordingHeapHead = 0;
     mRecordingHeapFree = mRecordingHeapCount;
+    if(mpHeapStatus)
+        memset(mpHeapStatus, 0, mRecordingHeapCount * sizeof(int32_t));
 }
 
 bool StreamingProcessor::isStreamActive(const Vector<int32_t> &streams,
