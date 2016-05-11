@@ -1901,6 +1901,9 @@ status_t FslExtractor::ParseText(uint32 index, uint32 type,uint32 subtype)
     ALOGD("ParseText index=%u,type=%u,subtype=%u",index,type,subtype);
     switch(type){
         case TXT_3GP_STREAMING_TEXT:
+        case TXT_QT_TEXT:
+            mime = MEDIA_MIMETYPE_TEXT_3GPP;
+            break;
         case TXT_SUBTITLE_TEXT:
             mime = MEDIA_MIMETYPE_TEXT_SRT;
             break;
