@@ -1444,7 +1444,7 @@ status_t FslExtractor::ParseMediaFormat()
     MediaType trackType;
     uint32 decoderType;
     uint32 decoderSubtype;
-
+    uint64 sSeekPosTmp = 0;
     ALOGD("FslExtractor::ParseMediaFormat BEGIN");
     if(IParser->getNumPrograms && IParser->getProgramTracks){
         err = IParser->getNumPrograms(parserHandle, &programCount);
@@ -1478,6 +1478,10 @@ status_t FslExtractor::ParseMediaFormat()
         if(ret)
             continue;
 
+
+        err = IParser->seek(parserHandle, i, &sSeekPosTmp, SEEK_FLAG_NO_LATER);
+        if(err)
+            return UNKNOWN_ERROR;
     }
 
     return OK;
