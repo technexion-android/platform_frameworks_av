@@ -180,7 +180,7 @@ private:
             const sp<MetaData> &meta,
             const void *_codecPrivate, size_t codecPrivateSize);
 
-    bool isTrackSeekable(uint32_t type);
+    bool isTrackModeParser();
     status_t convertPCMData(sp<ABuffer> inBuffer, sp<ABuffer> outBuffer, int32_t bitPerSample);
     FslExtractor(const FslExtractor &);
     FslExtractor &operator=(const FslExtractor &);

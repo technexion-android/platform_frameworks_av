@@ -2063,6 +2063,7 @@ status_t FslExtractor::ActiveTrack(uint32 index)
 {
     uint64 seekPos = 0;
     Mutex::Autolock autoLock(mLock);
+    bool seek = true;
 
     TrackInfo *trackInfo = &mTracks.editItemAt(index);
     if(trackInfo == NULL)
@@ -2079,10 +2080,17 @@ status_t FslExtractor::ActiveTrack(uint32 index)
         seekPos = currentAudioTs;
 
     IParser->enableTrack(parserHandle,trackInfo->mTrackNum, TRUE);
-    if(!isTrackSeekable(trackInfo->type))
-        return OK;
 
-    IParser->seek(parserHandle, trackInfo->mTrackNum, &seekPos, SEEK_FLAG_NO_LATER);
+    if(trackInfo->type == MEDIA_TEXT || trackInfo->type == MEDIA_AUDIO){
+        if(isTrackModeParser())
+            seek = true;
+        else
+            seek = false;
+    }
+
+    if(seek)
+        IParser->seek(parserHandle, trackInfo->mTrackNum, &seekPos, SEEK_FLAG_NO_LATER);
+
     ALOGD("start track %d",trackInfo->mTrackNum);
     return OK;
 }
@@ -2118,6 +2126,9 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
     if(mReadMode == PARSER_READ_MODE_FILE_BASED){
         if(pInfo->type == MEDIA_AUDIO && mVideoActived){
             seek = false;
+            //for track mode parser, it must seek audio track.
+            if(isTrackModeParser())
+                seek = true;
         }else if(pInfo->type == MEDIA_TEXT && mVideoActived){
             seek = false;
         }
@@ -2131,7 +2142,7 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
             pInfo->buffer.clear();
             pInfo->buffer = NULL;
         }
-        ALOGD("HandleSeekOperation do seek");
+        ALOGD("HandleSeekOperation do seek index=%d",index);
     }
 
     pInfo->bPartial = false;
@@ -2296,7 +2307,7 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
             add = true;
             if(pInfo->type == MEDIA_AUDIO){
                 if(pInfo->outTs >= 0 && pInfo->outTs < currentAudioTs && mVideoActived == true){
-                    ALOGV("drop audio after seek");
+                    ALOGV("drop audio after seek ts=%lld,audio_ts=%lld",pInfo->outTs,currentAudioTs);
                     add = false;
                 }
             }
@@ -2328,6 +2339,11 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
         pInfo->buffer.clear();
         pInfo->buffer = NULL;
     }
+
+    //check for get subtitle track in file mode, avoid interleave
+    pInfo = &mTracks.editItemAt(index);
+    if(pInfo->type == MEDIA_TEXT && pInfo->mTrackNum != track_num_got)
+        return WOULD_BLOCK;
 
     return OK;
 }
@@ -2366,18 +2382,14 @@ status_t FslExtractor::ClearTrackSource(uint32_t index)
     }
     return OK;
 }
-bool FslExtractor::isTrackSeekable(uint32_t type)
-{
-    if(type == MEDIA_TEXT || type == MEDIA_AUDIO){
-        if(mReadMode == PARSER_READ_MODE_TRACK_BASED &&
-             (!strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG4) || !strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_AVI)))
-            return true;
-        else
-            return false;
-    }
-    return true;
-}
 
+bool FslExtractor::isTrackModeParser()
+{
+    if(!strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG4) || !strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_AVI))
+        return true;
+    else
+        return false;
+}
 status_t FslExtractor::convertPCMData(sp<ABuffer> inBuffer, sp<ABuffer> outBuffer, int32_t bitPerSample)
 {
     if(bitPerSample == 8) {
