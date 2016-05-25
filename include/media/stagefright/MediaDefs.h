@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013, 2016 Freescale Semiconductor, Inc.
  */
 
 #ifndef MEDIA_DEFS_H_

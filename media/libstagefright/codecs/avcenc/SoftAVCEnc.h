@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/* Copyright (C) 2016 Freescale Semiconductor, Inc. */
 
 #ifndef __SOFT_AVC_ENC_H__
 #define __SOFT_AVC_ENC_H__

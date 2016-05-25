@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/* Copyright (C) 2013-2016 Freescale Semiconductor, Inc. */
 
 #define LOG_TAG "Camera2-Parameters"
 #define ATRACE_TAG ATRACE_TAG_CAMERA
