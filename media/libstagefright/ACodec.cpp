@@ -603,6 +603,7 @@ ACodec::ACodec()
     memset(&mLastNativeWindowCrop, 0, sizeof(mLastNativeWindowCrop));
 
     changeState(mUninitializedState);
+    mEnqueuedBuffers = 0;
     mSetStartTime = false;
     eEndian = OMX_EndianLittle;
 }
@@ -1524,6 +1525,8 @@ ACodec::BufferInfo *ACodec::dequeueBufferFromNativeWindow() {
                 info->mStatus = BufferInfo::OWNED_BY_US;
                 info->setWriteFence(fenceFd, "dequeueBufferFromNativeWindow");
                 updateRenderInfoForDequeuedBuffer(buf, fenceFd, info);
+                if(mEnqueuedBuffers > 0)
+                    mEnqueuedBuffers --;
                 return info;
             }
         }
@@ -6764,6 +6767,7 @@ void ACodec::BaseState::onOutputBufferDrained(const sp<AMessage> &msg) {
         info->mFenceFd = -1;
         if (err == OK) {
             info->mStatus = BufferInfo::OWNED_BY_NATIVE_WINDOW;
+            mCodec->mEnqueuedBuffers ++;
         } else {
             ALOGE("queueBuffer failed in onOutputBufferDrained: %d", err);
             mCodec->signalError(OMX_ErrorUndefined, makeNoSideEffectStatus(err));
@@ -7029,7 +7033,7 @@ void ACodec::LoadedState::stateEntered() {
     mCodec->mOutputFormat.clear();
     mCodec->mBaseOutputFormat.clear();
     mCodec->mGraphicBufferSource.clear();
-
+    mCodec->mEnqueuedBuffers = 0;
     if (mCodec->mShutdownInProgress) {
         bool keepComponentAllocated = mCodec->mKeepComponentAllocated;
 
@@ -8385,6 +8389,7 @@ bool ACodec::OutputPortSettingsChangedState::onMessageReceived(
 void ACodec::OutputPortSettingsChangedState::stateEntered() {
     ALOGV("[%s] Now handling output port settings change",
          mCodec->mComponentName.c_str());
+    mCodec->mEnqueuedBuffers = 0;
 }
 
 bool ACodec::OutputPortSettingsChangedState::onOMXFrameRendered(
