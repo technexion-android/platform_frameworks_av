@@ -1283,6 +1283,16 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
         // Return the required minimum undequeued buffers to the native window.
         cancelStart = bufferCount - minUndequeuedBuffers;
         cancelEnd = bufferCount;
+
+        OMX_PARAM_PORTDEFINITIONTYPE def;
+        InitOMXParams(&def);
+        def.nPortIndex = kPortIndexOutput;
+
+        status_t err = mOMXNode->getParameter(OMX_IndexParamPortDefinition, &def, sizeof(def));
+
+        if (err == OK && cancelStart < def.nBufferCountMin) {
+            cancelStart = def.nBufferCountMin;
+        }
     }
 
     for (OMX_U32 i = cancelStart; i < cancelEnd; i++) {
