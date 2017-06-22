@@ -91,6 +91,7 @@ ssize_t ParsedMessage::parse(const char *data, size_t size, bool noMoreData) {
 
     size_t offset = 0;
     bool headersComplete = false;
+    bool specialHandle = false;
     while (offset < size) {
         size_t lineEndOffset = offset;
         while (lineEndOffset + 1 < size
@@ -105,12 +106,14 @@ ssize_t ParsedMessage::parse(const char *data, size_t size, bool noMoreData) {
 
         AString line(&data[offset], lineEndOffset - offset);
 
-        if (offset == 0) {
-            // Special handling for the request/status line.
-
-            mDict.add(AString("_"), line);
+        // If the first line is received as CRLF
+        if (!specialHandle) {
             offset = lineEndOffset + 2;
-
+            if (line.size() != 0) {
+                // Special handling for the request/status line.
+                mDict.add(AString("_"), line);
+                specialHandle = true;
+            }
             continue;
         }
 
