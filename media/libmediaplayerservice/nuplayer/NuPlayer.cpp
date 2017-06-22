@@ -207,6 +207,7 @@ NuPlayer::NuPlayer(pid_t pid, const sp<MediaClock> &mediaClock)
       mPaused(false),
       mPausedByClient(true),
       mPausedForBuffering(false),
+      mStreaming(false),
       mIsDrmProtected(false),
       mDataSourceType(DATA_SOURCE_TYPE_NONE) {
     CHECK(mediaClock != NULL);
@@ -275,6 +276,7 @@ void NuPlayer::setDataSourceAsync(
                 notify, httpService, url, headers, mUIDValid, mUID);
         ALOGV("setDataSourceAsync RTSPSource %s", url);
         mDataSourceType = DATA_SOURCE_TYPE_RTSP;
+        mStreaming = true;
     } else if ((!strncasecmp(url, "http://", 7)
                 || !strncasecmp(url, "https://", 8))
                     && ((len >= 4 && !strcasecmp(".sdp", &url[len - 4]))
@@ -2008,6 +2010,7 @@ status_t NuPlayer::instantiateDecoder(
             }
         }
     }
+    format->setInt32("streaming", mStreaming?1:0);
     (*decoder)->init();
 
     // Modular DRM
