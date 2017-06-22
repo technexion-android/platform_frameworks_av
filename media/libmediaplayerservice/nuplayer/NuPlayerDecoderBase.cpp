@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright (C) 2015 Freescale Semiconductor, Inc. */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "NuPlayerDecoderBase"
 #include <utils/Log.h>
@@ -120,7 +120,7 @@ void NuPlayer::DecoderBase::onRequestInputBuffers() {
         mRequestInputBuffersPending = true;
 
         sp<AMessage> msg = new AMessage(kWhatRequestInputBuffers, this);
-        msg->post(10 * 1000ll);
+        msg->post(2 * 1000ll);
     }
 }
 
