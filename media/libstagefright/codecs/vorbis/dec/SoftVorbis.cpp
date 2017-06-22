@@ -509,6 +509,10 @@ void SoftVorbis::onQueueFilled(OMX_U32 /* portIndex */) {
         }
 
         if (mNumFramesLeftOnPage >= 0) {
+            if(mSawInputEos && numFrames == 0 && mNumFramesLeftOnPage == 0){
+                outHeader->nFlags = OMX_BUFFERFLAG_EOS;
+                mSignalledOutputEos = true;
+            }
             if (numFrames > mNumFramesLeftOnPage) {
                 ALOGV("discarding %d frames at end of page",
                      numFrames - mNumFramesLeftOnPage);
