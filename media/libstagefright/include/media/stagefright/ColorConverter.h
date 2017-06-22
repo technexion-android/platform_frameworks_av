@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright (C) 2016 Freescale Semiconductor, Inc. */
 #ifndef COLOR_CONVERTER_H_
 
 #define COLOR_CONVERTER_H_
@@ -95,6 +95,7 @@ private:
 
     status_t convertTIYUV420PackedSemiPlanar(
             const BitmapParams &src, const BitmapParams &dst);
+    status_t convertYUV422PlanartoYUV420Planar(const BitmapParams &src);
 
     ColorConverter(const ColorConverter &);
     ColorConverter &operator=(const ColorConverter &);

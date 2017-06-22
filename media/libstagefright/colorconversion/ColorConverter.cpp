@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright (C) 2016 Freescale Semiconductor, Inc. */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "ColorConverter"
 #include <utils/Log.h>
@@ -72,6 +72,7 @@ bool ColorConverter::isValid() const {
         case OMX_QCOM_COLOR_FormatYVU420SemiPlanar:
         case OMX_COLOR_FormatYUV420SemiPlanar:
         case OMX_TI_COLOR_FormatYUV420PackedSemiPlanar:
+        case OMX_COLOR_FormatYUV422Planar:
             return mDstFormat == OMX_COLOR_Format16bitRGB565;
 
         default:
@@ -206,7 +207,10 @@ status_t ColorConverter::convert(
         case OMX_TI_COLOR_FormatYUV420PackedSemiPlanar:
             err = convertTIYUV420PackedSemiPlanar(src, dst);
             break;
-
+        case OMX_COLOR_FormatYUV422Planar:
+            err = convertYUV422PlanartoYUV420Planar(src);
+            err = convertYUV420Planar(src, dst);
+            break;
         default:
         {
             CHECK(!"Should not be here. Unknown color conversion.");
@@ -918,7 +922,33 @@ status_t ColorConverter::convertTIYUV420PackedSemiPlanar(
 
     return OK;
 }
+status_t ColorConverter::convertYUV422PlanartoYUV420Planar(const BitmapParams &src)
+{
+    uint8_t *dst_ptr = (uint8_t *)src.mBits;
 
+    const uint8_t *src_y =
+        (const uint8_t *)src.mBits;
+
+    const uint8_t *src_u =
+        (const uint8_t *)src_y + src.mWidth * src.mHeight;
+
+    const uint8_t *src_v =
+        src_u + (src.mWidth / 2) * src.mHeight;
+
+    memcpy(dst_ptr,src_y,src.mWidth * src.mHeight);
+    dst_ptr += src.mWidth * src.mHeight;
+    for(size_t i = 0; i < src.mHeight; i+=2){
+        memcpy(dst_ptr,src_u,src.mWidth/2);
+        dst_ptr += src.mWidth/2;
+        src_u += src.mWidth;
+    }
+    for(size_t i = 0; i < src.mHeight; i+=2){
+        memcpy(dst_ptr,src_v,src.mWidth/2);
+        dst_ptr += src.mWidth/2;
+        src_v += src.mWidth;
+    }
+    return OK;
+}
 uint8_t *ColorConverter::initClip() {
     static const signed kClipMin = -278;
     static const signed kClipMax = 535;
