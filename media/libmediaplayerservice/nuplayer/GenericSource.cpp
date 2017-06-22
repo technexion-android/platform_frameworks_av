@@ -183,6 +183,7 @@ status_t NuPlayer::GenericSource::initFromDataSource() {
     }
 
     mLock.lock();
+    mExtractor = extractor;
     mFileMeta = fileMeta;
     if (mFileMeta != NULL) {
         int64_t duration;
@@ -457,14 +458,19 @@ void NuPlayer::GenericSource::onPrepareAsync() {
         }
         notifyVideoSizeChanged(msg);
     }
+    //FLAG_SECURE && FLAG_PROTECTED will be known if/when prepareDrm is called by the app
+    uint32_t flags = FLAG_CAN_PAUSE;
+    uint32_t extractor_flags = mExtractor->flags();
+    if(extractor_flags & MediaExtractor::CAN_SEEK)
+        flags |= FLAG_CAN_SEEK;
+    if(extractor_flags & MediaExtractor::CAN_SEEK_FORWARD)
+        flags |= FLAG_CAN_SEEK_FORWARD;
+    if(extractor_flags & MediaExtractor::CAN_SEEK_BACKWARD)
+        flags |= FLAG_CAN_SEEK_BACKWARD;
 
-    notifyFlagsChanged(
-            // FLAG_SECURE will be known if/when prepareDrm is called by the app
-            // FLAG_PROTECTED will be known if/when prepareDrm is called by the app
-            FLAG_CAN_PAUSE |
-            FLAG_CAN_SEEK_BACKWARD |
-            FLAG_CAN_SEEK_FORWARD |
-            FLAG_CAN_SEEK);
+    ALOGV("flags %x", flags);
+
+    notifyFlagsChanged(flags);
 
     finishPrepareAsync();
 
@@ -1348,6 +1354,10 @@ void NuPlayer::GenericSource::readBuffer(
     }
 
     int32_t generation = getDataGeneration(trackType);
+    int64_t videoSeekTimeResultUs = -1;
+    int64_t startUs = ALooper::GetNowUs();
+    int64_t nowUs = startUs;
+
     for (size_t numBuffers = 0; numBuffers < maxBuffers; ) {
         Vector<MediaBufferBase *> mediaBuffers;
         status_t err = NO_ERROR;
@@ -1391,6 +1401,8 @@ void NuPlayer::GenericSource::readBuffer(
                 mAudioTimeUs = timeUs;
             } else if (trackType == MEDIA_TRACK_TYPE_VIDEO) {
                 mVideoTimeUs = timeUs;
+                if(seeking == true && numBuffers == 0)
+                    videoSeekTimeResultUs = timeUs; //save the first frame timestamp after seek in order to seek audio
             }
 
             queueDiscontinuityIfNeeded(seeking, formatChange, trackType, track);
@@ -1436,6 +1448,10 @@ void NuPlayer::GenericSource::readBuffer(
             track->mPackets->signalEOS(err);
             break;
         }
+        //quit from loop when reading too many audio buffer
+        nowUs = ALooper::GetNowUs();
+        if(nowUs - startUs > 250000LL)
+            break;
     }
 
     if (mIsStreaming
@@ -1472,6 +1488,9 @@ void NuPlayer::GenericSource::readBuffer(
 
         postReadBuffer(trackType);
     }
+
+    if(videoSeekTimeResultUs > 0)
+        *actualTimeUs = videoSeekTimeResultUs;
 }
 
 void NuPlayer::GenericSource::queueDiscontinuityIfNeeded(
