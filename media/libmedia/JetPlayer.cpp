@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright (C) 2014 Freescale Semiconductor, Inc.*/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "JetPlayer-C"
 
@@ -365,7 +365,9 @@ int JetPlayer::loadFromFD(const int fd, const long long offset, const long long 
 int JetPlayer::closeFile()
 {
     Mutex::Autolock lock(mMutex);
-    return JET_CloseFile(mEasData);
+    int ret = JET_CloseFile(mEasData);
+    usleep(100000);
+    return ret;
 }
 
 
