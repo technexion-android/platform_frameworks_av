@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright (C) 2013-2016 Freescale Semiconductor, Inc.*/
 #ifndef ANDROID_ISTREAMSOURCE_H_
 
 #define ANDROID_ISTREAMSOURCE_H_
@@ -40,6 +40,9 @@ struct IStreamSource : public IInterface {
 
         // Timestamps are in ALooper::GetNowUs() units.
         kFlagIsRealTimeData   = 2,
+
+        // Will discard data if buffered too much data to keep low latency.
+        kFlagKeepLowLatency   = 4,
     };
     virtual uint32_t flags() const { return 0; }
 };

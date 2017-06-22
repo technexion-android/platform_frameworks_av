@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright (C) 2013-2016 Freescale Semiconductor, Inc.*/
 #ifndef STREAMING_SOURCE_H_
 
 #define STREAMING_SOURCE_H_
@@ -44,6 +44,8 @@ struct NuPlayer::StreamingSource : public NuPlayer::Source {
     virtual status_t dequeueAccessUnit(bool audio, sp<ABuffer> *accessUnit);
 
     virtual bool isRealTime() const;
+
+    virtual bool isAVCReorderDisabled() const;
 
 protected:
     virtual ~StreamingSource();

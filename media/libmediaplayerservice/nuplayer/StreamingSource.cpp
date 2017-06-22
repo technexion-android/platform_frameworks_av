@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright (C) 2013-2016 Freescale Semiconductor, Inc.*/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "StreamingSource"
 #include <utils/Log.h>
@@ -279,6 +279,10 @@ status_t NuPlayer::StreamingSource::dequeueAccessUnit(
 #endif
 
     return err;
+}
+
+bool NuPlayer::StreamingSource::isAVCReorderDisabled() const {
+    return mSource->flags() & IStreamSource::kFlagKeepLowLatency;
 }
 
 bool NuPlayer::StreamingSource::isRealTime() const {

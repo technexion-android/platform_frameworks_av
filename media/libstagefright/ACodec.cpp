@@ -53,6 +53,7 @@
 #include <media/openmax/OMX_Component.h>
 #include <media/openmax/OMX_IndexExt.h>
 #include <media/openmax/OMX_AsString.h>
+#include <media/openmax/OMX_Implement.h>
 
 #include "include/ACodecBufferChannel.h"
 #include "include/DataConverter.h"
@@ -1874,6 +1875,35 @@ status_t ACodec::configureCodec(
                     "create-input-buffers-suspended",
                     (int32_t*)&mCreateInputBuffersSuspended)) {
             mCreateInputBuffersSuspended = false;
+        }
+    }
+
+    if (video && (!encoder)) {
+        OMX_INDEXTYPE index;
+        err = mOMXNode->getExtensionIndex(
+                "OMX.google.android.index.disableAVCReorder",
+                &index);
+
+        if (err == OK) {
+            AString temp;
+            if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_AVC, mime)) {
+                msg->findString("disreorder", &temp);
+            }
+
+            DisableAVCReorderParams params;
+            InitOMXParams(&params);
+            if(!temp.c_str())
+                params.bDisable = OMX_FALSE;
+            else
+                params.bDisable = (!strcmp(temp.c_str(), "1")) ? OMX_TRUE : OMX_FALSE;
+            ALOGI("Send reorder config(%d) to VPU",params.bDisable);
+            err = mOMXNode->setParameter(
+                    index, &params, sizeof(params));
+            if (err != OK) {
+                ALOGE("disable AVC reorder failed");
+                // allow failure
+                err = OK;
+            }
         }
     }
 
