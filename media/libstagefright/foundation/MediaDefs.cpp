@@ -16,6 +16,7 @@
  */
 
 #include <media/stagefright/foundation/MediaDefs.h>
+/* Copyright (C) 2015-2016 Freescale Semiconductor, Inc.*/
 
 namespace android {
 

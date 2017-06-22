@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2017 The Android Open Source Project
+ * Copyright 2018 NXP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,6 +265,8 @@ void MediaExtractorFactory::RegisterExtractorsInSystem(
         const char *libDirPath, List<sp<ExtractorPlugin>> &pluginList) {
     ALOGV("search for plugins at %s", libDirPath);
     DIR *libDir = opendir(libDirPath);
+    int value = property_get_int32("media.fsl_codec.flag", 0);
+
     if (libDir) {
         struct dirent* libEntry;
         while ((libEntry = readdir(libDir))) {
@@ -273,9 +276,23 @@ void MediaExtractorFactory::RegisterExtractorsInSystem(
                 MediaExtractor::GetExtractorDef getDef =
                     (MediaExtractor::GetExtractorDef) dlsym(libHandle, "GETEXTRACTORDEF");
                 if (getDef) {
-                    ALOGV("registering sniffer for %s", libPath.string());
-                    RegisterExtractor(
-                            new ExtractorPlugin(getDef(), libHandle, libPath), pluginList);
+                    bool skipThis = false;
+                    // don't register below google extractors when using fsl extractor
+                    if((value & 0x01) && !strncmp(libDirPath, "/system", 7)){
+                        const char * name = getDef().extractor_name;
+                        if(!strcmp(name,"MP4 Extractor")
+                            || !strcmp(name,"FLAC Extractor")
+                            || !strcmp(name,"MPEG2-PS/TS Extractor")
+                            || !strcmp(name,"Matroska Extractor")
+                            || !strcmp(name,"AAC Extractor"))
+                                skipThis = true;
+                    }
+
+                    if(!skipThis){
+                        ALOGV("registering sniffer for %s", libPath.string());
+                        RegisterExtractor(
+                                new ExtractorPlugin(getDef(), libHandle, libPath), pluginList);
+                    }
                 } else {
                     ALOGW("%s does not contain sniffer", libPath.string());
                     dlclose(libHandle);
@@ -309,7 +326,10 @@ void MediaExtractorFactory::UpdateExtractors(const char *newUpdateApkPath) {
 #endif
             "/extractors", *newList);
 
-    RegisterExtractorsInSystem("/vendor/lib"
+    int value;
+    value = property_get_int32("media.fsl_codec.flag", 0);
+    if(value & 0x01)
+        RegisterExtractorsInSystem("/vendor/lib"
 #ifdef __LP64__
             "64"
 #endif
