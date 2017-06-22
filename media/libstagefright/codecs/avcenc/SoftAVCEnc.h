@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright (C) 2016 Freescale Semiconductor, Inc.*/
 #ifndef __SOFT_AVC_ENC_H__
 #define __SOFT_AVC_ENC_H__
 
@@ -81,7 +81,7 @@ namespace android {
 #define DEFAULT_SRCH_RNG_X          64
 #define DEFAULT_SRCH_RNG_Y          48
 #define DEFAULT_I_INTERVAL          30
-#define DEFAULT_IDR_INTERVAL        1000
+#define DEFAULT_IDR_INTERVAL        30
 #define DEFAULT_B_FRAMES            0
 #define DEFAULT_DISABLE_DEBLK_LEVEL 0
 #define DEFAULT_HPEL                1
