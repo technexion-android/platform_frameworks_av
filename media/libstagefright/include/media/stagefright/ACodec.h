@@ -300,6 +300,8 @@ private:
         kExtensionsExist,
     } mVendorExtensionsStatus;
 
+    bool mSetStartTime;
+
     status_t setCyclicIntraMacroblockRefresh(const sp<AMessage> &msg, int32_t mode);
     status_t allocateBuffersOnPort(OMX_U32 portIndex);
     status_t freeBuffersOnPort(OMX_U32 portIndex);
@@ -564,6 +566,7 @@ private:
     // Force EXEC->IDLE->LOADED shutdown sequence if not stale.
     void forceStateTransition(int generation);
 
+    status_t setMediaTime(int64_t time, float speed);
     DISALLOW_EVIL_CONSTRUCTORS(ACodec);
 };
 

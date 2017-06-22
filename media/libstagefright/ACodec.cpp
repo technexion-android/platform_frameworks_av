@@ -602,6 +602,7 @@ ACodec::ACodec()
     memset(&mLastNativeWindowCrop, 0, sizeof(mLastNativeWindowCrop));
 
     changeState(mUninitializedState);
+    mSetStartTime = false;
 }
 
 ACodec::~ACodec() {
@@ -1724,6 +1725,7 @@ status_t ACodec::configureCodec(
     mIsEncoder = encoder;
     mIsVideo = !strncasecmp(mime, "video/", 6);
     mIsImage = !strncasecmp(mime, "image/", 6);
+    mSetStartTime = true;
 
     mPortMode[kPortIndexInput] = IOMX::kPortModePresetByteBuffer;
     mPortMode[kPortIndexOutput] = IOMX::kPortModePresetByteBuffer;
@@ -3430,6 +3432,25 @@ status_t ACodec::setupVideoDecoder(
         return err;
     }
 
+    if(!strncmp(mComponentName.c_str(), "OMX.Freescale.std.video_decoder", 31)
+          && strstr(mComponentName.c_str(),"hw-based")) {
+        OMX_DECODER_CACHED_THR sThreshold;
+        OMX_INIT_STRUCT(&sThreshold, OMX_DECODER_CACHED_THR);
+        OMX_S32 maxDurationMsThreshold = 1000; // set default cached threshoad to vpu decoder
+        OMX_S32 maxBufCntThreshold = 30;
+        int32_t streaming = 0;
+
+        if(msg->findInt32("streaming", &streaming) && streaming){
+            maxDurationMsThreshold = 100; //500ms
+            maxBufCntThreshold = 3;
+        }
+
+        sThreshold.nPortIndex = 0;
+        sThreshold.nMaxDurationMsThreshold = maxDurationMsThreshold;
+        sThreshold.nMaxBufCntThreshold = maxBufCntThreshold;
+        mOMXNode->setParameter(OMX_IndexParamDecoderCachedThreshold, &sThreshold, sizeof(sThreshold));
+    }
+
     err = setHDRStaticInfoForVideoCodec(kPortIndexOutput, msg, outputFormat);
     if (err == ERROR_UNSUPPORTED) { // support is optional
         err = OK;
@@ -4967,6 +4988,16 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
                             return BAD_VALUE;
                         }
 
+                        if(rect.nHeight > 0
+                            && rect.nHeight < videoDef->nFrameHeight
+                            && !strncmp(mComponentName.c_str(), "OMX.Freescale.std.video_decoder", 31)
+                            && strstr(mComponentName.c_str(),"hw-based")){
+
+                            ALOGW("ACodec map vpu crop info: output crop: %d, frameH %d", rect.nHeight, videoDef->nFrameHeight);
+                            notify->setInt32("slice-height", videoDef->nFrameHeight);
+                            videoDef->nFrameHeight = rect.nHeight;
+                        }
+
                         notify->setRect(
                                 "crop",
                                 rect.nLeft,
@@ -5866,6 +5897,11 @@ void ACodec::BaseState::onInputBufferFilled(const sp<AMessage> &msg) {
 
                 if (eos) {
                     flags |= OMX_BUFFERFLAG_EOS;
+                }
+
+                if (mCodec->mSetStartTime && !(flags & OMX_BUFFERFLAG_CODECCONFIG)){
+                    flags |= OMX_BUFFERFLAG_STARTTIME;
+                    mCodec->mSetStartTime = false;
                 }
 
                 size_t size = buffer->size();
@@ -7371,6 +7407,19 @@ status_t ACodec::setParameters(const sp<AMessage> &params) {
         }
     }
 
+    float speed;
+    if (!params->findFloat("playback-speed", &speed) || speed < 0)
+        speed = 1.0f;
+
+    int64_t mediaTime;
+    if (params->findInt64("media-time", &mediaTime)) {
+        status_t err = setMediaTime(mediaTime, speed);
+        if (err != OK) {
+            ALOGE("Failed to set parameter 'media-time' (err %d)", err);
+            return err;
+        }
+    }
+
     int32_t intraRefreshPeriod = 0;
     if (params->findInt32("intra-refresh-period", &intraRefreshPeriod)
             && intraRefreshPeriod > 0) {
@@ -8291,6 +8340,8 @@ void ACodec::FlushingState::changeStateIfWeOwnAllBuffers() {
         mCodec->mPortEOS[kPortIndexInput] =
             mCodec->mPortEOS[kPortIndexOutput] = false;
 
+        mCodec->mSetStartTime = true;
+
         mCodec->mInputEOSResult = OK;
 
         if (mCodec->mSkipCutBuffer != NULL) {
@@ -8521,6 +8572,29 @@ status_t ACodec::getOMXChannelMapping(size_t numChannels, OMX_AUDIO_CHANNELTYPE 
             return -EINVAL;
     }
 
+    return OK;
+}
+
+status_t ACodec::setMediaTime(int64_t time, float speed) {
+
+    if(!mComponentName.startsWith("OMX.Freescale.std.video_decoder")){
+        return OK;
+    }
+    //only enable for hardware decoder and soft_hevc decoder.
+    if(!(mComponentName.endsWith("hw-based") || mComponentName.endsWith("soft_hevc.sw-based")))
+        return OK;
+
+    OMX_CONFIG_VIDEO_MEDIA_TIME def;
+    InitOMXParams(&def);
+    def.nTime = time;
+    def.nScale = speed * 0x10000; // Q16 format
+    status_t err = mOMXNode->setConfig(
+            (OMX_INDEXTYPE)OMX_IndexConfigVideoMediaTime,
+            &def, sizeof(def));
+
+    if (err != OK) {
+        ALOGE("codec does not support set media time %" PRId64 " (err %d)",time, err);
+    }
     return OK;
 }
 

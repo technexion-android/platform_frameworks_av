@@ -191,6 +191,7 @@ NuPlayer::NuPlayer(pid_t pid, const sp<MediaClock> &mediaClock)
       mScanSourcesGeneration(0),
       mPollDurationGeneration(0),
       mTimedTextGeneration(0),
+      mSetVideoTimeGeneration(0),
       mFlushingAudio(NONE),
       mFlushingVideo(NONE),
       mResumePending(false),
@@ -1284,6 +1285,8 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
                 notifyListener(MEDIA_INFO, MEDIA_INFO_RENDERING_START, 0);
             } else if (what == Renderer::kWhatMediaRenderingStart) {
                 ALOGV("media rendering started");
+                if(mVideoDecoder != NULL)
+                    scheduleSetVideoDecoderTime();
                 notifyListener(MEDIA_STARTED, 0, 0);
             } else if (what == Renderer::kWhatAudioTearDown) {
                 int32_t reason;
@@ -1449,6 +1452,27 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
             break;
         }
 
+        case kWhatSetTime:
+        {
+            int64_t ts = 0;
+            int32_t generation;
+            CHECK(msg->findInt32("generation", &generation));
+
+            if (generation != mSetVideoTimeGeneration) {
+                break;
+            }
+
+            sp<AMessage> params = new AMessage();
+            if(OK == mRenderer->getCurrentPosition(&ts)){
+                params->setInt64("media-time", ts);
+                params->setInt32("pause", mPaused);
+                mVideoDecoder->setParameters(params);
+            }
+
+            msg->post(1000000ll);  // poll again in a second.
+            break;
+        }
+
         default:
             TRESPASS();
             break;
@@ -1478,6 +1502,9 @@ void NuPlayer::onResume() {
     }
 
     startPlaybackTimer("onresume");
+    if (mVideoDecoder != NULL) {
+        scheduleSetVideoDecoderTime();
+    }
 }
 
 status_t NuPlayer::onInstantiateSecureDecoders() {
@@ -1599,6 +1626,10 @@ void NuPlayer::onStart(int64_t startPositionUs, MediaPlayerSeekMode mode) {
 
     startPlaybackTimer("onstart");
 
+    if(mVideoDecoder != NULL){
+        scheduleSetVideoDecoderTime();
+    }
+
     postScanSources();
 }
 
@@ -1696,6 +1727,7 @@ void NuPlayer::onPause() {
     } else {
         ALOGW("pause called when renderer is gone or not set");
     }
+    cancelSetVideoDecoderTime();
 
 }
 
@@ -2361,7 +2393,7 @@ void NuPlayer::performReset() {
             driver->notifyResetComplete();
         }
     }
-
+    cancelSetVideoDecoderTime();
     mStarted = false;
     mPrepared = false;
     mResetting = false;
@@ -2955,6 +2987,16 @@ status_t NuPlayer::onReleaseDrm()
 }
 // Modular DRM end
 ////////////////////////////////////////////////////////////////////////////////
+
+void NuPlayer::scheduleSetVideoDecoderTime() {
+    sp<AMessage> msg = new AMessage(kWhatSetTime, this);
+    msg->setInt32("generation", mSetVideoTimeGeneration);
+    msg->setInt32("pause", mPaused);
+    msg->post();
+}
+void NuPlayer::cancelSetVideoDecoderTime() {
+    ++mSetVideoTimeGeneration;
+}
 
 sp<AMessage> NuPlayer::Source::getFormat(bool audio) {
     sp<MetaData> meta = getFormatMeta(audio);
