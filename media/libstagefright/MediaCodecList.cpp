@@ -330,6 +330,16 @@ void MediaCodecList::findMatchingCodecs(
     }
 
     size_t index = 0;
+
+    bool use_fsl_video = false;
+    bool use_fsl_audio = false;
+    int value;
+    value = property_get_int32("media.fsl_codec.flag", 2);
+    if(value & 0x02)
+        use_fsl_video = true;
+    if(value & 0x04)
+        use_fsl_audio = true;
+
     for (;;) {
         ssize_t matchIndex =
             list->findCodecByType(mime, encoder, index);
@@ -343,6 +353,12 @@ void MediaCodecList::findMatchingCodecs(
         const sp<MediaCodecInfo> info = list->getCodecInfo(matchIndex);
         CHECK(info != nullptr);
         AString componentName = info->getCodecName();
+
+        if(!strncmp(componentName.c_str(), "OMX.Freescale.std.video_decoder", 30) && !use_fsl_video)
+            continue;
+
+        if(!strncmp(componentName.c_str(), "OMX.Freescale.std.audio_decoder", 30) && !use_fsl_audio)
+            continue;
 
         if ((flags & kHardwareCodecsOnly) && isSoftwareCodec(componentName)) {
             ALOGV("skipping SW codec '%s'", componentName.c_str());

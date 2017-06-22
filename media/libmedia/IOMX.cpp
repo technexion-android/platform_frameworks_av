@@ -32,6 +32,7 @@
 #include <media/omx/1.0/WOmxNode.h>
 #include <android/IGraphicBufferSource.h>
 #include <android/IOMXBufferSource.h>
+#include <media/openmax/OMX_Implement.h>
 
 namespace android {
 
@@ -679,7 +680,7 @@ status_t BnOMXNode::onTransact(
             size_t pageSize = 0;
             size_t allocSize = 0;
             bool isUsageBits = (index == (OMX_INDEXTYPE) OMX_IndexParamConsumerUsageBits);
-            if ((isUsageBits && size < 4) || (!isUsageBits && size < 8)) {
+            if ((isUsageBits && size < 4) || (!isUsageBits && size < 8 && index != (OMX_INDEXTYPE)OMX_IndexParamDecoderPlayMode)) {
                 // we expect the structure to contain at least the size and
                 // version, 8 bytes total
                 ALOGE("b/27207275 (%zu) (%d/%d)", size, int(index), int(code));
@@ -702,6 +703,7 @@ status_t BnOMXNode::onTransact(
                         err = NOT_ENOUGH_DATA;
                         OMX_U32 declaredSize = *(OMX_U32*)params;
                         if (index != (OMX_INDEXTYPE) OMX_IndexParamConsumerUsageBits &&
+                                index != (OMX_INDEXTYPE)OMX_IndexParamDecoderPlayMode &&
                                 declaredSize > size) {
                             // the buffer says it's bigger than it actually is
                             ALOGE("b/27207275 (%u/%zu)", declaredSize, size);

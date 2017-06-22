@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright (C) 2016 Freescale Semiconductor, Inc. */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Utils"
 #include <utils/Log.h>
@@ -632,6 +632,11 @@ status_t convertMetaDataToMessage(
         msg->setInt32("is-sync-frame", 1);
     }
 
+    int32_t subType;
+    if (meta->findInt32(kKeySubFormat, &subType)) {
+        msg->setInt32("sub-format", subType);
+    }
+
     // this only needs to be translated from meta to message as it is an extractor key
     int32_t trackID;
     if (meta->findInt32(kKeyTrackID, &trackID)) {
@@ -742,9 +747,34 @@ status_t convertMetaDataToMessage(
             msg->setInt32("is-adts", isADTS);
         }
 
+        int32_t isADIF;
+        if (meta->findInt32(kKeyIsADIF, &isADIF)) {
+            msg->setInt32("is-adif", true);
+        }
+
         int32_t aacProfile = -1;
         if (meta->findInt32(kKeyAACAOT, &aacProfile)) {
             msg->setInt32("aac-profile", aacProfile);
+        }
+
+        int32_t bitPerSample;
+        if (meta->findInt32(kKeyBitPerSample, &bitPerSample)) {
+            msg->setInt32("bit-per-sample", bitPerSample);
+        }
+
+        int32_t audioBlockAlign = -1;
+        if (meta->findInt32(kKeyAudioBlockAlign, &audioBlockAlign)) {
+            msg->setInt32("audio-block-align", audioBlockAlign);
+        }
+
+        int32_t bitsPerFrame = 0;
+        if (meta->findInt32(kKeyBitsPerFrame, &bitsPerFrame)) {
+            msg->setInt32("bits-per-frame", bitsPerFrame);
+        }
+
+        int32_t isEndianBig = 0;
+        if (meta->findInt32(kKeyIsEndianBig, &isEndianBig)) {
+            msg->setInt32("is-endian-big", isEndianBig);
         }
 
         int32_t pcmEncoding;
@@ -1426,6 +1456,16 @@ void convertMessageToMetaData(const sp<AMessage> &msg, sp<MetaData> &meta) {
         int32_t isADTS;
         if (msg->findInt32("is-adts", &isADTS)) {
             meta->setInt32(kKeyIsADTS, isADTS);
+        }
+
+        int32_t isADIF;
+        if (msg->findInt32("is-adif", &isADIF)) {
+            meta->setInt32(kKeyIsADIF, isADIF);
+        }
+
+        int32_t isEndianBig;
+        if (msg->findInt32("is-endian-big", &isEndianBig)) {
+            meta->setInt32(kKeyIsEndianBig, isEndianBig);
         }
 
         int32_t pcmEncoding;

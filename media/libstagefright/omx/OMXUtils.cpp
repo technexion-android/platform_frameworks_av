@@ -165,6 +165,33 @@ const char *GetComponentRole(bool isEncoder, const char *mime) {
             "audio_decoder.eac3", "audio_encoder.eac3" },
         { MEDIA_MIMETYPE_IMAGE_ANDROID_HEIC,
             "image_decoder.heic", "image_encoder.heic" },
+        //nxp added
+        { MEDIA_MIMETYPE_VIDEO_WMV9,
+            "video_decoder.wmv9", "video_encoder.wmv9" },
+        { MEDIA_MIMETYPE_VIDEO_WMV,
+            "video_decoder.wmv", "video_encoder.wmv" },
+        { MEDIA_MIMETYPE_VIDEO_REAL,
+            "video_decoder.rv", "video_encoder.rv" },
+        { MEDIA_MIMETYPE_VIDEO_SORENSON,
+            "video_decoder.sorenson", "video_encoder.sorenson" },
+        { MEDIA_MIMETYPE_VIDEO_MJPEG,
+            "video_decoder.mjpeg", "video_encoder.mjpeg" },
+        { MEDIA_MIMETYPE_VIDEO_DIVX,
+            "video_decoder.divx", "video_encoder.divx" },
+        { MEDIA_MIMETYPE_VIDEO_DIV4,
+            "video_decoder.div4", "video_encoder.div4" },
+        { MEDIA_MIMETYPE_VIDEO_DIV3,
+            "video_decoder.div3", "video_encoder.div3" },
+        { MEDIA_MIMETYPE_VIDEO_XVID,
+            "video_decoder.xvid", "video_encoder.xvid" },
+        { MEDIA_MIMETYPE_AUDIO_WMA,
+            "audio_decoder.wma", "audio_encoder.wma" },
+        { MEDIA_MIMETYPE_AUDIO_APE,
+            "audio_decoder.ape", "audio_encoder.ape" },
+        { MEDIA_MIMETYPE_AUDIO_REAL,
+            "audio_decoder.ra", "audio_encoder.ra" },
+        { MEDIA_MIMETYPE_AUDIO_AAC_FSL,
+            "audio_decoder.aac", "audio_encoder.aac" },
     };
 
     static const size_t kNumMimeToRole =
@@ -215,6 +242,7 @@ bool DescribeDefaultColorFormat(DescribeColorFormat2Params &params) {
         fmt != OMX_COLOR_FormatYUV420PackedPlanar &&
         fmt != OMX_COLOR_FormatYUV420SemiPlanar &&
         fmt != OMX_COLOR_FormatYUV420PackedSemiPlanar &&
+        fmt != OMX_COLOR_FormatYUV422SemiPlanar &&
         fmt != (OMX_COLOR_FORMATTYPE)HAL_PIXEL_FORMAT_YV12) {
         ALOGW("do not know color format 0x%x = %d", fmt, fmt);
         if (fmt == OMX_COLOR_FormatYUV420Planar16) {
