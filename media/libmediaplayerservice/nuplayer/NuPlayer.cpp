@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* Copyright (C) 2013-2016 Freescale Semiconductor, Inc.*/
+/* Copyright (C) 2013-2016 Freescale Semiconductor, Inc. */
+/* Copyright 2017-2018 NXP */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "NuPlayer"
 
@@ -61,6 +62,7 @@
 
 #include "ESDS.h"
 #include <media/stagefright/Utils.h>
+#include "GenericStreamSource.h"
 
 namespace android {
 
@@ -266,6 +268,11 @@ void NuPlayer::setDataSourceAsync(
 
     sp<AMessage> notify = new AMessage(kWhatSourceNotify, this);
 
+    if(!strncasecmp(url, "rtp://", 6)
+      || !strncasecmp(url, "udp://", 6)){
+        mStreaming = true;
+    }
+
     sp<Source> source;
     if (IsHTTPLiveURL(url)) {
         source = new HTTPLiveSource(notify, httpService, url, headers);
@@ -277,7 +284,14 @@ void NuPlayer::setDataSourceAsync(
         ALOGV("setDataSourceAsync RTSPSource %s", url);
         mDataSourceType = DATA_SOURCE_TYPE_RTSP;
         mStreaming = true;
-    } else if ((!strncasecmp(url, "http://", 7)
+    }
+    else if((!strncasecmp(url, "rtp://", 6) || !strncasecmp(url, "udp://", 6))
+         && (property_get_int32("media.rtp_streaming.low_latency", 0) & 0x01)
+        ){
+        sp<IStreamSource> iss = new GenericStreamSource(url);
+        source = new StreamingSource(notify, iss);
+    }
+    else if ((!strncasecmp(url, "http://", 7)
                 || !strncasecmp(url, "https://", 8))
                     && ((len >= 4 && !strcasecmp(".sdp", &url[len - 4]))
                     || strstr(url, ".sdp?"))) {

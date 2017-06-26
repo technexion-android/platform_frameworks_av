@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright (C) 2016 Freescale Semiconductor, Inc. */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "NuPlayerStreamListener"
 #include <utils/Log.h>
@@ -34,7 +34,6 @@ NuPlayer::NuPlayerStreamListener::NuPlayerStreamListener(
       mTargetHandler(targetHandler),
       mEOS(false),
       mSendDataNotification(true) {
-    mSource->setListener(this);
 
     mMemoryDealer = new MemoryDealer(kNumBuffers * kBufferSize);
     for (size_t i = 0; i < kNumBuffers; ++i) {
@@ -47,6 +46,8 @@ NuPlayer::NuPlayerStreamListener::NuPlayerStreamListener(
 }
 
 void NuPlayer::NuPlayerStreamListener::start() {
+    mSource->setListener(this);
+
     for (size_t i = 0; i < kNumBuffers; ++i) {
         mSource->onBufferAvailable(i);
     }

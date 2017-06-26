@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright 2018 NXP */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "ACodec"
 
@@ -6744,6 +6744,7 @@ void ACodec::BaseState::onOutputBufferDrained(const sp<AMessage> &msg) {
         int64_t mediaTimeUs = -1;
         buffer->meta()->findInt64("timeUs", &mediaTimeUs);
         if (mediaTimeUs >= 0) {
+            ALOGV("onOutputBufferDrained ts %" PRId64 " ", mediaTimeUs);
             mCodec->mRenderTracker.onFrameQueued(
                     mediaTimeUs, info->mGraphicBuffer, new Fence(::dup(info->mFenceFd)));
         }

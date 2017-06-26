@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/* Copyright 2018 NXP */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "ESQueue"
 #include <media/stagefright/foundation/ADebug.h>
@@ -1166,6 +1166,9 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitH264() {
             }
 
             accessUnit->meta()->setInt64("timeUs", timeUs);
+
+            ALOGV("returning H264 video access unit at time %" PRId64 " us", timeUs);
+
             if (foundIDR) {
                 accessUnit->meta()->setInt32("isSync", 1);
             }

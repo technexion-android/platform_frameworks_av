@@ -1073,7 +1073,62 @@ status_t ANetworkSession::createClientOrServer(
             } else {
                 CHECK_EQ(mode, kModeCreateUDPSession);
 
+                bool is_multicast = false;
+
                 if (remoteHost != NULL) {
+                    struct addrinfo hints, *res = 0;
+                    int error;
+                    char sport[16];
+                    const char *node = 0, *service = "0";
+
+                    if (port > 0) {
+                        snprintf(sport, sizeof(sport), "%d", port);
+                        service = sport;
+                    }
+                    if ((remoteHost[0] != '\0') && (remoteHost[0] != '?')) {
+                        node = remoteHost;
+                    }
+                    memset(&hints, 0, sizeof(hints));
+                    hints.ai_socktype = SOCK_DGRAM;
+                    hints.ai_family   = AF_UNSPEC;
+                    hints.ai_flags = 0;
+
+                    if ((error = getaddrinfo(node, service, &hints, &res)) || res == 0) {
+                        res = NULL;
+                        ALOGE("getaddrinfo fail");
+                        goto bail2;
+                    }
+
+                    struct sockaddr_in *paddr_in = (struct sockaddr_in *)res->ai_addr;
+                    ALOGV("family is %d, s_addr is %x",
+                        paddr_in->sin_family,(uint32_t)ntohl(paddr_in->sin_addr.s_addr));
+
+                    if (paddr_in->sin_family == AF_INET){
+                        uint32_t s_addr = (uint32_t)ntohl(paddr_in->sin_addr.s_addr);
+                        if((s_addr & 0xf0000000) == 0xe0000000)
+                        {
+                            ALOGV("is_multicast is true!");
+                            is_multicast = true;
+                        }
+                    }
+
+                    if (is_multicast) {
+                        struct ip_mreq mreq;
+                        mreq.imr_multiaddr.s_addr = paddr_in->sin_addr.s_addr;
+                        mreq.imr_interface.s_addr= INADDR_ANY;
+                        if (setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                            (const void *)&mreq, sizeof(mreq)) < 0) {
+                            err = -errno;
+                            ALOGE("join multi cast fail! %s, s_addr is 0x%x",
+                                strerror(errno), ntohl(paddr_in->sin_addr.s_addr));
+                            freeaddrinfo(res);
+                            goto bail2;
+                        }
+                    }
+                   freeaddrinfo(res);
+                }
+
+                if (remoteHost != NULL && !is_multicast) {
                     struct sockaddr_in remoteAddr;
                     memset(remoteAddr.sin_zero, 0, sizeof(remoteAddr.sin_zero));
                     remoteAddr.sin_family = AF_INET;
