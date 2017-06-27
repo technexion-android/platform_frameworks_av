@@ -114,6 +114,8 @@ private:
     struct Decoder;
     struct DecoderBase;
     struct DecoderPassThrough;
+    struct DecoderPassThroughAC3;
+    struct DecoderPassThroughDDP;
     struct CCDecoder;
     struct GenericSource;
     struct HTTPLiveSource;
@@ -258,6 +260,7 @@ private:
     bool mPausedForBuffering;
     bool mStreaming;
     bool mRendering;
+    bool bEnablePassThrough;
     // Modular DRM
     sp<ICrypto> mCrypto;
     bool mIsDrmProtected;
@@ -350,6 +353,8 @@ private:
     status_t onReleaseDrm();
     void scheduleSetVideoDecoderTime();
     void cancelSetVideoDecoderTime();
+    void tryOpenAudioSinkForPassThrough(
+        const sp<AMessage> &format, bool hasVideo);
     DISALLOW_EVIL_CONSTRUCTORS(NuPlayer);
 };
 
