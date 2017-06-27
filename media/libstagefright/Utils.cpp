@@ -1011,7 +1011,8 @@ status_t convertMetaDataToMessage(
             if (meta->findData(kKeyStreamHeader, &type, &data, &size)) {
                 parseMpeg2ProfileLevelFromHeader((uint8_t*)data, size, msg);
             }
-        } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AAC)) {
+        } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AAC)
+            || !strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AAC_FSL)){
             parseAacProfileFromCsd(buffer, msg);
         }
 
@@ -1510,7 +1511,9 @@ void convertMessageToMetaData(const sp<AMessage> &msg, sp<MetaData> &meta) {
                 size_t outsize = reassembleAVCC(csd0, csd1, avcc.data());
                 meta->setData(kKeyAVCC, kKeyAVCC, avcc.data(), outsize);
             }
-        } else if (mime == MEDIA_MIMETYPE_AUDIO_AAC || mime == MEDIA_MIMETYPE_VIDEO_MPEG4) {
+        } else if (mime == MEDIA_MIMETYPE_AUDIO_AAC
+                || mime == MEDIA_MIMETYPE_AUDIO_AAC_FSL
+                || mime == MEDIA_MIMETYPE_VIDEO_MPEG4) {
             std::vector<char> esds(csd0size + 31);
             // The written ESDS is actually for an audio stream, but it's enough
             // for transporting the CSD to muxers.
@@ -1614,6 +1617,7 @@ static const struct mime_conv_t mimeLookup[] = {
     { MEDIA_MIMETYPE_AUDIO_AMR_NB,      AUDIO_FORMAT_AMR_NB },
     { MEDIA_MIMETYPE_AUDIO_AMR_WB,      AUDIO_FORMAT_AMR_WB },
     { MEDIA_MIMETYPE_AUDIO_AAC,         AUDIO_FORMAT_AAC },
+    { MEDIA_MIMETYPE_AUDIO_AAC_FSL,     AUDIO_FORMAT_AAC },
     { MEDIA_MIMETYPE_AUDIO_VORBIS,      AUDIO_FORMAT_VORBIS },
     { MEDIA_MIMETYPE_AUDIO_OPUS,        AUDIO_FORMAT_OPUS},
     { MEDIA_MIMETYPE_AUDIO_AC3,         AUDIO_FORMAT_AC3},

@@ -3204,6 +3204,13 @@ status_t MediaCodec::onQueueInputBuffer(const sp<AMessage> &msg) {
         return -EACCES;
     }
 
+    // For Freescale audio decoder, input eos comes earlier than output eos because we send multiple frames
+    // but decode only one frame everytime. So don't return error here because decoder is still working.
+    if (size == (size_t)(-1) && mComponentName.startsWith("OMX.Freescale.std.audio_decoder")) {
+        info->mData->meta()->setInt32("eos", true);
+        size = 0;
+    }
+
     if (offset + size > info->mData->capacity()) {
         return -EINVAL;
     }
