@@ -1791,10 +1791,10 @@ status_t OMXNodeInstance::storeFenceInMeta_l(
 
 int OMXNodeInstance::retrieveFenceFromMeta_l(
         OMX_BUFFERHEADERTYPE *header, OMX_U32 portIndex) {
-    OMX_U32 metaSize = portIndex == kPortIndexInput ? header->nAllocLen : header->nFilledLen;
+    OMX_U32 metaSize = portIndex == kPortIndexInput ? header->nFilledLen : header->nAllocLen;
     int fenceFd = -1;
     if (mMetadataType[portIndex] == kMetadataBufferTypeANWBuffer
-            && header->nAllocLen >= sizeof(VideoNativeMetadata)) {
+            && metaSize >= sizeof(VideoNativeMetadata)) {
         VideoNativeMetadata &nativeMeta = *(VideoNativeMetadata *)(header->pBuffer);
         if (nativeMeta.eType == kMetadataBufferTypeANWBuffer) {
             fenceFd = nativeMeta.nFenceFd;
@@ -2296,7 +2296,7 @@ OMX_ERRORTYPE OMXNodeInstance::OnEmptyBufferDone(
     if (instance->mDying) {
         return OMX_ErrorNone;
     }
-    int fenceFd = instance->retrieveFenceFromMeta_l(pBuffer, kPortIndexOutput);
+    int fenceFd = instance->retrieveFenceFromMeta_l(pBuffer, kPortIndexInput);
 
     omx_message msg;
     msg.type = omx_message::EMPTY_BUFFER_DONE;

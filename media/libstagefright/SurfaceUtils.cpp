@@ -21,6 +21,7 @@
 #include <media/hardware/VideoAPI.h>
 #include <media/stagefright/SurfaceUtils.h>
 #include <gui/Surface.h>
+#include <media/stagefright/graphics_ext.h>
 
 namespace android {
 

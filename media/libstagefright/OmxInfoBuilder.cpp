@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Copyright 2018 NXP
  */
 
 //#define LOG_NDEBUG 0
@@ -152,7 +154,8 @@ status_t OmxInfoBuilder::buildMediaCodecList(MediaCodecListWriter* writer) {
         std::vector<const IOmxStore::NodeInfo*> hwCodecs;
         for (const IOmxStore::NodeInfo& node : role.nodes) {
             const hidl_string& nodeName = node.name;
-            bool isSoftware = hasPrefix(nodeName, "OMX.google");
+            bool isSoftware =
+                (hasPrefix(nodeName, "OMX.google")) || (std::string(nodeName).find("sw-based") <= std::string(nodeName).length());
             MediaCodecInfoWriter* info;
             if (isSoftware) {
                 auto c2i = swCodecName2Info.find(nodeName);

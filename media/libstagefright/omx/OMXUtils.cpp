@@ -191,7 +191,7 @@ const char *GetComponentRole(bool isEncoder, const char *mime) {
         { MEDIA_MIMETYPE_AUDIO_REAL,
             "audio_decoder.ra", "audio_encoder.ra" },
         { MEDIA_MIMETYPE_AUDIO_AAC_FSL,
-            "audio_decoder.aac", "audio_encoder.aac" },
+            "audio_decoder.aac-fsl", "audio_encoder.aac" },
     };
 
     static const size_t kNumMimeToRole =

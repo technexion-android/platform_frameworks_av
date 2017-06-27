@@ -319,6 +319,20 @@ static int compareSoftwareCodecsFirst(const AString *name1, const AString *name2
     return isOMX2 - isOMX1;
 }
 
+static int compareVendorCodecsFirst(const AString *name1, const AString *name2) {
+    // sort order 1: vendor codecs are first (lower)
+    bool isVendorCodec1 = name1->startsWithIgnoreCase("OMX.Freescale");
+    bool isVendorCodec2 = name2->startsWithIgnoreCase("OMX.Freescale");
+    if (isVendorCodec1 != isVendorCodec2) {
+        return isVendorCodec2 - isVendorCodec1;
+    }
+
+    // sort order 2: hw-based codecs are first (lower)
+    bool isHwBased1 = name1->endsWithIgnoreCase("hw-based");
+    bool isHwBased2 = name2->endsWithIgnoreCase("hw-based");
+    return isHwBased2 - isHwBased1;
+}
+
 //static
 void MediaCodecList::findMatchingCodecs(
         const char *mime, bool encoder, uint32_t flags,
@@ -385,6 +399,8 @@ void MediaCodecList::findMatchingCodecs(
     if (flags & kPreferSoftwareCodecs ||
             property_get_bool("debug.stagefright.swcodec", false)) {
         matches->sort(compareSoftwareCodecsFirst);
+    } else if (use_fsl_video || use_fsl_audio) {
+        matches->sort(compareVendorCodecsFirst);
     }
 }
 
