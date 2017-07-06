@@ -1,5 +1,6 @@
 /*
  * Copyright 2012, The Android Open Source Project
+ * Copyright 2017 NXP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,7 +290,7 @@ public:
     explicit CodecCallback(const sp<AMessage> &notify);
     virtual ~CodecCallback() = default;
 
-    virtual void onEos(status_t err) override;
+    virtual void onEos(status_t err, bool tunneled) override;
     virtual void onStartCompleted() override;
     virtual void onStopCompleted() override;
     virtual void onReleaseCompleted() override;
@@ -316,10 +317,11 @@ private:
 
 CodecCallback::CodecCallback(const sp<AMessage> &notify) : mNotify(notify) {}
 
-void CodecCallback::onEos(status_t err) {
+void CodecCallback::onEos(status_t err, bool tunneled) {
     sp<AMessage> notify(mNotify->dup());
     notify->setInt32("what", kWhatEOS);
     notify->setInt32("err", err);
+    notify->setInt32("tunneled-playback", tunneled);
     notify->post();
 }
 
@@ -2258,6 +2260,13 @@ void MediaCodec::onMessageReceived(const sp<AMessage> &msg) {
                 {
                     // We already notify the client of this by using the
                     // corresponding flag in "onOutputBufferReady".
+                    int32_t tunneled = 0;
+                    if (msg->findInt32("tunneled-playback", &tunneled) && tunneled) {
+                        sp<AMessage> notify = mCallback->dup();
+                        notify->setInt32("callbackID", CB_OUTPUT_TUNNEL_EOS);
+                        notify->post();
+                    }
+
                     break;
                 }
 

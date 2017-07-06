@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014 The Android Open Source Project
+ * Copyright 2017 NXP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +67,7 @@ struct CodecBase : public AHandler, /* static */ ColorUtils {
          *            OK nor ERROR_END_OF_STREAM, the EOS is declared
          *            prematurely for that error.
          */
-        virtual void onEos(status_t err) = 0;
+        virtual void onEos(status_t err, bool tunneled = false) = 0;
         /**
          * Notify MediaCodec that start operation is complete.
          */

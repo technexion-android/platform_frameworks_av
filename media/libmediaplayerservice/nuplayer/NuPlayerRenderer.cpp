@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010 The Android Open Source Project
+ * Copyright 2017 NXP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -451,6 +452,32 @@ void NuPlayer::Renderer::changeAudioFormat(
     msg->setMessage("meta", meta);
     msg->post();
 }
+
+status_t NuPlayer::Renderer::setVideoStartMediaTime(int64_t mediaTimeUs) {
+    if (mAnchorTimeMediaUs < 0) {
+        int64_t nowUs = ALooper::GetNowUs();
+        mMediaClock->updateAnchor(mediaTimeUs, nowUs);
+        mAnchorTimeMediaUs = mediaTimeUs;
+
+        if (!mPaused) {
+            if (!mVideoRenderingStarted) {
+                mVideoRenderingStarted = true;
+                notifyVideoRenderingStart();
+            }
+            Mutex::Autolock autoLock(mLock);
+            notifyIfMediaRenderingStarted_l();
+        }
+    }
+
+    if (!(mFlags & FLAG_REAL_TIME) && mLastAudioMediaTimeUs != -1 && mediaTimeUs > mLastAudioMediaTimeUs) {
+        // If audio ends before video, video continues to drive media clock.
+        // Also smooth out videos >= 10fps.
+        mMediaClock->updateMaxTimeMedia(mediaTimeUs + 100000);
+    }
+
+    return OK;
+}
+
 
 void NuPlayer::Renderer::onMessageReceived(const sp<AMessage> &msg) {
     switch (msg->what()) {

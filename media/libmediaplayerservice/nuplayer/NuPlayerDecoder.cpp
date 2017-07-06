@@ -1,5 +1,6 @@
 /*
  * Copyright 2014 The Android Open Source Project
+ * Copyright 2017 NXP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -194,6 +195,16 @@ void NuPlayer::Decoder::onMessageReceived(const sp<AMessage> &msg) {
                     break;
                 }
 
+                case MediaCodec::CB_OUTPUT_TUNNEL_EOS:
+                {
+                    sp<AMessage> notify = mNotify->dup();
+                    notify->setInt32("what", kWhatEOS);
+                    notify->setInt32("tunneled-playback", 1);
+                    notify->setInt32("err", ERROR_END_OF_STREAM);
+                    notify->post();
+                    break;
+                }
+
                 default:
                 {
                     TRESPASS();
@@ -326,6 +337,9 @@ void NuPlayer::Decoder::onConfigure(const sp<AMessage> &format) {
         }else{
             format->setInt32("color-format", 21);//OMX_COLOR_FormatYUV420SemiPlanar
         }
+
+        int tunneled = property_get_int32("media.omx.enable-tunnel", 0);
+        format->setInt32("feature-tunneled-playback", tunneled);
     }
 
     status_t err;
@@ -377,6 +391,20 @@ void NuPlayer::Decoder::onConfigure(const sp<AMessage> &format) {
             mStats->setInt32("width", width);
             mStats->setInt32("height", height);
         }
+
+        int32_t tunneled = 0;
+        if (format->findInt32("feature-tunneled-playback", &tunneled) && tunneled) {
+            // work round to make surface set the display width/height to sideband stream
+            int32_t left = 0, top = 0, right = 0, bottom = 0;
+
+            right = width > 0 ? width : 128;
+            bottom = height > 0 ? height : 128;
+            format->setRect("crop", left/2, top, right/2, bottom);
+            sp<AMessage> notify = mNotify->dup();
+            notify->setInt32("what", kWhatVideoSizeChanged);
+            notify->setMessage("format", format);
+            notify->post();
+    }
     }
 
     sp<AMessage> reply = new AMessage(kWhatCodecNotify, this);
@@ -462,10 +490,12 @@ void NuPlayer::Decoder::onSetParameters(const sp<AMessage> &params) {
     }
 
     int64_t ts = 0;
+    int32_t pause = 0;
     if (params->findInt64("media-time", &ts)){
         sp<AMessage> codecParams = new AMessage();
         codecParams->setInt64("media-time", ts);
-        codecParams->setFloat("playback-speed", mPlaybackSpeed);
+        params->findInt32("pause", &pause);
+        codecParams->setFloat("playback-speed", mPlaybackSpeed * (pause ? 0 : 1));
         mCodec->setParameters(codecParams);
     }
 }
@@ -1135,6 +1165,12 @@ bool NuPlayer::Decoder::onInputBufferFetched(const sp<AMessage> &msg) {
                     mComponentName.c_str(), err, errorDetailMsg.c_str());
             handleError(err);
         } else {
+            // tunneled decoder wait until 1st frame comes out to signal resume complete
+            int32_t tunneled = false;
+            if (mInputFormat->findInt32("tunneled-playback", &tunneled) && tunneled) {
+                notifyResumeCompleteIfNecessary();
+                mRenderer->setVideoStartMediaTime(timeUs);
+            }
             mInputBufferIsDequeued.editItemAt(bufferIx) = false;
         }
 

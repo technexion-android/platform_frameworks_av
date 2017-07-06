@@ -1,5 +1,6 @@
 /*
  * Copyright 2012, The Android Open Source Project
+ * Copyright 2017 NXP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,7 +238,7 @@ ssize_t MediaCodecList::findCodecByType(
         const char *type, bool encoder, size_t startIndex) const {
     static const char *advancedFeatures[] = {
         "feature-secure-playback",
-        "feature-tunneled-playback",
+        //"feature-tunneled-playback",
     };
 
     size_t numCodecInfos = mCodecInfos.size();
