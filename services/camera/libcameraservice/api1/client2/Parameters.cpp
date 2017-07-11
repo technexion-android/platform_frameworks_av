@@ -2817,14 +2817,25 @@ int Parameters::degToTransform(int degrees, bool mirror) {
         else if (degrees == 180) return HAL_TRANSFORM_ROT_180;
         else if (degrees == 270) return HAL_TRANSFORM_ROT_270;
     } else {  // Do mirror (horizontal flip)
+        char propBuf[PROPERTY_VALUE_MAX];
+        int hwrotation = 0;
+        bool invert = false;
+
+        if ((property_get("ro.sf.hwrotation", propBuf, NULL) > 0))
+            hwrotation = atoi(propBuf);
+
+        invert = (hwrotation == 90) || (hwrotation == 270);
+
         if (degrees == 0) {           // FLIP_H and ROT_0
-            return HAL_TRANSFORM_FLIP_H;
+            return (invert ? HAL_TRANSFORM_FLIP_V : HAL_TRANSFORM_FLIP_H);
         } else if (degrees == 90) {   // FLIP_H and ROT_90
-            return HAL_TRANSFORM_FLIP_H | HAL_TRANSFORM_ROT_90;
+            return (invert ? HAL_TRANSFORM_FLIP_V : HAL_TRANSFORM_FLIP_H) |
+                    HAL_TRANSFORM_ROT_90;
         } else if (degrees == 180) {  // FLIP_H and ROT_180
-            return HAL_TRANSFORM_FLIP_V;
+            return (invert ? HAL_TRANSFORM_FLIP_H : HAL_TRANSFORM_FLIP_V);
         } else if (degrees == 270) {  // FLIP_H and ROT_270
-            return HAL_TRANSFORM_FLIP_V | HAL_TRANSFORM_ROT_90;
+            return (invert ? HAL_TRANSFORM_FLIP_H : HAL_TRANSFORM_FLIP_V) |
+                    HAL_TRANSFORM_ROT_90;
         }
     }
     ALOGE("%s: Bad input: %d", __FUNCTION__, degrees);
