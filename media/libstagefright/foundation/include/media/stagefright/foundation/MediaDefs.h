@@ -104,6 +104,7 @@ extern const char *MEDIA_MIMETYPE_AUDIO_ADPCM;
 extern const char *MEDIA_MIMETYPE_AUDIO_REAL;
 extern const char *MEDIA_MIMETYPE_AUDIO_APE;
 extern const char *MEDIA_MIMETYPE_AUDIO_AAC_FSL;
+extern const char *MEDIA_MIMETYPE_AUDIO_BSAC;
 
 extern const char *MEDIA_MIMETYPE_TEXT_SRT;
 extern const char *MEDIA_MIMETYPE_TEXT_SSA;

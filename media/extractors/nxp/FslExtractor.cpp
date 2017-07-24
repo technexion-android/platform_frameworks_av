@@ -798,6 +798,7 @@ codec_mime_struct video_mime_table[]={
 codec_mime_struct audio_mime_table[]={
     {AUDIO_MP3,0,MEDIA_MIMETYPE_AUDIO_MPEG},
     {AUDIO_VORBIS,0,MEDIA_MIMETYPE_AUDIO_VORBIS},
+    {AUDIO_AAC,AUDIO_ER_BSAC,MEDIA_MIMETYPE_AUDIO_BSAC},
     {AUDIO_AAC,0,MEDIA_MIMETYPE_AUDIO_AAC_FSL},
     {AUDIO_MPEG2_AAC,0,MEDIA_MIMETYPE_AUDIO_AAC_FSL},
     {AUDIO_AC3,0,MEDIA_MIMETYPE_AUDIO_AC3},
@@ -1888,7 +1889,7 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     // switch to google.aac.decoder for m4a clips to pass testDecodeM4a, MA-8801
     const char *containerMime;
     mFileMetaData.findCString(kKeyMIMEType, &containerMime);
-    if(type == AUDIO_AAC && !strcmp(containerMime, MEDIA_MIMETYPE_CONTAINER_MPEG4) && mNumTracks == 1){
+    if(type == AUDIO_AAC && subtype != AUDIO_ER_BSAC && !strcmp(containerMime, MEDIA_MIMETYPE_CONTAINER_MPEG4) && mNumTracks == 1){
         mime = MEDIA_MIMETYPE_AUDIO_AAC;
     }
     meta->setCString(kKeyMIMEType, mime);

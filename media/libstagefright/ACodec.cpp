@@ -2341,6 +2341,8 @@ status_t ACodec::configureCodec(
         err = setupAPECodec(encoder,msg);
     } else if(!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_REAL)){
         err = setupRACodec(encoder,msg);
+    } else if(!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_BSAC)){
+        err = setupBSACCodec(encoder,msg);
     }
 
     if (err != OK) {
@@ -3249,6 +3251,54 @@ status_t ACodec::setupRACodec(
             &def,
             sizeof(def));
 }
+
+status_t ACodec::setupBSACCodec(
+        bool encoder, const sp<AMessage> &msg) {
+    int32_t numChannels;
+    int32_t sampleRate;
+
+    if (!msg->findInt32("channel-count", &numChannels))
+        numChannels = 2;
+    if (!msg->findInt32("sample-rate", &sampleRate))
+        sampleRate = 44100;
+
+    status_t err = setupRawAudioFormat(
+            encoder ? kPortIndexInput : kPortIndexOutput, sampleRate, numChannels);
+
+    if (err != OK) {
+        return err;
+    }
+
+    if (encoder) {
+        ALOGW("bsac encoding is not supported.");
+        return INVALID_OPERATION;
+    }
+
+    OMX_AUDIO_PARAM_BSACTYPE def;
+    InitOMXParams(&def);
+    def.nPortIndex = kPortIndexInput;
+
+    err = mOMXNode->getParameter(
+            (OMX_INDEXTYPE)OMX_IndexParamAudioBsac,
+            &def,
+            sizeof(def));
+
+    if (err != OK) {
+        return err;
+    }
+
+    if(msg->findInt32("channel-count", &numChannels))
+        def.nChannels = numChannels;
+    if(msg->findInt32("sample-rate", &sampleRate))
+        def.nSampleRate = sampleRate;
+
+    return mOMXNode->setParameter(
+            OMX_IndexParamAudioBsac,
+            &def,
+            sizeof(def));
+}
+
+
 static OMX_AUDIO_AMRBANDMODETYPE pickModeFromBitRate(
         bool isAMRWB, int32_t bps) {
     if (isAMRWB) {
@@ -5787,6 +5837,24 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
                     notify->setString("mime", MEDIA_MIMETYPE_AUDIO_WMA);
                     notify->setInt32("channel-count", params.nChannels);
                     notify->setInt32("sample-rate", params.nSamplingRate);
+                    break;
+                }
+
+                case OMX_AUDIO_CodingBSAC:
+                {
+                    OMX_AUDIO_PARAM_BSACTYPE params;
+                    InitOMXParams(&params);
+                    params.nPortIndex = portIndex;
+
+                    err = mOMXNode->getParameter(
+                                OMX_IndexParamAudioBsac, &params, sizeof(params));
+                    if (err != OK) {
+                        return err;
+                    }
+
+                    notify->setString("mime", MEDIA_MIMETYPE_AUDIO_BSAC);
+                    notify->setInt32("channel-count", params.nChannels);
+                    notify->setInt32("sample-rate", params.nSampleRate);
                     break;
                 }
 

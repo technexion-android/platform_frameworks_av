@@ -97,5 +97,6 @@ const char *MEDIA_MIMETYPE_AUDIO_ADPCM= "audio/adpcm";
 const char *MEDIA_MIMETYPE_AUDIO_REAL= "audio/x-pn-realaudio";
 const char *MEDIA_MIMETYPE_AUDIO_APE= "audio/x-monkeys-audio";
 const char *MEDIA_MIMETYPE_AUDIO_AAC_FSL = "audio/aac-fsl";
+const char *MEDIA_MIMETYPE_AUDIO_BSAC = "audio/x-bsac";
 
 }  // namespace android
