@@ -1878,7 +1878,7 @@ status_t ACodec::configureCodec(
         }
     }
 
-    if (video && (!encoder)) {
+    if (mIsVideo && (!encoder)) {
         OMX_INDEXTYPE index;
         err = mOMXNode->getExtensionIndex(
                 "OMX.google.android.index.disableAVCReorder",
@@ -2340,7 +2340,7 @@ status_t ACodec::configureCodec(
         return err;
     }
 
-    if((!video) && (!encoder) && mComponentName.startsWith("OMX.Freescale.std.audio_decoder")){
+    if((!mIsVideo) && (!encoder) && mComponentName.startsWith("OMX.Freescale.std.audio_decoder")){
         OMX_PARAM_AUDIO_OUTPUT_CONVERT sConvert;
         InitOMXParams(&sConvert);
         sConvert.bEnable = OMX_TRUE;
@@ -3601,7 +3601,7 @@ static const struct VideoCodingMapEntry {
     { MEDIA_MIMETYPE_VIDEO_WMV, OMX_VIDEO_CodingWMV },
     { MEDIA_MIMETYPE_VIDEO_WMV9, (OMX_VIDEO_CODINGTYPE)OMX_VIDEO_CodingWMV9 },
     { MEDIA_MIMETYPE_VIDEO_REAL, OMX_VIDEO_CodingRV },
-    { MEDIA_MIMETYPE_VIDEO_SORENSON, (OMX_VIDEO_CODINGTYPE)OMX_VIDEO_SORENSON263 },
+    { MEDIA_MIMETYPE_VIDEO_SORENSON, (OMX_VIDEO_CODINGTYPE)OMX_VIDEO_CodingSORENSON263 },
     { MEDIA_MIMETYPE_VIDEO_MJPEG, OMX_VIDEO_CodingMJPEG },
     { MEDIA_MIMETYPE_VIDEO_DIV3, (OMX_VIDEO_CODINGTYPE)OMX_VIDEO_CodingDIV3 },
     { MEDIA_MIMETYPE_VIDEO_DIV4, (OMX_VIDEO_CODINGTYPE)OMX_VIDEO_CodingDIV4 },

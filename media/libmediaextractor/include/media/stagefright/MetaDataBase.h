@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
+ * Copyright 2018 NXP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,6 +226,15 @@ enum {
     kKeyExifOffset       = 'exof', // int64_t, Exif data offset
     kKeyExifSize         = 'exsz', // int64_t, Exif data size
     kKeyIsExif           = 'exif', // bool (int32_t) buffer contains exif data block
+
+    kKeyIsADIF            = 'adif',  // bool (int32_t)
+    kKeySubFormat         = 'sFmt', // (int32_t)
+    kKeyCodecData         = 'cCdd', // raw data
+    kKeyBitPerSample         = 'bPsp', // (int32_t)
+    kKeyAudioBlockAlign         = 'aBan', // (int32_t)
+    kKeyBitsPerFrame            = 'bPfm',
+    kKeyIsEndianBig             = 'edbg', //bool (int32_t)
+    kKeySpecialThumbnail            = 'sThb',//int32_t
 };
 
 enum {
