@@ -43,6 +43,7 @@
 namespace android {
 #define MAX_USER_DATA_STRING_LENGTH 1024
 #define MAX_FRAME_BUFFER_LENGTH 10000000
+#define MAX_FRAME_BUFFER_LENGTH_4K 50000000
 #define MAX_VIDEO_BUFFER_SIZE (512*1024)
 #define MAX_AUDIO_BUFFER_SIZE (16*1024)
 #define MAX_TEXT_BUFFER_SIZE (1024)
@@ -184,6 +185,7 @@ status_t FslMediaSource::read(
     int64_t seekTimeUs;
     ReadOptions::SeekMode mode;
     int64_t outTs = 0;
+    int64_t targetSampleTimeUs = -1;
     const char *containerMime = NULL;
     const char *mime = NULL;
 
@@ -204,6 +206,10 @@ status_t FslMediaSource::read(
                 break;
         }
 
+        if (mode == ReadOptions::SEEK_CLOSEST) {
+            targetSampleTimeUs = seekTimeUs;
+        }
+
         clearPendingFrames();
 
         MetaDataBase meta;
@@ -211,6 +217,10 @@ status_t FslMediaSource::read(
         if(result == OK){
             meta.findCString(kKeyMIMEType, &containerMime);
             mFormat.findCString(kKeyMIMEType, &mime);
+
+            if((mode == ReadOptions::SEEK_CLOSEST) && containerMime && !strcasecmp(containerMime,MEDIA_MIMETYPE_CONTAINER_MPEG4)){
+                seekFlag = SEEK_FLAG_CLOSEST;
+            }
 
             if(mFrameSent < 10 && containerMime && !strcasecmp(containerMime, MEDIA_MIMETYPE_CONTAINER_FLV)
                         && mime && !strcasecmp(mime,MEDIA_MIMETYPE_VIDEO_SORENSON))
@@ -238,6 +248,8 @@ status_t FslMediaSource::read(
         }
 
         ret = mExtractor->HandleSeekOperation(mSourceIndex,&seekTimeUs,seekFlag);
+        if(seekFlag == SEEK_FLAG_CLOSEST)
+            targetSampleTimeUs = seekTimeUs;
     }
 
     while (mPendingFrames.empty()) {
@@ -267,6 +279,10 @@ status_t FslMediaSource::read(
 
     if(!mIsAVC && !mIsHEVC){
         return OK;
+    }
+
+    if (targetSampleTimeUs >= 0) {
+        frame->meta_data().setInt64(kKeyTargetTime, targetSampleTimeUs);
     }
 
     //convert to nal frame
@@ -404,7 +420,18 @@ bool FslMediaSource::started()
 }
 bool FslMediaSource::full()
 {
-    if(mBufferSize > MAX_FRAME_BUFFER_LENGTH)
+    size_t maxBufferSize;
+    int width = 0;
+    int height = 0;
+
+    if(mFormat.findInt32(kKeyWidth, &width) && mFormat.findInt32(kKeyHeight, &height)
+        && width >= 3840 && height >= 2160){
+        maxBufferSize = MAX_FRAME_BUFFER_LENGTH_4K;
+    }
+    else
+        maxBufferSize = MAX_FRAME_BUFFER_LENGTH;
+
+    if(mBufferSize > maxBufferSize)
         return true;
     else
         return false;
@@ -498,7 +525,7 @@ static int32   appSeekFile( FslFileHandle file_handle, int64 offset, int32 whenc
     switch(whence) {
         case SEEK_CUR:
         {
-            if(h->mLength > 0 && h->mOffset + offset > h->mLength){
+            if(h->mLength > 0 && (h->mOffset + offset > h->mLength || h->mOffset + offset < 0)){
                 nContentPipeResult = -1;
             }else
                 h->mOffset += offset;
@@ -1161,6 +1188,18 @@ status_t FslExtractor::CreateParserInterface()
             err = PARSER_SUCCESS;
         }
 
+        err = myQueryInterface(PARSER_API_GET_VIDEO_DISPLAY_WIDTH, (void **)&IParser->getVideoDisplayWidth);
+        if(err){
+            IParser->getVideoDisplayWidth = NULL;
+            err = PARSER_SUCCESS;
+        }
+
+        err = myQueryInterface(PARSER_API_GET_VIDEO_DISPLAY_HEIGHT, (void **)&IParser->getVideoDisplayHeight);
+        if(err){
+            IParser->getVideoDisplayHeight = NULL;
+            err = PARSER_SUCCESS;
+        }
+
         //audio properties
         err = myQueryInterface(PARSER_API_GET_AUDIO_NUM_CHANNELS, (void **)&IParser->getAudioNumChannels);
         if(err)
@@ -1197,6 +1236,10 @@ status_t FslExtractor::CreateParserInterface()
         if(err)
             break;
         err = myQueryInterface(PARSER_API_GET_TEXT_TRACK_HEIGHT, (void **)&IParser->getTextTrackHeight);
+        if(err)
+            break;
+
+        err = myQueryInterface(PARSER_API_GET_TEXT_TRACK_MIME, (void **)&IParser->getTextTrackMime);
         if(err)
             break;
 
@@ -1414,7 +1457,7 @@ status_t FslExtractor::ParseMetaData()
             IParser->getMetaData(parserHandle, kKeyMap[i].key, &userDataFormat, &metaData, \
                 &metaDataSize);
 
-            if((metaData != NULL) && ((int)metaDataSize > 0) && USER_DATA_FORMAT_UTF8 == userDataFormat)
+            if((metaData != NULL) && ((int32_t)metaDataSize > 0) && USER_DATA_FORMAT_UTF8 == userDataFormat)
             {
                 if(metaDataSize > MAX_USER_DATA_STRING_LENGTH)
                     metaDataSize = MAX_USER_DATA_STRING_LENGTH;
@@ -1547,6 +1590,9 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
     uint32 decoderSpecificInfoSize = 0;
     uint32 width = 0;
     uint32 height = 0;
+    uint32 display_width = 0;
+    uint32 display_height = 0;
+
     uint32 rotation = 0;
     uint32 rate = 0;
     uint32 scale = 0;
@@ -1612,6 +1658,20 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
             return UNKNOWN_ERROR;
         }
     }
+
+	if(IParser->getVideoDisplayWidth){
+	    err = IParser->getVideoDisplayWidth(parserHandle, index, &display_width);
+	    if(err){
+	        return UNKNOWN_ERROR;
+	    }
+	}
+
+	if(IParser->getVideoDisplayHeight){
+	    err = IParser->getVideoDisplayHeight(parserHandle, index, &display_height);
+	    if(err){
+	        return UNKNOWN_ERROR;
+	    }
+	}
 
     ALOGI("ParseVideo width=%u,height=%u,fps=%u,rotate=%u",width,height,fps,rotation);
 
@@ -1690,11 +1750,17 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
         meta->setInt32(kKeySubFormat, wmvType);
     }
 
-    meta->setInt32(kKeyBitRate, bitrate);
+    if (bitrate > 0)
+        meta->setInt32(kKeyBitRate, bitrate);
     meta->setInt32(kKeyWidth, width);
     meta->setInt32(kKeyHeight, height);
     meta->setInt64(kKeyDuration, duration);
 
+	if(display_width > 0)
+		meta->setInt32(kKeyDisplayWidth, display_width);
+	if(display_height > 0)
+		meta->setInt32(kKeyDisplayHeight, display_height);
+ 
     // stagefright uses framerate only in MPEG4 extractor, let fslextrator be same with it
     if(fps > 0 && !strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG4))
         meta->setInt32(kKeyFrameRate, fps);
@@ -2054,6 +2120,7 @@ status_t FslExtractor::ParseText(uint32 index, uint32 type,uint32 subtype)
     uint32 width = 0;
     uint32 height = 0;
     const char* mime = NULL;
+    uint32 mime_len = 0;
     ALOGD("ParseText index=%u,type=%u,subtype=%u",index,type,subtype);
     switch(type){
         case TXT_3GP_STREAMING_TEXT:
@@ -2072,8 +2139,6 @@ status_t FslExtractor::ParseText(uint32 index, uint32 type,uint32 subtype)
         default:
             break;
     }
-    if(mime == NULL)
-        return UNKNOWN_ERROR;
 
     err = IParser->getTextTrackWidth(parserHandle,index,&width);
     if(err)
@@ -2081,6 +2146,15 @@ status_t FslExtractor::ParseText(uint32 index, uint32 type,uint32 subtype)
 
     err = IParser->getTextTrackHeight(parserHandle,index,&height);
     if(err)
+        return UNKNOWN_ERROR;
+
+    if(IParser->getTextTrackMime && NULL == mime){
+        err = IParser->getTextTrackMime(parserHandle,index,(uint8**)&mime,&mime_len);
+        if(err)
+             return UNKNOWN_ERROR;
+    }
+
+    if(mime == NULL)
         return UNKNOWN_ERROR;
 
     if(IParser->getLanguage) {
