@@ -1284,7 +1284,7 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
         // Return the required minimum undequeued buffers to the native window.
         cancelStart = bufferCount - minUndequeuedBuffers;
         cancelEnd = bufferCount;
-
+        #ifdef CHIPSMEDIA_VPU
         OMX_PARAM_PORTDEFINITIONTYPE def;
         InitOMXParams(&def);
         def.nPortIndex = kPortIndexOutput;
@@ -1294,6 +1294,7 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
         if (err == OK && cancelStart < def.nBufferCountMin) {
             cancelStart = def.nBufferCountMin;
         }
+        #endif
     }
 
     for (OMX_U32 i = cancelStart; i < cancelEnd; i++) {
@@ -6365,6 +6366,13 @@ void ACodec::BaseState::onOutputBufferDrained(const sp<AMessage> &msg) {
         {
             if (!mCodec->mPortEOS[kPortIndexOutput]) {
                 if (info->mStatus == BufferInfo::OWNED_BY_NATIVE_WINDOW) {
+                    #ifdef CHIPSMEDIA_VPU
+                    //dequeue buffer until surface has 2 buffers
+                    if(mCodec->mEnqueuedBuffers > 0 && mCodec->mEnqueuedBuffers < 3){
+                        ALOGE("[%s]do not dequeue buffer,queued cnt=%d",mCodec->mComponentName.c_str(),mCodec->mEnqueuedBuffers);
+                        break;
+                    }
+                    #endif
                     // We cannot resubmit the buffer we just rendered, dequeue
                     // the spare instead.
 
