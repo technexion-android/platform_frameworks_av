@@ -308,6 +308,19 @@ void NuPlayer::Decoder::onConfigure(const sp<AMessage> &format) {
 
     mCodec = MediaCodec::CreateByType(
             mCodecLooper, mime.c_str(), false /* encoder */, NULL /* err */, mPid, mUid);
+    if (mCodec != NULL) {
+        int32_t numChannels;
+
+        mCodec->getName(&mComponentName);
+        if (format->findInt32("channel-count", &numChannels) && numChannels > 2 && mComponentName.endsWith("aac.hw-based")) {
+            ALOGV("AAC hw-based decoder doesn't support multi-channel, switch to sw-based decoder");
+            mCodec->release();
+            mComponentName.erase(mComponentName.find("hw-based"), 8);
+            mComponentName.append("sw-based");
+            mCodec = MediaCodec::CreateByComponentName(
+                    mCodecLooper, mComponentName.c_str(), NULL /* err */, mPid, mUid);
+        }
+    }
     int32_t secure = 0;
     if (format->findInt32("secure", &secure) && secure != 0) {
         if (mCodec != NULL) {
