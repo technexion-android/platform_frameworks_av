@@ -54,6 +54,12 @@ SecureBuffer::SecureBuffer(
       mPointer(nullptr),
       mHandle(handle) {
 }
+SecureBuffer::SecureBuffer(
+        const sp<AMessage> &format, void *ptr,const sp<NativeHandle> &handle, size_t size)
+    : MediaCodecBuffer(format, new ABuffer(ptr, size)),
+      mPointer(ptr),
+      mHandle(handle) {
+}
 
 void *SecureBuffer::getDestinationPointer() {
     return (void *)(mHandle == nullptr ? mPointer : mHandle->handle());

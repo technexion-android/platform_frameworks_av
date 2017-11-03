@@ -952,10 +952,17 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
                     err = mOMXNode->allocateSecureBuffer(
                             portIndex, bufSize, &info.mBufferID,
                             &ptr, &native_handle);
-
+                    #ifdef HANTRO_VPU
+                     const native_handle_t *native_handle_ptr = native_handle == NULL ? NULL : native_handle->handle();
+                    int *buf = (int*)mmap(0, bufSize, PROT_READ | PROT_WRITE, MAP_SHARED, native_handle_ptr->data[1], 0);
+                     //modify from (void*)native_handle_ptr to buf for copy data to non secure buffer
+                     info.mData = new SecureBuffer(format, (void *)buf, native_handle, bufSize);
+                     ALOGE("allocateBuffersOnPort buf=%p",(void*)buf);
+                    #else
                     info.mData = (native_handle == NULL)
                             ? new SecureBuffer(format, ptr, bufSize)
                             : new SecureBuffer(format, native_handle, bufSize);
+                    #endif
                     info.mCodecData = info.mData;
                 } else {
                     bool success;
@@ -1505,11 +1512,12 @@ ACodec::BufferInfo *ACodec::dequeueBufferFromNativeWindow() {
                     stale = true;
                     break;
                 }
-
+                #if 0
                 ALOGV("dequeued buffer #%u with age %u, graphicBuffer %p",
                         (unsigned)(info - &mBuffers[kPortIndexOutput][0]),
                         mDequeueCounter - info->mDequeuedAt,
                         info->mGraphicBuffer->handle);
+                #endif
 
                 info->mStatus = BufferInfo::OWNED_BY_US;
                 info->setWriteFence(fenceFd, "dequeueBufferFromNativeWindow");
@@ -1634,6 +1642,12 @@ status_t ACodec::freeBuffer(OMX_U32 portIndex, size_t i) {
             // fall through
 
         case BufferInfo::OWNED_BY_NATIVE_WINDOW:
+            #ifdef HANTRO_VPU
+            if(portIndex == kPortIndexInput && (mFlags & kFlagIsSecure)){
+                munmap(info->mData->data(),info->mData->capacity());
+                ALOGI("call freeBuffer id=%d,size=%zu",info->mBufferID,info->mData->capacity());
+            }
+            #endif
             err = mOMXNode->freeBuffer(portIndex, info->mBufferID);
             break;
 
@@ -1869,7 +1883,14 @@ status_t ACodec::configureCodec(
     mUsingNativeWindow = haveNativeWindow;
     if (mIsVideo && !encoder) {
         inputFormat->setInt32("adaptive-playback", false);
-
+        #if 0
+        if(property_get_bool("media.fsl_codec.test_secure_playback", false)){
+            mFlags |= kFlagIsGrallocUsageProtected;
+            mFlags |= kFlagPushBlankBuffersToNativeWindowOnShutdown;
+            mFlags |= kFlagIsSecure;
+            ALOGE("enable secure playback test");
+        }
+        #endif
         int32_t usageProtected;
         if (msg->findInt32("protected", &usageProtected) && usageProtected) {
             if (!haveNativeWindow) {

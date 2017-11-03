@@ -146,6 +146,20 @@ status_t ACodecBufferChannel::queueSecureInputBuffer(
         result = mCrypto->decrypt(key, iv, mode, pattern,
                 source, it->mClientBuffer->offset(),
                 subSamples, numSubSamples, destination, errorDetailMsg);
+        #ifdef HANTRO_VPU
+        if(secure){
+            int fd1 = destination.mHandle->data[1];
+            int len = 0;
+            for (int i = 0; i < (int)numSubSamples; i++) {
+                len += subSamples[i].mNumBytesOfClearData;
+                len += subSamples[i].mNumBytesOfEncryptedData;
+            }
+            char *buf = (char*)mmap(0, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd1, 0);
+            memcpy(buf,source.mSharedMemory->pointer(),len);
+            munmap(buf,len);
+            destination.mHandle->data[2] = len;
+        }
+        #endif
 
         if (result < 0) {
             return result;

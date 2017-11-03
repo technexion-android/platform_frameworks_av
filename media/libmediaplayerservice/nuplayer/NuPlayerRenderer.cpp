@@ -1335,8 +1335,8 @@ void NuPlayer::Renderer::onDrainVideoQueue() {
         tooLate = (mVideoLateByUs > 40000);
 
         if (tooLate) {
-            ALOGV("video late by %lld us (%.2f secs)",
-                 (long long)mVideoLateByUs, mVideoLateByUs / 1E6);
+            ALOGV("video late by %" PRId64 " us (%.2f secs)",
+                 mVideoLateByUs, mVideoLateByUs / 1E6);
         } else {
             int64_t mediaUs = 0;
             mMediaClock->getMediaTime(realTimeUs, &mediaUs);
