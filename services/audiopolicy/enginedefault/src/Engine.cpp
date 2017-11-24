@@ -656,6 +656,8 @@ audio_devices_t Engine::getDeviceForInputSource(audio_source_t inputSource) cons
         device = AUDIO_DEVICE_IN_WIRED_HEADSET;
     } else if (availableDeviceTypes & AUDIO_DEVICE_IN_USB_HEADSET) {
         device = AUDIO_DEVICE_IN_USB_HEADSET;
+    } else if (availableDeviceTypes & AUDIO_DEVICE_IN_AUX_DIGITAL) {
+        device = AUDIO_DEVICE_IN_AUX_DIGITAL;
     } else if (availableDeviceTypes & AUDIO_DEVICE_IN_USB_DEVICE) {
         device = AUDIO_DEVICE_IN_USB_DEVICE;
     } else if (availableDeviceTypes & AUDIO_DEVICE_IN_BUILTIN_MIC) {
