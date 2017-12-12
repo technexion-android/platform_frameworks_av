@@ -1527,7 +1527,7 @@ void NuPlayer::GenericSource::readBuffer(
                 if (counterTrack->mSource != NULL) {
                     durationUs = counterTrack->mPackets->getBufferedDurationUs(&finalResult);
                 }
-                if (finalResult == ERROR_END_OF_STREAM || durationUs >= markUs) {
+                if (finalResult == ERROR_END_OF_STREAM || durationUs >= markUs || mCachedSource->isCacheFull()) {
                     if (mPreparing) {
                         notifyPrepared();
                         mPreparing = false;

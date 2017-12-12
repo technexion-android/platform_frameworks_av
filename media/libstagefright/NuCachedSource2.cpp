@@ -192,6 +192,7 @@ NuCachedSource2::NuCachedSource2(
       mLastAccessPos(0),
       mFetching(true),
       mDisconnecting(false),
+      mCacheFull(false),
       mLastFetchTimeUs(-1),
       mNumRetriesLeft(kMaxNumRetries),
       mHighwaterThresholdBytes(kDefaultHighWaterThreshold),
@@ -419,6 +420,7 @@ void NuCachedSource2::onFetch() {
         if (mFetching && mCache->totalSize() >= mHighwaterThresholdBytes) {
             ALOGI("Cache full, done prefetching for now");
             mFetching = false;
+            mCacheFull = true;
 
             if (mDisconnectAtHighwatermark
                     && (mSource->flags() & DataSource::kIsHTTPBasedSource)) {
@@ -426,7 +428,8 @@ void NuCachedSource2::onFetch() {
                 static_cast<HTTPBase *>(mSource.get())->disconnect();
                 mFinalStatus = -EAGAIN;
             }
-        }
+        } else
+            mCacheFull = false;
     } else {
         Mutex::Autolock autoLock(mLock);
         restartPrefetcherIfNecessary_l();
