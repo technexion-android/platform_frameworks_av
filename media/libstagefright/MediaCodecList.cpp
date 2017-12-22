@@ -340,6 +340,16 @@ void MediaCodecList::findMatchingCodecs(
     if(value & 0x04)
         use_fsl_audio = true;
 
+    //this is for 8qm a0 board, will remove the code in the future.
+    char str_value[PROPERTY_VALUE_MAX];
+    bool skip_for_8qm = false;
+    memset(str_value, 0, PROPERTY_VALUE_MAX);
+    property_get("ro.boot.soc_type", str_value, "non");
+    if(!strcmp(str_value,"imx8qm")){
+        skip_for_8qm = true;
+        ALOGV("enable skip_for_8qm");
+    }
+
     for (;;) {
         ssize_t matchIndex =
             list->findCodecByType(mime, encoder, index);
@@ -358,6 +368,9 @@ void MediaCodecList::findMatchingCodecs(
             continue;
 
         if(!strncmp(componentName.c_str(), "OMX.Freescale.std.audio_decoder", 30) && !use_fsl_audio)
+            continue;
+
+        if(skip_for_8qm && componentName.startsWith("OMX.Freescale.std.") && componentName.endsWith("hw-based"))
             continue;
 
         if ((flags & kHardwareCodecsOnly) && isSoftwareCodec(componentName)) {
