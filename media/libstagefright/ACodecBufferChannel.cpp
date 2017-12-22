@@ -29,6 +29,7 @@
 #include <media/stagefright/MediaCodec.h>
 #include <media/MediaCodecBuffer.h>
 #include <system/window.h>
+#include <cutils/ashmem.h>
 
 #include "include/ACodecBufferChannel.h"
 #include "include/SecureBuffer.h"
@@ -147,17 +148,40 @@ status_t ACodecBufferChannel::queueSecureInputBuffer(
                 source, it->mClientBuffer->offset(),
                 subSamples, numSubSamples, destination, errorDetailMsg);
         #ifdef HANTRO_VPU
-        if(secure){
-            int fd1 = destination.mHandle->data[1];
+        if(secure) {
+            // Copy clear meta data to shared memory (VPU driver reads them from there).
+            // WARNING: we might have issue if they are crypted, as below code copy only clear data !!!
+            int shm_hantro_fd = destination.mHandle->data[1];
+            int shm_hantro_fd_size = ashmem_get_size_region(shm_hantro_fd);
             int len = 0;
-            for (int i = 0; i < (int)numSubSamples; i++) {
-                len += subSamples[i].mNumBytesOfClearData;
-                len += subSamples[i].mNumBytesOfEncryptedData;
+            uint8_t* shm_hantro = (uint8_t *) mmap(0, shm_hantro_fd_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_hantro_fd, 0);
+            if (shm_hantro != NULL)
+            {
+                size_t offset = 0;
+                // reset shared memory content
+                memset(shm_hantro, 0, shm_hantro_fd_size);
+                for (size_t i = 0; i < numSubSamples; i++) {
+                    const CryptoPlugin::SubSample& subSample = subSamples[i];
+
+                    len += subSample.mNumBytesOfClearData;
+                    len += subSample.mNumBytesOfEncryptedData;
+
+                    if (subSample.mNumBytesOfClearData != 0) {
+                        memcpy(reinterpret_cast<uint8_t*>(shm_hantro) + offset,
+                               reinterpret_cast<const uint8_t*>(source.mSharedMemory->pointer()) + offset,
+                               subSample.mNumBytesOfClearData);
+
+                        offset += subSample.mNumBytesOfClearData;
+                    }
+
+                    if (subSample.mNumBytesOfEncryptedData != 0) {
+                        offset += subSample.mNumBytesOfEncryptedData;
+                    }
+                }
+                 munmap(shm_hantro, shm_hantro_fd_size);
+            } else {
+                 ALOGE("ACodecBufferChannel::queueSecureInputBuffer: Cannot map VPU shared mmemory\n");
             }
-            char *buf = (char*)mmap(0, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd1, 0);
-            memcpy(buf,source.mSharedMemory->pointer(),len);
-            munmap(buf,len);
-            destination.mHandle->data[2] = len;
         }
         #endif
 
