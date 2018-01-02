@@ -3529,7 +3529,8 @@ status_t ACodec::setSupportedOutputFormat(bool getLegacyFlexibleFormat) {
                 || format.eColorFormat == OMX_COLOR_FormatYUV420PackedPlanar
                 || format.eColorFormat == OMX_COLOR_FormatYUV420SemiPlanar
                 || format.eColorFormat == OMX_COLOR_FormatYUV420PackedSemiPlanar
-                || format.eColorFormat == OMX_TI_COLOR_FormatYUV420PackedSemiPlanar) {
+                || format.eColorFormat == OMX_TI_COLOR_FormatYUV420PackedSemiPlanar
+                || format.eColorFormat == OMX_COLOR_FormatYUV420SemiPlanar8x128Tiled) {
             break;
         }
         // find best legacy non-standard format
