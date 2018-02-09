@@ -3414,6 +3414,7 @@ status_t ACodec::setVideoPortFormatType(
         OMX_VIDEO_CODINGTYPE compressionFormat,
         OMX_COLOR_FORMATTYPE colorFormat,
         bool usingNativeBuffers) {
+
     OMX_VIDEO_PARAM_PORTFORMATTYPE format;
     InitOMXParams(&format);
     format.nPortIndex = portIndex;
@@ -3530,7 +3531,10 @@ status_t ACodec::setSupportedOutputFormat(bool getLegacyFlexibleFormat) {
                 || format.eColorFormat == OMX_COLOR_FormatYUV420SemiPlanar
                 || format.eColorFormat == OMX_COLOR_FormatYUV420PackedSemiPlanar
                 || format.eColorFormat == OMX_TI_COLOR_FormatYUV420PackedSemiPlanar
-                || format.eColorFormat == OMX_COLOR_FormatYUV420SemiPlanar8x128Tiled) {
+                || format.eColorFormat == OMX_COLOR_FormatYUV420SemiPlanar8x128Tiled
+                || format.eColorFormat == OMX_COLOR_FormatYUV420SemiPlanar8x4Tiled
+                || format.eColorFormat == OMX_COLOR_FormatYUV420SemiPlanar4x4Tiled
+                || format.eColorFormat == OMX_COLOR_FormatYUV420SemiPlanar4x4TiledCompressed) {
             break;
         }
         // find best legacy non-standard format

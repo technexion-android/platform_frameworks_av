@@ -319,7 +319,11 @@ void NuPlayer::Decoder::onConfigure(const sp<AMessage> &format) {
     mCodec->getName(&mComponentName);
 
     if (mComponentName.startsWith("OMX.Freescale.std.video_decoder") && mComponentName.endsWith("hw-based")){
-        format->setInt32("color-format", 21);//OMX_COLOR_FormatYUV420SemiPlanar
+        if( property_get_int32("media.hantro_vpu.enable-tile", 0)){
+            format->setInt32("color-format", 0x7F000003);//OMX_COLOR_FormatYUV420SemiPlanar8x4Tiled
+        }else{
+            format->setInt32("color-format", 21);//OMX_COLOR_FormatYUV420SemiPlanar
+        }
     }
 
     status_t err;
