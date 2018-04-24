@@ -2350,6 +2350,10 @@ status_t ACodec::configureCodec(
 
     int32_t maxInputSize;
     if (msg->findInt32("max-input-size", &maxInputSize)) {
+        #ifdef MALONE_VPU
+        //malone vpu requires 128 bytes alignment for input buffer
+        maxInputSize = (maxInputSize + 127) / 128 * 128;
+        #endif
         err = setMinBufferSize(kPortIndexInput, (size_t)maxInputSize);
         err = OK; // ignore error
     } else if (!strcmp("OMX.Nvidia.aac.decoder", mComponentName.c_str())) {

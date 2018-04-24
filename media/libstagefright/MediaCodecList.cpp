@@ -340,19 +340,14 @@ void MediaCodecList::findMatchingCodecs(
     if(value & 0x04)
         use_fsl_audio = true;
 
-    //this is for 8qm a0 board, will remove the code in the future.
-    char str_value[PROPERTY_VALUE_MAX];
-    bool skip_hw_video_decoder = false;
     bool skip_hw_audio_decoder = false;
+
+    char str_value[PROPERTY_VALUE_MAX];
     memset(str_value, 0, PROPERTY_VALUE_MAX);
     property_get("ro.boot.soc_type", str_value, "non");
     if(!strcmp(str_value,"imx8qm")){
-        skip_hw_video_decoder = true;
         skip_hw_audio_decoder = true;
-        ALOGV("skip all hardware codec");
-    }else if(!strcmp(str_value,"imx8qxp")){
-        skip_hw_video_decoder = true;
-        ALOGV("skip vpu decoder");
+        ALOGV("skip hardware audio codec");
     }
 
     for (;;) {
@@ -373,9 +368,6 @@ void MediaCodecList::findMatchingCodecs(
             continue;
 
         if(!strncmp(componentName.c_str(), "OMX.Freescale.std.audio_decoder", 30) && !use_fsl_audio)
-            continue;
-
-        if(skip_hw_video_decoder && componentName.startsWith("OMX.Freescale.std.video_decoder") && componentName.endsWith("hw-based"))
             continue;
 
         if(skip_hw_audio_decoder && componentName.startsWith("OMX.Freescale.std.audio_decoder") && componentName.endsWith("hw-based"))

@@ -304,6 +304,10 @@ cc_library {
             // enable DCHIPSMEDIA_VPU only when BOARD_VPU_TYPE=chipsmedia
             cflags: ["-DCHIPSMEDIA_VPU"],
         },
+        malone_vpu: {
+            // enable DMALONE_VPU only when BOARD_VPU_TYPE=malone
+            cflags: ["-DMALONE_VPU"],
+        },
     },
 
     sanitize: {
