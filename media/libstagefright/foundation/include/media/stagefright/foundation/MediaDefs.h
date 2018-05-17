@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 /* Copyright (C) 2015-2016 Freescale Semiconductor, Inc.*/
+/* Copyright 2018 NXP */
+
 #ifndef MEDIA_DEFS_H_
 
 #define MEDIA_DEFS_H_
@@ -105,6 +107,7 @@ extern const char *MEDIA_MIMETYPE_AUDIO_REAL;
 extern const char *MEDIA_MIMETYPE_AUDIO_APE;
 extern const char *MEDIA_MIMETYPE_AUDIO_AAC_FSL;
 extern const char *MEDIA_MIMETYPE_AUDIO_BSAC;
+extern const char *MEDIA_MIMETYPE_AUDIO_DSD;
 
 extern const char *MEDIA_MIMETYPE_TEXT_SRT;
 extern const char *MEDIA_MIMETYPE_TEXT_SSA;

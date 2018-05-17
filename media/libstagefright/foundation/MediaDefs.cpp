@@ -17,6 +17,7 @@
 
 #include <media/stagefright/foundation/MediaDefs.h>
 /* Copyright (C) 2015-2016 Freescale Semiconductor, Inc.*/
+/* Copyright 2018 NXP */
 
 namespace android {
 
@@ -98,5 +99,7 @@ const char *MEDIA_MIMETYPE_AUDIO_REAL= "audio/x-pn-realaudio";
 const char *MEDIA_MIMETYPE_AUDIO_APE= "audio/x-monkeys-audio";
 const char *MEDIA_MIMETYPE_AUDIO_AAC_FSL = "audio/aac-fsl";
 const char *MEDIA_MIMETYPE_AUDIO_BSAC = "audio/x-bsac";
+const char *MEDIA_MIMETYPE_AUDIO_DSD = "audio/dsd";
+
 
 }  // namespace android

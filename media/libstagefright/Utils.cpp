@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 /* Copyright (C) 2016 Freescale Semiconductor, Inc. */
+/* Copyright 2018 NXP */
+
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Utils"
 #include <utils/Log.h>
@@ -1631,6 +1633,7 @@ static const struct mime_conv_t mimeLookup[] = {
     { MEDIA_MIMETYPE_AUDIO_OPUS,        AUDIO_FORMAT_OPUS},
     { MEDIA_MIMETYPE_AUDIO_AC3,         AUDIO_FORMAT_AC3},
     { MEDIA_MIMETYPE_AUDIO_FLAC,        AUDIO_FORMAT_FLAC},
+    { MEDIA_MIMETYPE_AUDIO_DSD,         AUDIO_FORMAT_DSD},
     { 0, AUDIO_FORMAT_INVALID }
 };
 

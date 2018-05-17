@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 /* Copyright 2009-2016 Freescale Semiconductor, Inc. */
+/* Copyright 2018 NXP */
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "StagefrightMediaScanner"
@@ -44,7 +45,7 @@ static bool FileHasAcceptableExtension(const char *extension) {
         ".avi", ".mpeg", ".mpg", ".awb", ".mpga", ".mov",
         ".m4v", ".oga"
         ,".divx", ".adts", ".asf", ".wmv", ".vob",
-        ".f4v", ".flv", ".rmvb", ".rm", ".ra", ".rv", ".ape"
+        ".f4v", ".flv", ".rmvb", ".rm", ".ra", ".rv", ".ape", ".dsf"
     };
     static const size_t kNumValidExtensions =
         sizeof(kValidExtensions) / sizeof(kValidExtensions[0]);

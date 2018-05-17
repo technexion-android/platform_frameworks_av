@@ -1,5 +1,6 @@
 /**
  *  Copyright (C) 2016 Freescale Semiconductor, Inc.
+ *  Copyright 2018 NXP
  *  All Rights Reserved.
  *
  *  The following programs are the sole property of Freescale Semiconductor Inc.,
@@ -130,6 +131,22 @@ static bool TryRmvbType(char* buffer,size_t len,String8 *mimeType,float *confide
 
     return false;
 }
+
+static bool TryDsfType(char* buffer,size_t len,String8 *mimeType,float *confidence)
+{
+    ALOGI("TryDsfType %c%c%c%c", buffer[0], buffer[1], buffer[2], buffer[3]);
+    if(len < 4)
+        return false;
+    if (buffer[0] == 'D' && buffer[1] == 'S' && buffer[2] == 'D' && buffer[3] == ' ') {
+        mimeType->setTo(MEDIA_MIMETYPE_CONTAINER_DSF);
+        *confidence = 0.2f;
+         ALOGI("TryDsfType SUCCESS");
+        return true;
+    }
+
+    return false;
+}
+
 #define MPEG_SCAN_BUFFER_SIZE       (128*1024)
 
 #define MPEGTS_HDR_SIZE             (4)
@@ -787,6 +804,7 @@ static TRYTYPEFUNC TryFunc[] = {
     TryAsfType,
     TryRmvbType,
     TryAACADIFType,
+    TryDsfType,
 };
 bool SniffFSL(
         DataSourceBase *source, String8 *mimeType, float *confidence,

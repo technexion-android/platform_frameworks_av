@@ -1,6 +1,6 @@
 /**
  *  Copyright 2016 Freescale Semiconductor, Inc.
- *  Copyright 2017 NXP
+ *  Copyright 2017-2018 NXP
  *  All Rights Reserved.
  *
  *  The following programs are the sole property of Freescale Semiconductor Inc.,
@@ -790,7 +790,8 @@ fsl_mime_struct mime_table[]={
     {"mp3",MEDIA_MIMETYPE_AUDIO_MPEG},
     {"aac",MEDIA_MIMETYPE_AUDIO_AAC_ADTS},
     {"ape",MEDIA_MIMETYPE_AUDIO_APE},
-    {"flac",MEDIA_MIMETYPE_AUDIO_FLAC}
+    {"flac",MEDIA_MIMETYPE_AUDIO_FLAC},
+    {"dsf",MEDIA_MIMETYPE_CONTAINER_DSF},
 };
 typedef struct{
     uint32_t type;
@@ -843,6 +844,7 @@ codec_mime_struct audio_mime_table[]={
     {AUDIO_FLAC,0,MEDIA_MIMETYPE_AUDIO_FLAC},
     {AUDIO_OPUS,0,MEDIA_MIMETYPE_AUDIO_OPUS},
     {AUDIO_APE,0,MEDIA_MIMETYPE_AUDIO_APE},
+    {AUDIO_DSD,0,MEDIA_MIMETYPE_AUDIO_DSD},
 };
 FslExtractor::FslExtractor(DataSourceBase *source,const char *mime)
     : mDataSource(source),
@@ -1992,6 +1994,11 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     else if(type == AUDIO_MP3){
         max_size = 8192;
         meta->setInt32(kKeyMaxInputSize, max_size);
+    }
+    else if(type == AUDIO_DSD){
+        const int DSD_BLOCK_SIZE = 4096;
+        const int DSD_CHANNEL_NUM_MAX = 6;
+        max_size = DSD_BLOCK_SIZE * DSD_CHANNEL_NUM_MAX;
     }
 
     if(type == AUDIO_WMA){
