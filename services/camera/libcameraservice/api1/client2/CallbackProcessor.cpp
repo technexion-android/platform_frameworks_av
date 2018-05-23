@@ -25,6 +25,9 @@
 #include "common/CameraDeviceBase.h"
 #include "api1/Camera2Client.h"
 #include "api1/client2/CallbackProcessor.h"
+#ifdef OPENCL_2D_IN_CAMERA
+#include "opencl-2d.h"
+#endif
 
 #define ALIGN(x, mask) ( ((x) + (mask) - 1) & ~((mask) - 1) )
 
@@ -39,11 +42,21 @@ CallbackProcessor::CallbackProcessor(sp<Camera2Client> client):
         mCallbackAvailable(false),
         mCallbackToApp(false),
         mCallbackStreamId(NO_STREAM) {
+#ifdef OPENCL_2D_IN_CAMERA
+	    if(cl_g2d_open(&g2dHandle) == -1 || g2dHandle == NULL)
+	        ALOGE("Fail to open g2d device!\n");
+        else
+	        ALOGI("good on opencl g2d device!\n");
+#endif
 }
 
 CallbackProcessor::~CallbackProcessor() {
     ALOGV("%s: Exit", __FUNCTION__);
     deleteStream();
+#ifdef OPENCL_2D_IN_CAMERA
+	if(g2dHandle != NULL)
+	    cl_g2d_close(g2dHandle);
+#endif
 }
 
 void CallbackProcessor::onFrameAvailable(const BufferItem& /*item*/) {
@@ -465,6 +478,45 @@ status_t CallbackProcessor::convertFromFlexibleYuv(int32_t previewFormat,
     // Copy Y plane, adjusting for stride
     const uint8_t *ySrc = src.data;
     uint8_t *yDst = dst;
+#ifdef OPENCL_2D_IN_CAMERA
+    struct cl_g2d_surface srcSurface,dstSurface;
+    //NV12 to NV21 with OpenCL G2D
+    if ((previewFormat == HAL_PIXEL_FORMAT_YCrCb_420_SP) &&
+         (src.dataCr == src.dataCb + 1)  ) {
+        if(g2dHandle != NULL) {
+            srcSurface.format = CL_G2D_NV12;
+            srcSurface.usage = CL_G2D_DEVICE_MEMORY;
+            srcSurface.planes[0] = (long)ySrc;
+            srcSurface.planes[1] = (long)(ySrc + src.stride * src.height);
+
+            srcSurface.left = 0;
+            srcSurface.top = 0;
+            srcSurface.right = src.width;
+            srcSurface.bottom = src.height;
+            srcSurface.stride = src.stride;
+            srcSurface.width  = src.width;
+            srcSurface.height = src.height;
+
+            dstSurface.format = CL_G2D_NV21;
+            dstSurface.usage = CL_G2D_DEVICE_MEMORY;
+            dstSurface.planes[0] = (long)yDst;
+            dstSurface.planes[1] = (long)(yDst + dstYStride * src.height);
+            dstSurface.left = 0;
+            dstSurface.top = 0;
+            dstSurface.right = src.width;
+            dstSurface.bottom = src.height;
+            dstSurface.stride = dstYStride;
+            dstSurface.width  = src.width;
+            dstSurface.height = src.height;
+
+            cl_g2d_blit(g2dHandle, &srcSurface, &dstSurface);
+            cl_g2d_flush(g2dHandle);
+            cl_g2d_finish(g2dHandle);
+            return OK;
+        }
+    }
+#endif
+
     for (size_t row = 0; row < src.height; row++) {
         memcpy(yDst, ySrc, src.width);
         ySrc += src.stride;

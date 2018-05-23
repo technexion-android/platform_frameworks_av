@@ -83,16 +83,26 @@ LOCAL_SHARED_LIBRARIES:= \
     android.hardware.camera.device@3.3 \
     android.hardware.camera.device@3.4
 
+ifeq ($(OPENCL_2D_IN_CAMERA),true)
+LOCAL_SHARED_LIBRARIES += \
+    libopencl-2d
+endif
+
 LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := libbinder libcamera_client libfmq
 
 LOCAL_C_INCLUDES += \
     system/media/private/camera/include \
-    frameworks/native/include/media/openmax
+    frameworks/native/include/media/openmax \
+    vendor/nxp-opensource/imx/opencl-2d
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
     frameworks/av/services/camera/libcameraservice
 
 LOCAL_CFLAGS += -Wall -Wextra -Werror
+
+ifeq ($(OPENCL_2D_IN_CAMERA),true)
+LOCAL_CFLAGS += -DOPENCL_2D_IN_CAMERA
+endif
 
 LOCAL_MODULE:= libcameraservice
 

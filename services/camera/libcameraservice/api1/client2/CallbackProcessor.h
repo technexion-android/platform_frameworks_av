@@ -58,6 +58,9 @@ class CallbackProcessor:
     wp<Camera2Client> mClient;
     wp<CameraDeviceBase> mDevice;
     int mId;
+#ifdef OPENCL_2D_IN_CAMERA
+    void *g2dHandle;
+#endif
 
     mutable Mutex mInputMutex;
     bool mCallbackAvailable;
