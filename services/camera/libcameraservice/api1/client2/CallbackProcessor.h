@@ -26,6 +26,10 @@
 
 #include "api1/client2/Camera2Heap.h"
 
+typedef int (*hwc_func1)(void* handle);
+typedef int (*hwc_func3)(void* handle, void* arg1, void* arg2);
+typedef int (*hwc_func4)(void* handle, void* arg1, void* arg2, void* arg3);
+
 namespace android {
 
 class Camera2Client;
@@ -58,9 +62,12 @@ class CallbackProcessor:
     wp<Camera2Client> mClient;
     wp<CameraDeviceBase> mDevice;
     int mId;
-#ifdef OPENCL_2D_IN_CAMERA
-    void *g2dHandle;
-#endif
+    void *mCLHandle;
+    hwc_func1 mCLOpen;
+    hwc_func1 mCLClose;
+    hwc_func3 mCLBlit;
+    hwc_func1 mCLFlush;
+    hwc_func1 mCLFinish;
 
     mutable Mutex mInputMutex;
     bool mCallbackAvailable;

@@ -21,15 +21,21 @@
 #include <utils/Log.h>
 #include <utils/Trace.h>
 #include <gui/Surface.h>
+#include <dlfcn.h>
 
 #include "common/CameraDeviceBase.h"
 #include "api1/Camera2Client.h"
 #include "api1/client2/CallbackProcessor.h"
-#ifdef OPENCL_2D_IN_CAMERA
 #include "opencl-2d.h"
-#endif
 
 #define ALIGN(x, mask) ( ((x) + (mask) - 1) & ~((mask) - 1) )
+
+#if defined(__LP64__)
+#define LIB_PATH1 "/vendor/lib64"
+#else
+#define LIB_PATH1 "/vendor/lib"
+#endif
+#define CLENGINE "libopencl-2d.so"
 
 namespace android {
 namespace camera2 {
@@ -42,21 +48,42 @@ CallbackProcessor::CallbackProcessor(sp<Camera2Client> client):
         mCallbackAvailable(false),
         mCallbackToApp(false),
         mCallbackStreamId(NO_STREAM) {
-#ifdef OPENCL_2D_IN_CAMERA
-	    if(cl_g2d_open(&g2dHandle) == -1 || g2dHandle == NULL)
-	        ALOGE("Fail to open g2d device!\n");
-        else
-	        ALOGI("good on opencl g2d device!\n");
-#endif
+
+    char path[PATH_MAX] = {0};
+    snprintf(path, PATH_MAX, "%s/%s", LIB_PATH1, CLENGINE);
+    if (access(path, R_OK) == 0)
+        ALOGI("libopencl-2d.so is existed!\n");
+
+    void* handle = dlopen(path, RTLD_NOW);
+    int32_t ret = 0;
+
+    if (handle == NULL) {
+        mCLOpen = NULL;
+        mCLClose = NULL;
+        mCLFlush = NULL;
+        mCLFinish = NULL;
+        mCLBlit = NULL;
+        mCLHandle = NULL;
+    } else {
+        mCLOpen = (hwc_func1)dlsym(handle, "cl_g2d_open");
+        mCLClose = (hwc_func1)dlsym(handle, "cl_g2d_close");
+        mCLFlush = (hwc_func1)dlsym(handle, "cl_g2d_flush");
+        mCLFinish = (hwc_func1)dlsym(handle, "cl_g2d_finish");
+        mCLBlit = (hwc_func3)dlsym(handle, "cl_g2d_blit");
+        ret = (*mCLOpen)((void*)&mCLHandle);
+        if (ret != 0) {
+            mCLHandle = NULL;
+        }
+    }
+
 }
 
 CallbackProcessor::~CallbackProcessor() {
     ALOGV("%s: Exit", __FUNCTION__);
     deleteStream();
-#ifdef OPENCL_2D_IN_CAMERA
-	if(g2dHandle != NULL)
-	    cl_g2d_close(g2dHandle);
-#endif
+    if (mCLHandle != NULL) {
+        (*mCLClose)(mCLHandle);
+    }
 }
 
 void CallbackProcessor::onFrameAvailable(const BufferItem& /*item*/) {
@@ -478,12 +505,12 @@ status_t CallbackProcessor::convertFromFlexibleYuv(int32_t previewFormat,
     // Copy Y plane, adjusting for stride
     const uint8_t *ySrc = src.data;
     uint8_t *yDst = dst;
-#ifdef OPENCL_2D_IN_CAMERA
-    struct cl_g2d_surface srcSurface,dstSurface;
-    //NV12 to NV21 with OpenCL G2D
-    if ((previewFormat == HAL_PIXEL_FORMAT_YCrCb_420_SP) &&
-         (src.dataCr == src.dataCb + 1)  ) {
-        if(g2dHandle != NULL) {
+
+    if (mCLHandle != NULL) {
+        struct cl_g2d_surface srcSurface,dstSurface;
+        //NV12 to NV21 with OpenCL G2D
+        if ((previewFormat == HAL_PIXEL_FORMAT_YCrCb_420_SP) &&
+             (src.dataCr == src.dataCb + 1)  ) {
             srcSurface.format = CL_G2D_NV12;
             srcSurface.usage = CL_G2D_DEVICE_MEMORY;
             srcSurface.planes[0] = (long)ySrc;
@@ -509,13 +536,12 @@ status_t CallbackProcessor::convertFromFlexibleYuv(int32_t previewFormat,
             dstSurface.width  = src.width;
             dstSurface.height = src.height;
 
-            cl_g2d_blit(g2dHandle, &srcSurface, &dstSurface);
-            cl_g2d_flush(g2dHandle);
-            cl_g2d_finish(g2dHandle);
+            (*mCLBlit)(mCLHandle, (void*)&srcSurface, (void*)&dstSurface);
+            (*mCLFlush)(mCLHandle);
+            (*mCLFinish)(mCLHandle);
             return OK;
         }
     }
-#endif
 
     for (size_t row = 0; row < src.height; row++) {
         memcpy(yDst, ySrc, src.width);
