@@ -1044,11 +1044,13 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
                 }
             }
 
-
-            #if 0
-            if(mAudioDecoder != NULL && mVideoDecoder != NULL)
-                mRenderer->enableSyncQueue(true);
-            #endif
+            // only enable SyncQueue for target evk_8mq
+            // this will cause some cts cases failed, but evk_8mm don't care cts that much.
+            char val[PROPERTY_VALUE_MAX];
+            if (property_get("ro.product.model", val, NULL) && strcmp(val, "EVK_8MQ") == 0) {
+                if(mAudioDecoder != NULL && mVideoDecoder != NULL)
+                    mRenderer->enableSyncQueue(true);
+            }
 
             status_t err;
             if ((err = mSource->feedMoreTSData()) != OK) {

@@ -453,6 +453,13 @@ void NuPlayer::Renderer::changeAudioFormat(
     msg->post();
 }
 
+void NuPlayer::Renderer::enableSyncQueue(bool bEnabled)
+{
+    sp<AMessage> msg = new AMessage(kWhatEnableSyncQueue, this);
+    msg->setInt32("enable", (bEnabled ? 1 : 0));
+    msg->post();
+}
+
 status_t NuPlayer::Renderer::setVideoStartMediaTime(int64_t mediaTimeUs) {
     if (mAnchorTimeMediaUs < 0) {
         int64_t nowUs = ALooper::GetNowUs();
