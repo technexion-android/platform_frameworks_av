@@ -26,7 +26,6 @@
 #include <media/stagefright/MediaErrors.h>
 #include <media/hardware/HardwareAPI.h>
 #include <system/graphics-base.h>
-#include <media/openmax/OMX_Implement.h>
 
 namespace android {
 
@@ -244,7 +243,6 @@ bool DescribeDefaultColorFormat(DescribeColorFormat2Params &params) {
         fmt != OMX_COLOR_FormatYUV420SemiPlanar &&
         fmt != OMX_COLOR_FormatYUV420PackedSemiPlanar &&
         fmt != OMX_COLOR_FormatYUV422SemiPlanar &&
-        fmt != OMX_COLOR_FormatYUV420SemiPlanar8x128Tiled &&
         fmt != (OMX_COLOR_FORMATTYPE)HAL_PIXEL_FORMAT_YV12) {
         ALOGW("do not know color format 0x%x = %d", fmt, fmt);
         if (fmt == OMX_COLOR_FormatYUV420Planar16) {
@@ -324,7 +322,6 @@ bool DescribeDefaultColorFormat(DescribeColorFormat2Params &params) {
         case OMX_COLOR_FormatYUV420SemiPlanar:
             // FIXME: NV21 for sw-encoder, NV12 for decoder and hw-encoder
         case OMX_COLOR_FormatYUV420PackedSemiPlanar:
-        case OMX_COLOR_FormatYUV420SemiPlanar8x128Tiled:
             // NV12
             image.mPlane[image.U].mOffset = params.nStride * params.nSliceHeight;
             image.mPlane[image.U].mColInc = 2;

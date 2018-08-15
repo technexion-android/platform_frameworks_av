@@ -108,7 +108,7 @@ status_t setNativeWindowSizeFormatAndUsage(
         }
     }
 
-    int finalUsage = usage | consumerUsage;
+    uint32_t finalUsage = usage | consumerUsage;
     ALOGV("gralloc usage: %#x(producer) + %#x(consumer) = %#x", usage, consumerUsage, finalUsage);
     err = native_window_set_usage(nativeWindow, finalUsage);
     if (err != NO_ERROR) {
