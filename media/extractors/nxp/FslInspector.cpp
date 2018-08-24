@@ -23,6 +23,8 @@
 #include <utils/String8.h>
 #include <utils/RefBase.h>
 #include <mkvparser/mkvparser.h>
+#include <media/stagefright/foundation/avc_utils.h>
+#include <media/stagefright/foundation/ByteUtils.h>
 
 namespace android {
 
@@ -589,6 +591,192 @@ static bool TryMkv(DataSourceBase *source, String8 *mimeType, float *confidence)
     return false;
 }
 
+static const uint32_t kMask = 0xfffe0c00;
+
+static bool DetectAudioTypeBySource(DataSourceBase *source, bool check_aac)
+{
+    off64_t inout_pos = 0;
+    off64_t post_id3_pos = 0;
+
+    if (source == NULL)
+        return false;
+
+    //Skip ID3 header
+    for (;;) {
+        uint8_t id3header[10];
+        if (source->readAt(inout_pos, id3header, sizeof(id3header))
+                < (ssize_t)sizeof(id3header)) {
+            // If we can't even read these 10 bytes, we might as well bail
+            // out, even if there _were_ 10 bytes of valid mp3 audio data...
+            return false;
+        }
+
+        if (memcmp("ID3", id3header, 3)) {
+            break;
+        }
+
+        // Skip the ID3v2 header.
+
+        size_t len =
+            ((id3header[6] & 0x7f) << 21)
+            | ((id3header[7] & 0x7f) << 14)
+            | ((id3header[8] & 0x7f) << 7)
+            | (id3header[9] & 0x7f);
+
+        if (len > 3 * 1024 * 1024)
+            len = 3 * 1024 * 1024;
+
+        len += 10;
+
+        inout_pos += len;
+    }
+
+    post_id3_pos = inout_pos;
+
+    off64_t pos = inout_pos;
+    if(check_aac){
+        uint8_t header[2];
+
+        if (source->readAt(pos, &header, 2) != 2) {
+            return false;
+        }
+
+        if ((header[0] == 0xff) && ((header[1] & 0xf6) == 0xf0)) {
+            return true;
+        }
+        return false;
+    }
+
+
+    bool valid = false;
+
+    const size_t kMaxReadBytes = 1024;
+    const size_t kMaxBytesChecked = 128 * 1024;
+    uint8_t buf[kMaxReadBytes];
+    ssize_t bytesToRead = kMaxReadBytes;
+    ssize_t totalBytesRead = 0;
+    ssize_t remainingBytes = 0;
+    bool reachEOS = false;
+    uint8_t *tmp = buf;
+
+    do {
+        if (pos >= (off64_t)(inout_pos + kMaxBytesChecked)) {
+            // Don't scan forever.
+            ALOGV("giving up at offset %lld", (long long)pos);
+            break;
+        }
+
+        if (remainingBytes < 4) {
+            if (reachEOS) {
+                break;
+            } else {
+                memcpy(buf, tmp, remainingBytes);
+                bytesToRead = kMaxReadBytes - remainingBytes;
+
+                /*
+                 * The next read position should start from the end of
+                 * the last buffer, and thus should include the remaining
+                 * bytes in the buffer.
+                 */
+                totalBytesRead = source->readAt(pos + remainingBytes,
+                                                buf + remainingBytes,
+                                                bytesToRead);
+                if (totalBytesRead <= 0) {
+                    break;
+                }
+                reachEOS = (totalBytesRead != bytesToRead);
+                totalBytesRead += remainingBytes;
+                remainingBytes = totalBytesRead;
+                tmp = buf;
+                continue;
+            }
+        }
+
+        uint32_t header = U32_AT(tmp);
+
+        size_t frame_size;
+        int sample_rate, num_channels, bitrate;
+        if (!GetMPEGAudioFrameSize(
+                    header, &frame_size,
+                    &sample_rate, &num_channels, &bitrate)) {
+            ++pos;
+            ++tmp;
+            --remainingBytes;
+            continue;
+        }
+
+        ALOGV("found possible 1st frame at %lld (header = 0x%08x)", (long long)pos, header);
+
+        // We found what looks like a valid frame,
+        // now find its successors.
+
+        off64_t test_pos = pos + frame_size;
+
+        valid = true;
+        for (int j = 0; j < 3; ++j) {
+            uint8_t tmp[4];
+            if (source->readAt(test_pos, tmp, 4) < 4) {
+                valid = false;
+                break;
+            }
+
+            uint32_t test_header = U32_AT(tmp);
+
+            ALOGV("subsequent header is %08x", test_header);
+
+            if ((test_header & kMask) != (header & kMask)) {
+                valid = false;
+                break;
+            }
+
+            size_t test_frame_size;
+            if (!GetMPEGAudioFrameSize(
+                        test_header, &test_frame_size)) {
+                valid = false;
+                break;
+            }
+
+            ALOGV("found subsequent frame #%d at %lld", j + 2, (long long)test_pos);
+
+            test_pos += test_frame_size;
+        }
+
+        if (valid) {
+           inout_pos = pos;
+        } else {
+            ALOGV("no dice, no valid sequence of frames found.");
+        }
+
+        ++pos;
+        ++tmp;
+        --remainingBytes;
+    } while (!valid);
+
+    return valid;
+
+}
+
+static bool TryMp3Type(DataSourceBase *source,String8 *mimeType,float *confidence)
+{
+    if(DetectAudioTypeBySource(source, false)){
+        *mimeType = MEDIA_MIMETYPE_AUDIO_MPEG;
+        *confidence = 0.2f;
+        return true;
+    }
+
+    return false;
+}
+static bool TryADTSType(DataSourceBase *source,String8 *mimeType,float *confidence)
+{
+    if(DetectAudioTypeBySource(source, true)){
+        *mimeType = MEDIA_MIMETYPE_AUDIO_AAC_ADTS;
+        *confidence = 0.2f;
+        return true;
+    }
+
+    return false;
+}
+
 typedef bool (*TRYTYPEFUNC)(char* buffer,size_t len,String8 *mimeType,float *confidence);
 
 static TRYTYPEFUNC TryFunc[] = {
@@ -620,6 +808,10 @@ bool SniffFSL(
     else if (TryFlacType(source,mimeType,confidence))
         return true;
     else if (TryMkv(source,mimeType,confidence))
+        return true;
+    else if (TryMp3Type(source,mimeType,confidence))
+        return true;
+    else if (TryADTSType(source,mimeType,confidence))
         return true;
 
     return false;
