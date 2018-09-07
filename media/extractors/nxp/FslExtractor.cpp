@@ -1764,7 +1764,7 @@ status_t FslExtractor::ParseVideo(uint32 index, uint32 type,uint32 subtype)
 		meta->setInt32(kKeyDisplayWidth, display_width);
 	if(display_height > 0)
 		meta->setInt32(kKeyDisplayHeight, display_height);
- 
+
     // stagefright uses framerate only in MPEG4 extractor, let fslextrator be same with it
     if(fps > 0 && !strcmp(mMime, MEDIA_MIMETYPE_CONTAINER_MPEG4))
         meta->setInt32(kKeyFrameRate, fps);
@@ -1995,6 +1995,11 @@ status_t FslExtractor::ParseAudio(uint32 index, uint32 type,uint32 subtype)
     }
     else if(type == AUDIO_MP3){
         max_size = 8192;
+        meta->setInt32(kKeyMaxInputSize, max_size);
+    }
+    else if (type == AUDIO_PCM && bitPerSample == 24) {
+        // workaround for MA-12617, audio sample size exceed 16*1024, add to 32*1024
+        max_size = 32786;
         meta->setInt32(kKeyMaxInputSize, max_size);
     }
     else if(type == AUDIO_DSD){
