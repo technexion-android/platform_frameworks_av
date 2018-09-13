@@ -860,7 +860,10 @@ FslExtractor::FslExtractor(DataSourceBase *source,const char *mime)
     currentVideoTs = 0;
     currentAudioTs = 0;
     mVideoActived = false;
+    mAudioActived = false;
     bWaitForAudioStartTime = false;
+    mVideoIndex = 0;
+    mAudioIndex = 0;
 
     ALOGD("FslExtractor::FslExtractor mime=%s",mMime);
 }
@@ -2356,9 +2359,12 @@ status_t FslExtractor::ActiveTrack(uint32 index)
     if(trackInfo->type == MEDIA_VIDEO){
         seekPos = currentVideoTs;
         mVideoActived = true;
-    }else if(trackInfo->type == MEDIA_AUDIO)
+        mVideoIndex = index;
+    }else if(trackInfo->type == MEDIA_AUDIO){
         seekPos = currentAudioTs;
-    else if(currentVideoTs > 0)
+        mAudioActived = true;
+        mAudioIndex = index;
+    }else if(currentVideoTs > 0)
         seekPos = currentVideoTs;
     else
         seekPos = currentAudioTs;
@@ -2387,6 +2393,8 @@ status_t FslExtractor::DisableTrack(uint32 index)
 
     if(trackInfo->type == MEDIA_VIDEO){
         mVideoActived = false;
+    }else if(trackInfo->type == MEDIA_AUDIO){
+        mAudioActived = false;
     }
 
     IParser->enableTrack(parserHandle,trackInfo->mTrackNum, FALSE);
@@ -2398,6 +2406,8 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
     TrackInfo *pInfo = NULL;
     int64_t target;
     bool seek = true;
+    bool seek2 = false;
+    TrackInfo *pInfo2 = NULL;
     if(ts == NULL)
         return UNKNOWN_ERROR;
 
@@ -2416,6 +2426,20 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
         }else if(pInfo->type == MEDIA_TEXT && mVideoActived){
             seek = false;
         }
+
+        if(pInfo->type == MEDIA_VIDEO && mAudioActived && isTrackModeParser()){
+            pInfo2 = &mTracks.editItemAt(mAudioIndex);
+            seek2 = true;
+            if(pInfo2->type != MEDIA_AUDIO)
+                seek2 = false;
+        }
+
+        if(pInfo->type == MEDIA_AUDIO && mVideoActived && isTrackModeParser()){
+            pInfo2 = &mTracks.editItemAt(mVideoIndex);
+            seek2 = true;
+            if(pInfo2->type != MEDIA_VIDEO)
+                seek2 = false;
+        }
     }
 
     if(seek){
@@ -2427,6 +2451,18 @@ status_t FslExtractor::HandleSeekOperation(uint32_t index,int64_t * ts,uint32_t 
             pInfo->buffer = NULL;
         }
         ALOGD("HandleSeekOperation do seek index=%d",index);
+    }
+
+
+    if(seek2 && pInfo2 != NULL){
+        IParser->seek(parserHandle, pInfo2->mTrackNum, (uint64*)ts, flag);
+        //clear temp buffer
+        if(pInfo2->buffer != NULL){
+            pInfo2->buffer->release();
+            pInfo2->buffer = NULL;
+        }
+        ALOGD("HandleSeekOperation do seek 2 index=%d",index);
+        pInfo2->bPartial = false;
     }
 
     pInfo->bPartial = false;

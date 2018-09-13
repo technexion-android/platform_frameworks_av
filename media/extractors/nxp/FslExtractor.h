@@ -182,7 +182,10 @@ private:
     Mutex mLock;
     int64_t currentVideoTs;
     int64_t currentAudioTs;
+    uint32_t mVideoIndex;
+    uint32_t mAudioIndex;
     bool mVideoActived;
+    bool mAudioActived;
     bool bWaitForAudioStartTime;
     bool isLiveStreaming() const;
     status_t GetLibraryName();
