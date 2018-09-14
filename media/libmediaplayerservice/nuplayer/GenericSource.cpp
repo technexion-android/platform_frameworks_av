@@ -951,6 +951,7 @@ status_t NuPlayer::GenericSource::dequeueAccessUnit(
         sp<AMessage> msg = new AMessage(kWhatFetchTimedTextData, this);
         msg->setInt64("timeUs", timeUs);
         msg->setInt32("generation", mFetchTimedTextDataGeneration);
+        msg->setInt32("textTrackType", mTextTrackType);
         msg->post();
     }
 
