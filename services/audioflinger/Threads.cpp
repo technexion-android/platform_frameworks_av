@@ -897,6 +897,11 @@ String16 AudioFlinger::ThreadBase::getWakeLockTag()
 
 void AudioFlinger::ThreadBase::acquireWakeLock_l()
 {
+    int lpa_enable = property_get_int32("lpa_enable", 0);
+
+    if (lpa_enable == 1)
+        return;
+
     getPowerManager_l();
     if (mPowerManager != 0) {
         sp<IBinder> binder = new BBinder();
