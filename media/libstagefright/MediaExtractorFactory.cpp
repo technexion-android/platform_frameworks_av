@@ -284,7 +284,8 @@ void MediaExtractorFactory::RegisterExtractorsInSystem(
                             || !strcmp(name,"FLAC Extractor")
                             || !strcmp(name,"MPEG2-PS/TS Extractor")
                             || !strcmp(name,"Matroska Extractor")
-                            || !strcmp(name,"AAC Extractor"))
+                            || !strcmp(name,"AAC Extractor")
+                            || !strcmp(name,"MP3 Extractor"))
                                 skipThis = true;
                     }
 
