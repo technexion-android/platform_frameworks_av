@@ -2437,7 +2437,8 @@ status_t ACodec::configureCodec(
         }
     }
 
-    mInputFormat->setInt32("tunneled-playback", mTunneled);
+    if(mInputFormat != NULL)
+        mInputFormat->setInt32("tunneled-playback", mTunneled);
 
     // create data converters if needed
     if (!mIsVideo && !mIsImage && err == OK) {
