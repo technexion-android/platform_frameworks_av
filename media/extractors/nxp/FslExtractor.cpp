@@ -2647,14 +2647,14 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
         bool add = false;
         if(source != NULL  && source->started()){
             add = true;
-            if(pInfo->type == MEDIA_AUDIO){
-                if(pInfo->outTs >= 0 && pInfo->outTs < currentAudioTs && mVideoActived == true){
+            if(pInfo->type == MEDIA_AUDIO && bWaitForAudioStartTime == true) {
+                if(pInfo->outTs >= 0 && pInfo->outTs < currentAudioTs && mVideoActived == true) {
                     ALOGV("drop audio after seek ts= %" PRId64 ",audio_ts= %" PRId64 "",pInfo->outTs,currentAudioTs);
                     add = false;
-                } else if(pInfo->outTs == -1 && bWaitForAudioStartTime == true) {
+                } else if(pInfo->outTs == -1) {
                     // drop audio as invalid start time after seek
                     add = false;
-                } else if (bWaitForAudioStartTime == true) {
+                } else {
                     // get audio start time
                     bWaitForAudioStartTime = false;
                 }
