@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/* Copyright 2018 NXP */
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "FrameDecoder"
@@ -504,6 +505,11 @@ status_t VideoFrameDecoder::onOutputReceived(
     int32_t width, height;
     CHECK(outputFormat->findInt32("width", &width));
     CHECK(outputFormat->findInt32("height", &height));
+
+    /* MA-12749 Fix thumbnail has green bar issue */
+    int32_t slice_height = -1;
+    if (outputFormat->findInt32("slice-height", &slice_height) && slice_height > height)
+        height = slice_height;
 
     int32_t crop_left, crop_top, crop_right, crop_bottom;
     if (!outputFormat->findRect("crop", &crop_left, &crop_top, &crop_right, &crop_bottom)) {
