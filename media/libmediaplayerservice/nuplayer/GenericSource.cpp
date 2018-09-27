@@ -510,7 +510,8 @@ void NuPlayer::GenericSource::finishPrepareAsync() {
     }
 
     if (mIsStreaming) {
-        mCachedSource->resumeFetchingIfNecessary();
+        if (mCachedSource != NULL)
+            mCachedSource->resumeFetchingIfNecessary();
         mPreparing = true;
         schedulePollBuffering();
     } else {
@@ -907,7 +908,8 @@ status_t NuPlayer::GenericSource::dequeueAccessUnit(
             }
             if (track->mPackets->getAvailableBufferCount(&finalResult) < 2
                 && !mSentPauseOnBuffering && !mPreparing) {
-                mCachedSource->resumeFetchingIfNecessary();
+                if (mCachedSource != NULL)
+                    mCachedSource->resumeFetchingIfNecessary();
                 sendCacheStats();
                 mSentPauseOnBuffering = true;
                 sp<AMessage> notify = dupNotify();
@@ -1528,7 +1530,8 @@ void NuPlayer::GenericSource::readBuffer(
                 if (counterTrack->mSource != NULL) {
                     durationUs = counterTrack->mPackets->getBufferedDurationUs(&finalResult);
                 }
-                if (finalResult == ERROR_END_OF_STREAM || durationUs >= markUs || mCachedSource->isCacheFull()) {
+                if (finalResult == ERROR_END_OF_STREAM || durationUs >= markUs ||
+                        (mCachedSource != NULL && mCachedSource->isCacheFull())) {
                     if (mPreparing) {
                         notifyPrepared();
                         mPreparing = false;
