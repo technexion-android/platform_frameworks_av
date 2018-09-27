@@ -7,7 +7,7 @@
  *  and contain its proprietary and confidential information.
  *
  */
-#define LOG_NDEBUG 0
+//#define LOG_NDEBUG 0
 #define LOG_TAG "FslInspector"
 #include <utils/Log.h>
 
