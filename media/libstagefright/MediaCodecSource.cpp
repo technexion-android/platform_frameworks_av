@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 /* Copyright (C) 2015 Freescale Semiconductor, Inc. */
+/* Copyright 2018 NXP */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "MediaCodecSource"
 #define DEBUG_DRIFT_TIME 0
@@ -467,7 +468,7 @@ MediaCodecSource::~MediaCodecSource() {
     releaseEncoder();
 
     MediaBufferBase* mbuf = NULL;
-    while(mPuller->readBuffer(&mbuf)){
+    while(mPuller != NULL && mPuller->readBuffer(&mbuf)){
         if (!mIsVideo && mbuf != NULL) {
             mbuf->release();
         }
