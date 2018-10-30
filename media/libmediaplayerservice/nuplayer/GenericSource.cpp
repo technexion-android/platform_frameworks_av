@@ -1377,7 +1377,10 @@ void NuPlayer::GenericSource::readBuffer(
             track = &mAudioTrack;
             if (mVideoTrack.mSource == NULL) {
                 maxBuffers = 64;
-            } else {
+            } else if (mAudioLastDequeueTimeUs - mVideoLastDequeueTimeUs < 1000000) {
+                // Fix MA-13208, if last dequeued audio has much larger timestamp than video, that means
+                // audio frames are enough, need to decrease audio maxBuffers to 1 to avoid interleave eos,
+                // otherwise, set maxBuffers to 16 to read multiple audio buffers.
                 maxBuffers = 16;
             }
             break;
