@@ -247,6 +247,7 @@ private:
     bool mSourceStarted;
     bool mAudioDecoderError;
     bool mVideoDecoderError;
+    bool mNoAudioDecoder;
 
     // Actual pause state, either as requested by client or due to buffering.
     bool mPaused;
@@ -264,6 +265,7 @@ private:
     // Modular DRM
     sp<ICrypto> mCrypto;
     bool mIsDrmProtected;
+
 
     typedef enum {
         DATA_SOURCE_TYPE_NONE,

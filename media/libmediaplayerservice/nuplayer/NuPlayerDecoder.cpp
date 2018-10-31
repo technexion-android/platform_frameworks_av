@@ -335,7 +335,15 @@ void NuPlayer::Decoder::onConfigure(const sp<AMessage> &format) {
     if (mCodec == NULL) {
         ALOGE("Failed to create %s%s decoder",
                 (secure ? "secure " : ""), mime.c_str());
-        handleError(UNKNOWN_ERROR);
+        //add no_decoder into error message
+        //handleError(UNKNOWN_ERROR);
+        ++mBufferGeneration;
+
+        sp<AMessage> notify = mNotify->dup();
+        notify->setInt32("what", kWhatError);
+        notify->setInt32("err", UNKNOWN_ERROR);
+        notify->setInt32("no_decoder", 1);
+        notify->post();
         return;
     }
     mIsSecure = secure;

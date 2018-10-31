@@ -219,6 +219,7 @@ NuPlayer::NuPlayer(pid_t pid, const sp<MediaClock> &mediaClock)
     clearFlushComplete();
     mRendering = false;
     bEnablePassThrough = false;
+    mNoAudioDecoder = false;
 }
 
 NuPlayer::~NuPlayer() {
@@ -1236,6 +1237,9 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
                             notifyListener(MEDIA_INFO, MEDIA_INFO_PLAY_AUDIO_ERROR, err);
                         }
                         mAudioDecoderError = true;
+                        int32_t no_decoder = 0;
+                        if(msg->findInt32("no_decoder", &no_decoder) && 1 == no_decoder)
+                            mNoAudioDecoder = true;
                     } else {
                         if (mAudioDecoderError || mSource->getFormat(true /* audio */) == NULL
                                 || mAudioSink == NULL || mAudioDecoder == NULL) {
@@ -1538,7 +1542,7 @@ void NuPlayer::onResume() {
     }
     // |mAudioDecoder| may have been released due to the pause timeout, so re-create it if
     // needed.
-    if (audioDecoderStillNeeded() && mAudioDecoder == NULL) {
+    if (audioDecoderStillNeeded() && mAudioDecoder == NULL && !mNoAudioDecoder) {
         instantiateDecoder(true /* audio */, &mAudioDecoder);
     }
     if (mRenderer != NULL) {
