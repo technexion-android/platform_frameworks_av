@@ -2558,6 +2558,8 @@ status_t FslExtractor::GetNextSample(uint32_t index,bool is_sync)
         if(PARSER_SUCCESS != err){
             if(err == PARSER_READ_ERROR)
                 return ERROR_IO;
+            else if(err == PARSER_ERR_INVALID_PARAMETER)
+                return ERROR_MALFORMED;
             else
                 return ERROR_END_OF_STREAM;
         }
