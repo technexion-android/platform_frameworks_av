@@ -9113,6 +9113,10 @@ status_t ACodec::getOMXChannelMapping(size_t numChannels, OMX_AUDIO_CHANNELTYPE 
 }
 
 status_t ACodec::setMediaTime(int64_t time, float speed) {
+    #ifdef MALONE_VPU
+    //disable the feature
+    return OK;
+    #endif
 
     if(!mComponentName.startsWith("OMX.Freescale.std.video_decoder")){
         return OK;
