@@ -21,8 +21,13 @@ cc_library_shared {
         "libcutils",
         "liblog",
         "libdl",
-        "libeffectsconfig",
     ],
+
+    static_libs: [
+        "libeffectsconfig",
+        "libtinyxml2",
+    ],
+
     cflags: ["-fvisibility=hidden"],
 
     local_include_dirs:["include/media"],
