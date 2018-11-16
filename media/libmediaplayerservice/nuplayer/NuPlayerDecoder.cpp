@@ -393,7 +393,14 @@ void NuPlayer::Decoder::onConfigure(const sp<AMessage> &format) {
         ALOGE("Failed to configure [%s] decoder (err=%d)", mComponentName.c_str(), err);
         mCodec->release();
         mCodec.clear();
-        handleError(err);
+
+        //MA-13370, add no_decoder into error message
+        ++mBufferGeneration;
+        sp<AMessage> notify = mNotify->dup();
+        notify->setInt32("what", kWhatError);
+        notify->setInt32("err", err);
+        notify->setInt32("no_decoder", 1);
+        notify->post();
         return;
     }
     rememberCodecSpecificData(format);
