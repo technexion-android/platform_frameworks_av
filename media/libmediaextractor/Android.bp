@@ -1,5 +1,6 @@
 cc_library {
     name: "libmediaextractor",
+    vendor_available: true,
 
     include_dirs: [
         "frameworks/av/include",

@@ -18,6 +18,7 @@
 #define LOG_TAG "MediaExtractor"
 #include <utils/Log.h>
 #include <pwd.h>
+#include <unistd.h>
 
 #include <media/MediaExtractor.h>
 #include <media/stagefright/foundation/ADebug.h>
