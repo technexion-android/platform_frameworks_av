@@ -337,6 +337,19 @@ bool DescribeDefaultColorFormat(DescribeColorFormat2Params &params) {
             image.mPlane[image.V].mHorizSubsampling = 2;
             image.mPlane[image.V].mVertSubsampling = 2;
             break;
+        case OMX_COLOR_FormatYUV422SemiPlanar:
+            image.mPlane[image.U].mOffset = params.nStride * params.nSliceHeight;
+            image.mPlane[image.U].mColInc = 2;
+            image.mPlane[image.U].mRowInc = params.nStride;
+            image.mPlane[image.U].mHorizSubsampling = 2;
+            image.mPlane[image.U].mVertSubsampling = 1;
+
+            image.mPlane[image.V].mOffset = image.mPlane[image.U].mOffset + 1;
+            image.mPlane[image.V].mColInc = 2;
+            image.mPlane[image.V].mRowInc = params.nStride;
+            image.mPlane[image.V].mHorizSubsampling = 2;
+            image.mPlane[image.V].mVertSubsampling = 1;
+            break;
 
         default:
             TRESPASS();
