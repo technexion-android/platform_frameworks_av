@@ -1045,12 +1045,28 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
                 }
             }
 
-            // only enable SyncQueue for target evk_8mq
-            // this will cause some cts cases failed, but evk_8mm don't care cts that much.
-            char val[PROPERTY_VALUE_MAX];
-            if (property_get("ro.product.model", val, NULL) && strcmp(val, "EVK_8MQ") == 0) {
-                if(mAudioDecoder != NULL && mVideoDecoder != NULL)
+            //Check whether need to enable SyncQueue
+            if(mAudioDecoder != NULL && mVideoDecoder != NULL){
+                char val[PROPERTY_VALUE_MAX];
+                bool bSyncQueue = false;
+                if (property_get("ro.boot.soc_type", val, NULL)){
+                    //Enable SyncQueue for target evk_8mq
+                    // this will cause some cts cases failed, but evk_8mm don't care cts that much
+                    if(0 == strcmp(val, "imx8mq")){
+                        bSyncQueue = true;
+                    }else if(0 == strcmp(val, "imx8qxp") || 0 == strcmp(val, "imx8qm")){
+                        //Enable SyncQueue when video is 4K for imx8qxp and imx8qm
+                        //then the first few frames will not be dropped
+                        int32_t width = 0;
+                        sp<MetaData> meta = mSource->getFormatMeta(false /* audio */);
+                        if(meta != NULL && meta->findInt32(kKeyWidth, &width) && width >= 3840)
+                            bSyncQueue = true;
+                    }
+                }
+                if(bSyncQueue){
+                    ALOGI("enable SyncQueue");
                     mRenderer->enableSyncQueue(true);
+                }
             }
 
             status_t err;
