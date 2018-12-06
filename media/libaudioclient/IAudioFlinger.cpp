@@ -25,6 +25,7 @@
 #include <binder/IPCThreadState.h>
 #include <binder/Parcel.h>
 #include <cutils/multiuser.h>
+#include <cutils/properties.h>
 #include <media/TimeCheck.h>
 #include <private/android_filesystem_config.h>
 
@@ -951,7 +952,12 @@ status_t BnAudioFlinger::onTransact(
             break;
     }
 
-    TimeCheck check("IAudioFlinger");
+    int lpa_enable = property_get_int32("vendor.audio.lpa.enable", 0);
+    if (!lpa_enable) {
+        TimeCheck check("IAudioFlinger");
+    } else {
+        ALOGD("IAudioFlinger: disable timecheck in LPA mode");
+    }
 
     switch (code) {
         case CREATE_TRACK: {
