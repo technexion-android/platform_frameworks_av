@@ -280,8 +280,7 @@ void MediaExtractorFactory::RegisterExtractorsInSystem(
                     // don't register below google extractors when using fsl extractor
                     if((value & 0x01) && !strncmp(libDirPath, "/system", 7)){
                         const char * name = getDef().extractor_name;
-                        if(!strcmp(name,"MP4 Extractor")
-                            || !strcmp(name,"FLAC Extractor")
+                        if( !strcmp(name,"FLAC Extractor")
                             || !strcmp(name,"MPEG2-PS/TS Extractor")
                             || !strcmp(name,"Matroska Extractor")
                             || !strcmp(name,"AAC Extractor")
