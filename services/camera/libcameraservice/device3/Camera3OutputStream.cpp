@@ -271,11 +271,13 @@ status_t Camera3OutputStream::returnBufferCheckedLocked(
         /* Certain consumers (such as AudioSource or HardwareComposer) use
          * MONOTONIC time, causing time misalignment if camera timestamp is
          * in BOOTTIME. Do the conversion if necessary. */
-        res = native_window_set_buffers_timestamp(mConsumer.get(),
-                mUseMonoTimestamp ? timestamp - mTimestampOffset : timestamp);
+        /* NXP camera HAL use MONOTONIC time, already aligns with the
+           multimedia. Use mTimestampOffset in ALOGE, or compile failed
+           since mTimestampOffset not used. */
+        res = native_window_set_buffers_timestamp(mConsumer.get(), timestamp);
         if (res != OK) {
-            ALOGE("%s: Stream %d: Error setting timestamp: %s (%d)",
-                  __FUNCTION__, mId, strerror(-res), res);
+            ALOGE("%s: Stream %d: Error setting timestamp: %s (%d), mTimestampOffset %lld",
+                  __FUNCTION__, mId, strerror(-res), res, (long long)mTimestampOffset);
             return res;
         }
 
