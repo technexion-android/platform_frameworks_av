@@ -5952,13 +5952,17 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::DirectOutputThread::prep
                     // it will then automatically call start() when data is available
                     track->disable();
                 } else if (last) {
-                    ALOGW("pause because of UNDERRUN, framesReady = %zu,"
-                            "minFrames = %u, mFormat = %#x",
-                            framesReady, minFrames, mFormat);
-                    mixerStatus = MIXER_TRACKS_ENABLED;
-                    if (mHwSupportsPause && !mHwPaused && !mStandby) {
-                        doHwPause = true;
-                        mHwPaused = true;
+                    if (m_lpa_enable)
+                        track->mRetryCount++;
+                    else {
+                        ALOGW("pause because of UNDERRUN, framesReady = %zu,"
+                                "minFrames = %u, mFormat = %#x",
+                                framesReady, minFrames, mFormat);
+                        mixerStatus = MIXER_TRACKS_ENABLED;
+                        if (mHwSupportsPause && !mHwPaused && !mStandby) {
+                            doHwPause = true;
+                            mHwPaused = true;
+                        }
                     }
                 }
             }
