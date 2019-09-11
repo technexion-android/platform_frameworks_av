@@ -93,6 +93,7 @@ bool ColorConverter::isValid() const {
         case OMX_COLOR_FormatCbYCrY:
         case OMX_QCOM_COLOR_FormatYVU420SemiPlanar:
         case OMX_TI_COLOR_FormatYUV420PackedSemiPlanar:
+        case OMX_COLOR_FormatYCbYCr:
             return mDstFormat == OMX_COLOR_Format16bitRGB565;
 
         case OMX_COLOR_FormatYUV420SemiPlanar:
@@ -255,6 +256,10 @@ status_t ColorConverter::convert(
             err = convertTIYUV420PackedSemiPlanar(src, dst);
             break;
 
+        case OMX_COLOR_FormatYCbYCr:
+            err = convertYCbYCr(src, dst);
+            break;
+
         default:
         {
             CHECK(!"Should not be here. Unknown color conversion.");
@@ -283,6 +288,64 @@ status_t ColorConverter::convertCbYCrY(
             signed y2 = (signed)src_ptr[2 * x + 3] - 16;
             signed u = (signed)src_ptr[2 * x] - 128;
             signed v = (signed)src_ptr[2 * x + 2] - 128;
+
+            signed u_b = u * 517;
+            signed u_g = -u * 100;
+            signed v_g = -v * 208;
+            signed v_r = v * 409;
+
+            signed tmp1 = y1 * 298;
+            signed b1 = (tmp1 + u_b) / 256;
+            signed g1 = (tmp1 + v_g + u_g) / 256;
+            signed r1 = (tmp1 + v_r) / 256;
+
+            signed tmp2 = y2 * 298;
+            signed b2 = (tmp2 + u_b) / 256;
+            signed g2 = (tmp2 + v_g + u_g) / 256;
+            signed r2 = (tmp2 + v_r) / 256;
+
+            uint32_t rgb1 =
+                ((kAdjustedClip[r1] >> 3) << 11)
+                | ((kAdjustedClip[g1] >> 2) << 5)
+                | (kAdjustedClip[b1] >> 3);
+
+            uint32_t rgb2 =
+                ((kAdjustedClip[r2] >> 3) << 11)
+                | ((kAdjustedClip[g2] >> 2) << 5)
+                | (kAdjustedClip[b2] >> 3);
+
+            if (x + 1 < src.cropWidth()) {
+                *(uint32_t *)(&dst_ptr[x]) = (rgb2 << 16) | rgb1;
+            } else {
+                dst_ptr[x] = rgb1;
+            }
+        }
+
+        src_ptr += src.mWidth * 2;
+        dst_ptr += dst.mWidth;
+    }
+
+    return OK;
+}
+
+status_t ColorConverter::convertYCbYCr(
+        const BitmapParams &src, const BitmapParams &dst) {
+    // XXX Untested
+
+    uint8_t *kAdjustedClip = initClip();
+
+    uint16_t *dst_ptr = (uint16_t *)dst.mBits
+        + dst.mCropTop * dst.mWidth + dst.mCropLeft;
+
+    const uint8_t *src_ptr = (const uint8_t *)src.mBits
+        + (src.mCropTop * dst.mWidth + src.mCropLeft) * 2;
+
+    for (size_t y = 0; y < src.cropHeight(); ++y) {
+        for (size_t x = 0; x < src.cropWidth(); x += 2) {
+            signed y1 = (signed)src_ptr[2 * x] - 16;
+            signed y2 = (signed)src_ptr[2 * x + 2] - 16;
+            signed u = (signed)src_ptr[2 * x + 1] - 128;
+            signed v = (signed)src_ptr[2 * x + 3] - 128;
 
             signed u_b = u * 517;
             signed u_g = -u * 100;
