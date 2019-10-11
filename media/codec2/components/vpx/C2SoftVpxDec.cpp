@@ -631,11 +631,11 @@ void C2SoftVpxDec::process(
 }
 
 static void copyOutputBufferToYuvPlanarFrame(
-        uint8_t *dst, const uint8_t *srcY, const uint8_t *srcU, const uint8_t *srcV,
+        uint8_t *dst, uint8_t *dst_u, uint8_t *dst_v, const uint8_t *srcY, const uint8_t *srcU, const uint8_t *srcV,
         size_t srcYStride, size_t srcUStride, size_t srcVStride,
         size_t dstYStride, size_t dstUVStride,
         uint32_t width, uint32_t height) {
-    uint8_t *dstStart = dst;
+    //uint8_t *dstStart = dst;
 
     for (size_t i = 0; i < height; ++i) {
          memcpy(dst, srcY, width);
@@ -643,19 +643,22 @@ static void copyOutputBufferToYuvPlanarFrame(
          dst += dstYStride;
     }
 
-    dst = dstStart + dstYStride * height;
+    //dst = dstStart + dstYStride * height;
+
     for (size_t i = 0; i < height / 2; ++i) {
-         memcpy(dst, srcV, width / 2);
+         memcpy(dst_v, srcV, width / 2);
          srcV += srcVStride;
-         dst += dstUVStride;
+         dst_v += dstUVStride;
     }
 
-    dst = dstStart + (dstYStride * height) + (dstUVStride * height / 2);
+    //dst = dstStart + (dstYStride * height) + (dstUVStride * height / 2);
+
     for (size_t i = 0; i < height / 2; ++i) {
-         memcpy(dst, srcU, width / 2);
+         memcpy(dst_u, srcU, width / 2);
          srcU += srcUStride;
-         dst += dstUVStride;
+         dst_u += dstUVStride;
     }
+
 }
 
 static void convertYUV420Planar16ToY410(uint32_t *dst,
@@ -824,6 +827,9 @@ status_t C2SoftVpxDec::outputBuffer(
            ((c2_cntr64_t *)img->user_priv)->peekll());
 
     uint8_t *dst = const_cast<uint8_t *>(wView.data()[C2PlanarLayout::PLANE_Y]);
+    uint8_t *dst_u = const_cast<uint8_t *>(wView.data()[C2PlanarLayout::PLANE_U]);
+    uint8_t *dst_v = const_cast<uint8_t *>(wView.data()[C2PlanarLayout::PLANE_V]);
+
     size_t srcYStride = img->stride[VPX_PLANE_Y];
     size_t srcUStride = img->stride[VPX_PLANE_U];
     size_t srcVStride = img->stride[VPX_PLANE_V];
@@ -871,8 +877,9 @@ status_t C2SoftVpxDec::outputBuffer(
         const uint8_t *srcY = (const uint8_t *)img->planes[VPX_PLANE_Y];
         const uint8_t *srcU = (const uint8_t *)img->planes[VPX_PLANE_U];
         const uint8_t *srcV = (const uint8_t *)img->planes[VPX_PLANE_V];
+
         copyOutputBufferToYuvPlanarFrame(
-                dst, srcY, srcU, srcV,
+                dst, dst_u, dst_v, srcY, srcU, srcV,
                 srcYStride, srcUStride, srcVStride,
                 dstYStride, dstUVStride,
                 mWidth, mHeight);
