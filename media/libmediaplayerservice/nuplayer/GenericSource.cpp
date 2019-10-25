@@ -1342,7 +1342,15 @@ void NuPlayer::GenericSource::readBuffer(
             break;
         case MEDIA_TRACK_TYPE_AUDIO:
             track = &mAudioTrack;
-            maxBuffers = 64;
+            //maxBuffers = 64;
+            if (mVideoTrack.mSource == NULL) {
+                maxBuffers = 64;
+            } else if (mAudioLastDequeueTimeUs - mVideoLastDequeueTimeUs < 1000000) {
+                // Fix MA-13208, if last dequeued audio has much larger timestamp than video, that means
+                // audio frames are enough, need to decrease audio maxBuffers to 1 to avoid interleave eos,
+                // otherwise, set maxBuffers to 16 to read multiple audio buffers.
+                 maxBuffers = 16;
+            }
             break;
         case MEDIA_TRACK_TYPE_SUBTITLE:
             track = &mSubtitleTrack;
@@ -1377,6 +1385,9 @@ void NuPlayer::GenericSource::readBuffer(
     }
 
     int32_t generation = getDataGeneration(trackType);
+    int64_t videoSeekTimeResultUs = -1;
+    int64_t startUs = ALooper::GetNowUs();
+    int64_t nowUs = startUs;
     for (size_t numBuffers = 0; numBuffers < maxBuffers; ) {
         Vector<MediaBufferBase *> mediaBuffers;
         status_t err = NO_ERROR;
@@ -1420,6 +1431,8 @@ void NuPlayer::GenericSource::readBuffer(
                 mAudioTimeUs = timeUs;
             } else if (trackType == MEDIA_TRACK_TYPE_VIDEO) {
                 mVideoTimeUs = timeUs;
+                if(seeking == true && numBuffers == 0)
+                    videoSeekTimeResultUs = timeUs; //save the first frame timestamp after seek in order to seek audio
             }
 
             queueDiscontinuityIfNeeded(seeking, formatChange, trackType, track);
@@ -1465,6 +1478,12 @@ void NuPlayer::GenericSource::readBuffer(
             track->mPackets->signalEOS(err);
             break;
         }
+
+        //quit from loop when reading too many audio buffer
+        nowUs = ALooper::GetNowUs();
+        if(nowUs - startUs > 250000LL)
+            break;
+
     }
 
     if (mIsStreaming
@@ -1501,6 +1520,8 @@ void NuPlayer::GenericSource::readBuffer(
 
         postReadBuffer(trackType);
     }
+    if(videoSeekTimeResultUs > 0)
+        *actualTimeUs = videoSeekTimeResultUs;
 }
 
 void NuPlayer::GenericSource::queueDiscontinuityIfNeeded(
