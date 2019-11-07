@@ -247,6 +247,7 @@ enum {
 
     // Treat empty track as malformed for MediaRecorder.
     kKeyEmptyTrackMalFormed = 'nemt', // bool (int32_t)
+    kKeySubFormat         = 'sFmt', // (int32_t)
 };
 
 enum {
