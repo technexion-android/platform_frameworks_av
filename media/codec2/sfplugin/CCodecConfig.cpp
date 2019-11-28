@@ -359,7 +359,7 @@ void CCodecConfig::initializeStandardParams() {
         .limitTo(D::OUTPUT & D::READ));
 
     add(ConfigMapper(KEY_BIT_RATE, C2_PARAMKEY_BITRATE, "value")
-        .limitTo(D::ENCODER & D::OUTPUT));
+        .limitTo((D::ENCODER | D::DECODER) & (D::OUTPUT | D::INPUT)));
     // we also need to put the bitrate in the max bitrate field
     add(ConfigMapper(KEY_MAX_BIT_RATE, C2_PARAMKEY_BITRATE, "value")
         .limitTo(D::ENCODER & D::READ & D::OUTPUT));
