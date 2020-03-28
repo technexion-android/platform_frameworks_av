@@ -72,7 +72,7 @@ public:
         addParameter(
                 DefineParam(mBitrate, C2_PARAMKEY_BITRATE)
                 .withDefault(new C2StreamBitrateInfo::input(0u, 64000))
-                .withFields({C2F(mBitrate, value).inRange(1, 98304000)})
+                .withFields({C2F(mBitrate, value).inRange(1, 196608000)})
                 .withSetter(Setter<decltype(*mBitrate)>::NonStrictValueWithNoDeps)
                 .build());
 
