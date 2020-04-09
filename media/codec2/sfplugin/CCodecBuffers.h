@@ -932,6 +932,7 @@ protected:
 private:
     FlexBuffersImpl mImpl;
     std::shared_ptr<LocalBufferPool> mLocalBufferPool;
+    bool mUseNV12;
 };
 
 class DummyInputBuffers : public InputBuffers {
