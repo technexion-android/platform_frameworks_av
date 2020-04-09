@@ -199,7 +199,12 @@ void addSupportedColorFormats(
         // vendor video codecs prefer opaque format
         if (trait.name.find("android") == std::string::npos) {
             caps->addColorFormat(COLOR_FormatSurface);
+            #ifdef MALONE_VPU
+            if(encoder)
+                caps->addColorFormat(COLOR_FormatYUV420SemiPlanar);
+            #endif
         }
+
         caps->addColorFormat(COLOR_FormatYUV420Flexible);
         caps->addColorFormat(COLOR_FormatYUV420Planar);
         caps->addColorFormat(COLOR_FormatYUV420SemiPlanar);
