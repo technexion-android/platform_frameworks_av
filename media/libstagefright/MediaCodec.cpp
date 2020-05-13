@@ -3964,6 +3964,13 @@ status_t MediaCodec::onQueueInputBuffer(const sp<AMessage> &msg) {
         return -EACCES;
     }
 
+    // For NXP audio decoder, input eos comes earlier than output eos because we send multiple frames
+    // but decode only one frame everytime. So don't return error here because decoder is still working.
+    if (size == (size_t)(-1) && !mIsVideo && mComponentName.startsWith("c2.imx.")) {
+        info->mData->meta()->setInt32("eos", true);
+        size = 0;
+    }
+
     if (offset + size > buffer->capacity()) {
         return -EINVAL;
     }
