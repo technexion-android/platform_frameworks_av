@@ -15,6 +15,13 @@ nuplayer_defaults {
         "NuPlayerStreamListener.cpp",
         "RTSPSource.cpp",
         "StreamingSource.cpp",
+        "ParsedMessage.cpp",
+        "ANetworkSession.cpp",
+        "GenericStreamSource.cpp",
+        "SessionManager.cpp",
+        "RTPSessionManager.cpp",
+        "UDPSessionManager.cpp",
+        "StreamingDataSource.cpp",
     ],
 
     header_libs: [

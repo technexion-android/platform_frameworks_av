@@ -44,6 +44,8 @@
 #include <media/stagefright/MediaExtractorFactory.h>
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/Utils.h>
+#include <inttypes.h>
+#include "StreamingDataSource.h"
 
 namespace android {
 
@@ -167,15 +169,22 @@ sp<MetaData> NuPlayer::GenericSource::getFileFormatMeta() const {
 status_t NuPlayer::GenericSource::initFromDataSource() {
     sp<IMediaExtractor> extractor;
     sp<DataSource> dataSource;
+    String8 mimeType;
     {
         Mutex::Autolock _l_d(mDisconnectLock);
         dataSource = mDataSource;
     }
     CHECK(dataSource != NULL);
+    const char* uri = mUri.c_str();
+    if (!strncasecmp("rtp://", uri, 6)
+       || !strncasecmp("udp://", uri, 6))
+    {
+        mimeType = MEDIA_MIMETYPE_CONTAINER_MPEG2TS;
+    }
 
     mLock.unlock();
     // This might take long time if data source is not reliable.
-    extractor = MediaExtractorFactory::Create(dataSource, NULL);
+    extractor = MediaExtractorFactory::Create(dataSource, mimeType.isEmpty() ? NULL : mimeType.string());
 
     if (extractor == NULL) {
         ALOGE("initFromDataSource, cannot create extractor!");
@@ -367,6 +376,7 @@ void NuPlayer::GenericSource::prepareAsync() {
 }
 
 void NuPlayer::GenericSource::onPrepareAsync() {
+
     mDisconnectLock.lock();
     ALOGV("onPrepareAsync: mDataSource: %d", (mDataSource != NULL));
 
@@ -397,17 +407,32 @@ void NuPlayer::GenericSource::onPrepareAsync() {
                 }
             }
 
-            mLock.unlock();
-            mDisconnectLock.unlock();
-            // This might take long time if connection has some issue.
-            sp<DataSource> dataSource = PlayerServiceDataSourceFactory::getInstance()
+            if (!strncasecmp("rtp://", uri, 6)
+                    || !strncasecmp("udp://", uri, 6)){
+                mLock.unlock();
+                mDisconnectLock.unlock();
+                sp<DataSource> dataSource = new StreamingDataSource(uri);
+                mDisconnectLock.lock();
+                mLock.lock();
+
+                if (!mDisconnected) {
+                    mDataSource = dataSource;
+                }
+            }else{
+                mLock.unlock();
+                mDisconnectLock.unlock();
+                // This might take long time if connection has some issue.
+                sp<DataSource> dataSource = PlayerServiceDataSourceFactory::getInstance()
                     ->CreateFromURI(mHTTPService, uri, &mUriHeaders, &contentType,
                             static_cast<HTTPBase *>(mHttpSource.get()));
-            mDisconnectLock.lock();
-            mLock.lock();
-            if (!mDisconnected) {
-                mDataSource = dataSource;
+                mDisconnectLock.lock();
+                mLock.lock();
+
+                if (!mDisconnected) {
+                    mDataSource = dataSource;
+                }
             }
+
         } else {
             if (property_get_bool("media.stagefright.extractremote", true) &&
                     !PlayerServiceFileSource::requiresDrm(
@@ -507,7 +532,8 @@ void NuPlayer::GenericSource::finishPrepareAsync() {
     }
 
     if (mIsStreaming) {
-        mCachedSource->resumeFetchingIfNecessary();
+        if (mCachedSource != NULL)
+            mCachedSource->resumeFetchingIfNecessary();
         mPreparing = true;
         schedulePollBuffering();
     } else {
@@ -891,7 +917,8 @@ status_t NuPlayer::GenericSource::dequeueAccessUnit(
             }
             if (track->mPackets->getAvailableBufferCount(&finalResult) < 2
                 && !mSentPauseOnBuffering && !mPreparing) {
-                mCachedSource->resumeFetchingIfNecessary();
+                if (mCachedSource != NULL)
+                    mCachedSource->resumeFetchingIfNecessary();
                 sendCacheStats();
                 mSentPauseOnBuffering = true;
                 sp<AMessage> notify = dupNotify();
