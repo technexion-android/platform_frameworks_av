@@ -22,6 +22,8 @@ nuplayer_defaults {
         "RTPSessionManager.cpp",
         "UDPSessionManager.cpp",
         "StreamingDataSource.cpp",
+        "NuPlayerDecoderPassThroughAC3.cpp",
+        "NuPlayerDecoderPassThroughDDP.cpp",
     ],
 
     header_libs: [

@@ -1103,6 +1103,16 @@ bool NuPlayer::Renderer::onDrainAudioQueue() {
                 mAudioSink->stop();
                 mNumFramesWritten = 0;
             }
+
+            //if audio clock has not started, then switch to system clock
+            if(mNextAudioClockUpdateTimeUs == -1){
+                int64_t unused;
+                int64_t nowUs = ALooper::GetNowUs();
+                if((mMediaClock->getMediaTime(nowUs, &unused) != OK)){
+                    mMediaClock->updateAnchor(mAudioFirstAnchorTimeMediaUs, nowUs, mAnchorTimeMediaUs);
+                    mUseVirtualAudioSink = true;
+                }
+            }
             return false;
         }
 
