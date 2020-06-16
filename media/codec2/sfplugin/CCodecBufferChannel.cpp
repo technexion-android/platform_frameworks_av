@@ -536,6 +536,40 @@ status_t CCodecBufferChannel::queueSecureInputBuffer(
         result = mCrypto->decrypt(
                 key, iv, mode, pattern, source, buffer->offset(),
                 subSamples, numSubSamples, destination, errorDetailMsg);
+        #ifdef HANTRO_VPU
+        if(secure) {
+            // Copy clear meta data to shared memory (VPU driver reads them from there).
+            // WARNING: we might have issue if they are crypted, as below code copy only clear data !!!
+            int size = buffer->size();
+            int fd2 = destination.mHandle->data[1];
+            void* vaddr = mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd2, 0);
+            if (vaddr == MAP_FAILED) {
+                ALOGE("Could not mmap %s", strerror(errno));
+            } else if (vaddr != NULL) {
+                size_t offset = 0;
+                // reset shared memory content
+                memset(vaddr, 0, size);
+                for (size_t i = 0; i < numSubSamples; i++) {
+                    const CryptoPlugin::SubSample& subSample = subSamples[i];
+
+                    if (subSample.mNumBytesOfClearData != 0) {
+                        memcpy(reinterpret_cast<uint8_t*>(vaddr) + offset,
+                               reinterpret_cast<const uint8_t*>(source.mSharedMemory->pointer()) + offset,
+                               subSample.mNumBytesOfClearData);
+
+                        offset += subSample.mNumBytesOfClearData;
+                    }
+
+                    if (subSample.mNumBytesOfEncryptedData != 0) {
+                        offset += subSample.mNumBytesOfEncryptedData;
+                    }
+                }
+                munmap(vaddr, size);
+            } else {
+                 ALOGE("CCodecBufferChannel::queueSecureInputBuffer: Cannot map VPU shared mmemory\n");
+            }
+        }
+        #endif
         if (result < 0) {
             ALOGI("[%s] decrypt failed: result=%zd", mName, result);
             return result;
