@@ -88,6 +88,8 @@ static status_t _ImageCopy(View &view, const MediaImage2 *img, ImagePixel *imgBa
         uint32_t planeH = img->mHeight / plane.rowSampling;
 
         bool canCopyByRow = (plane.colInc == 1) && (img->mPlane[i].mColInc == 1);
+        if((plane.colInc == 2) && (img->mPlane[i].mColInc == 2))
+            canCopyByRow = true;
         bool canCopyByPlane = canCopyByRow && (plane.rowInc == img->mPlane[i].mRowInc);
         if (canCopyByPlane) {
             MemCopier<ToMediaImage, 0>::copy(imgRow, viewRow, plane.rowInc * planeH);
