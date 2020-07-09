@@ -541,7 +541,7 @@ status_t CCodecBufferChannel::queueSecureInputBuffer(
             // Copy clear meta data to shared memory (VPU driver reads them from there).
             // WARNING: we might have issue if they are crypted, as below code copy only clear data !!!
             int size = buffer->size();
-            int fd2 = destination.mHandle->data[1];
+            int fd2 = destination.secureMemory->data[1];
             void* vaddr = mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd2, 0);
             if (vaddr == MAP_FAILED) {
                 ALOGE("Could not mmap %s", strerror(errno));
@@ -554,7 +554,7 @@ status_t CCodecBufferChannel::queueSecureInputBuffer(
 
                     if (subSample.mNumBytesOfClearData != 0) {
                         memcpy(reinterpret_cast<uint8_t*>(vaddr) + offset,
-                               reinterpret_cast<const uint8_t*>(source.mSharedMemory->pointer()) + offset,
+                               reinterpret_cast<const uint8_t*>(encryptedBuffer->getmMemory()->unsecurePointer()) + offset,
                                subSample.mNumBytesOfClearData);
 
                         offset += subSample.mNumBytesOfClearData;

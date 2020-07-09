@@ -383,6 +383,8 @@ public:
      */
     native_handle_t *handle() const;
 
+    sp<IMemory> getmMemory();
+
 private:
 
     std::shared_ptr<C2LinearBlock> mBlock;

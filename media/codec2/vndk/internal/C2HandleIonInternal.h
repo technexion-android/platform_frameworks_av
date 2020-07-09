@@ -25,12 +25,18 @@ struct C2HandleIon : public C2Handle {
     // ion handle owns ionFd(!) and bufferFd
     C2HandleIon(int bufferFd, size_t size)
         : C2Handle(cHeader),
-          mFds{ bufferFd },
+          mFds{ bufferFd ,bufferFd},
+          mInts{ int(size & 0xFFFFFFFF), int((uint64_t(size) >> 32) & 0xFFFFFFFF), kMagic } { }
+
+    C2HandleIon(int bufferFd, int bufferFd2, size_t size)
+        : C2Handle(cHeader),
+          mFds{ bufferFd, bufferFd2 },
           mInts{ int(size & 0xFFFFFFFF), int((uint64_t(size) >> 32) & 0xFFFFFFFF), kMagic } { }
 
     static bool isValid(const C2Handle * const o);
 
     int bufferFd() const { return mFds.mBuffer; }
+    int bufferFd2() const { return mFds.mBuffer2; }
     size_t size() const {
         return size_t(unsigned(mInts.mSizeLo))
                 | size_t(uint64_t(unsigned(mInts.mSizeHi)) << 32);
@@ -39,6 +45,7 @@ struct C2HandleIon : public C2Handle {
 protected:
     struct {
         int mBuffer; // shared ion buffer
+        int mBuffer2;
     } mFds;
     struct {
         int mSizeLo; // low 32-bits of size

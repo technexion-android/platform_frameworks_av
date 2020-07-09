@@ -869,7 +869,9 @@ bool EncryptedLinearBlockBuffer::copyDecryptedContent(
 bool EncryptedLinearBlockBuffer::copyDecryptedContentFromMemory(size_t length) {
     return copyDecryptedContent(mMemory, length);
 }
-
+sp<IMemory> EncryptedLinearBlockBuffer::getmMemory() {
+    return mMemory;
+}
 native_handle_t *EncryptedLinearBlockBuffer::handle() const {
     return const_cast<native_handle_t *>(mBlock->handle());
 }

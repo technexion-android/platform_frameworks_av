@@ -29,6 +29,7 @@
 #include <C2PlatformSupport.h>
 #include <cutils/properties.h>
 #include <util/C2InterfaceHelper.h>
+#include <ion/ion.h>
 
 #include <dlfcn.h>
 #include <unistd.h> // getpagesize
@@ -675,7 +676,7 @@ private:
                     me.set().allocFlags = defaultFlags;
                     me.set().minAlignment = defaultAlign;
 #else
-                    me.set().heapMask = ~0;
+                    me.set().heapMask = ~(1 << UNMAPPED_HEAP_ID);
                     me.set().allocFlags = 0;
                     me.set().minAlignment = 0;
 #endif
