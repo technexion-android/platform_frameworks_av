@@ -1,5 +1,5 @@
-cc_library_static {
-
+nuplayer_defaults {
+    name: "nuplayer_default",
     srcs: [
         "AWakeLock.cpp",
         "GenericSource.cpp",
@@ -59,10 +59,29 @@ cc_library_static {
         "libplayerservice_datasource",
     ],
 
-    name: "libstagefright_nuplayer",
 
     sanitize: {
         cfi: true,
     },
 
+}
+bootstrap_go_package {
+    name: "soong-nuplayer",
+    pkgPath: "android/soong/frameworks/av/media/libmediaplayerservice/nuplayer",
+    deps: [
+        "blueprint",
+        "blueprint-pathtools",
+        "soong",
+        "soong-android",
+        "soong-cc",
+        "soong-genrule",
+    ],
+    srcs: [
+        "nuplayer.go",
+    ],
+    pluginFor: ["soong_build"],
+}
+cc_library_static {
+    name: "libstagefright_nuplayer",
+    defaults: ["nuplayer_default"],
 }

@@ -1,6 +1,6 @@
-cc_library_shared {
-    name: "libsfplugin_ccodec",
+libsfplugin_defaults {
 
+    name: "libsfplugin_default",
     export_include_dirs: ["include"],
 
     srcs: [
@@ -66,4 +66,24 @@ cc_library_shared {
             "signed-integer-overflow",
         ],
     },
+}
+bootstrap_go_package {
+    name: "soong-libsfplugin",
+    pkgPath: "android/soong/frameworks/av/media/codec2/sfplugin",
+    deps: [
+        "blueprint",
+        "blueprint-pathtools",
+        "soong",
+        "soong-android",
+        "soong-cc",
+        "soong-genrule",
+    ],
+    srcs: [
+        "sfplugin.go",
+    ],
+    pluginFor: ["soong_build"],
+}
+cc_library {
+    name: "libsfplugin_ccodec",
+    defaults: ["libsfplugin_default"],
 }
