@@ -536,6 +536,69 @@ c2_status_t C2AllocationGralloc::map(
             break;
         }
 
+        case static_cast<uint32_t>(PixelFormat4::YCBCR_422_I):
+        {
+            android_ycbcr ycbcrLayout;
+            status_t err = GraphicBufferMapper::get().lockYCbCr(
+                        const_cast<native_handle_t*>(mBuffer), grallocUsage,
+                        { (int32_t)rect.left, (int32_t)rect.top,
+                          (int32_t)rect.width, (int32_t)rect.height },
+                        &ycbcrLayout);
+
+            if (err != C2_OK) {
+                ALOGE("lockYCbCr YCBCR_422_I failed: %d", err);
+                return C2_CORRUPTED;
+            }
+
+            addr[C2PlanarLayout::PLANE_Y] = (uint8_t *)ycbcrLayout.y;
+            addr[C2PlanarLayout::PLANE_U] = (uint8_t *)ycbcrLayout.cb;
+            addr[C2PlanarLayout::PLANE_V] = (uint8_t *)ycbcrLayout.cr;
+            layout->type = C2PlanarLayout::TYPE_YUV;
+            layout->numPlanes = 1;
+            layout->rootPlanes = 1;
+            layout->planes[C2PlanarLayout::PLANE_Y] = {
+                C2PlaneInfo::CHANNEL_Y,         // channel
+                (int32_t)ycbcrLayout.chroma_step,// colInc
+                (int32_t)ycbcrLayout.ystride,   // rowInc
+                1,                              // mColSampling
+                1,                              // mRowSampling
+                8,                              // allocatedDepth
+                8,                              // bitDepth
+                0,                              // rightShift
+                C2PlaneInfo::NATIVE,            // endianness
+                C2PlanarLayout::PLANE_Y,        // rootIx
+                0,                              // offset
+            };
+            layout->planes[C2PlanarLayout::PLANE_U] = {
+                C2PlaneInfo::CHANNEL_CB,          // channel
+                (int32_t)ycbcrLayout.chroma_step,  // colInc
+                (int32_t)ycbcrLayout.cstride,     // rowInc
+                2,                                // mColSampling
+                2,                                // mRowSampling
+                8,                                // allocatedDepth
+                8,                                // bitDepth
+                0,                                // rightShift
+                C2PlaneInfo::NATIVE,              // endianness
+                C2PlanarLayout::PLANE_U,          // rootIx
+                0,                                // offset
+            };
+            layout->planes[C2PlanarLayout::PLANE_V] = {
+                C2PlaneInfo::CHANNEL_CR,          // channel
+                (int32_t)ycbcrLayout.chroma_step,  // colInc
+                (int32_t)ycbcrLayout.cstride,     // rowInc
+                2,                                // mColSampling
+                2,                                // mRowSampling
+                8,                                // allocatedDepth
+                8,                                // bitDepth
+                0,                                // rightShift
+                C2PlaneInfo::NATIVE,              // endianness
+                C2PlanarLayout::PLANE_V,          // rootIx
+                0,                                // offset
+            };
+            ALOGV("lockYCbCr YCBCR_422_I success yStride=%zu",ycbcrLayout.cstride);
+            break;
+        }
+
         case static_cast<uint32_t>(PixelFormat4::YCBCR_420_888):
             // fall-through
         case static_cast<uint32_t>(PixelFormat4::YV12):

@@ -596,7 +596,7 @@ void CCodecConfig::initializeStandardParams() {
     // Pixel Format (use local key for actual pixel format as we don't distinguish between
     // SDK layouts for flexible format and we need the actual SDK color format in the media format)
     add(ConfigMapper("android._color-format",  C2_PARAMKEY_PIXEL_FORMAT, "value")
-        .limitTo((D::VIDEO | D::IMAGE) & D::RAW)
+        .limitTo((D::VIDEO | D::IMAGE) & (D::OUTPUT | D::RAW))
         .withMappers([](C2Value v) -> C2Value {
             int32_t value;
             if (v.get(&value)) {

@@ -249,6 +249,18 @@ public:
         switch (layout.type) {
             case C2PlanarLayout::TYPE_YUV:
                 mediaImage->mType = MediaImage2::MEDIA_IMAGE_TYPE_YUV;
+
+                //support one plane for YUYV format(COLOR_FormatYCbYCr)
+                if(1 == layout.numPlanes){
+                    stride *= 2;//update stride as twice frame width
+                    mediaImage->mPlane[mediaImage->Y].mOffset = 0;
+                    mediaImage->mPlane[mediaImage->Y].mColInc = 1;
+                    mediaImage->mPlane[mediaImage->Y].mRowInc = stride;
+                    mediaImage->mPlane[mediaImage->Y].mHorizSubsampling = 1;
+                    mediaImage->mPlane[mediaImage->Y].mVertSubsampling = 1;
+                    break;
+                }
+
                 if (layout.numPlanes != 3) {
                     ALOGD("Converter: %d planes for YUV layout", layout.numPlanes);
                     mInitCheck = BAD_VALUE;
@@ -520,6 +532,12 @@ sp<GraphicBlockBuffer> GraphicBlockBuffer::Allocate(
     int32_t colorFormat = COLOR_FormatYUV420Flexible;
     (void)format->findInt32("color-format", &colorFormat);
 
+    int32_t andorid_colorFormat = 0;
+    if(format->findInt32("android._color-format", &andorid_colorFormat) && andorid_colorFormat == COLOR_FormatYCbYCr){
+        colorFormat = COLOR_FormatYCbYCr;
+        ALOGV("GraphicBlockBuffer set colorFormat COLOR_FormatYCbYCr");
+    }
+
     GraphicView2MediaImageConverter converter(view, colorFormat, false /* copy */);
     if (converter.initCheck() != OK) {
         ALOGD("Converter init failed: %d", converter.initCheck());
@@ -636,6 +654,12 @@ sp<ConstGraphicBlockBuffer> ConstGraphicBlockBuffer::Allocate(
 
     int32_t colorFormat = COLOR_FormatYUV420Flexible;
     (void)format->findInt32("color-format", &colorFormat);
+
+    int32_t andorid_colorFormat = 0;
+    if(format->findInt32("android._color-format", &andorid_colorFormat) && andorid_colorFormat == COLOR_FormatYCbYCr){
+        colorFormat = COLOR_FormatYCbYCr;
+        ALOGV("ConstGraphicBlockBuffer set colorFormat COLOR_FormatYCbYCr");
+    }
 
     GraphicView2MediaImageConverter converter(*view, colorFormat, false /* copy */);
     if (converter.initCheck() != OK) {

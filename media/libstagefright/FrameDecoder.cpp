@@ -627,6 +627,12 @@ status_t VideoFrameDecoder::onOutputReceived(
         return captureSurface();
     }
 
+    int32_t android_fmt = 0;
+    if(outputFormat->findInt32("android._color-format", &android_fmt) && android_fmt == OMX_COLOR_FormatYCbYCr){
+        srcFormat = android_fmt;
+        ALOGV("onOutputReceived change color-format=%d,",srcFormat);
+    }
+
     ColorConverter converter((OMX_COLOR_FORMATTYPE)srcFormat, dstFormat());
 
     uint32_t standard, range, transfer;
