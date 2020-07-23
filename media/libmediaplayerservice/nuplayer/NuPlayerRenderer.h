@@ -221,7 +221,7 @@ private:
     bool mUseAudioCallback;
 
     sp<AWakeLock> mWakeLock;
-
+    int32_t mContinusDrop;
     std::atomic_flag mSyncFlag = ATOMIC_FLAG_INIT;
     Mutex mSyncLock;
     Condition mSyncCondition;
@@ -301,7 +301,7 @@ private:
     void cancelAudioOffloadPauseTimeout();
 
     int64_t getDurationUsIfPlayedAtSampleRate(uint32_t numFrames);
-
+    bool isTooLate(int64_t ts, int64_t media);
     DISALLOW_EVIL_CONSTRUCTORS(Renderer);
 };
 

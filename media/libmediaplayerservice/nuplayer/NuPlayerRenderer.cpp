@@ -158,6 +158,7 @@ NuPlayer::Renderer::Renderer(
     mPlaybackRate = mPlaybackSettings.mSpeed;
     mMediaClock->setPlaybackRate(mPlaybackRate);
     (void)mSyncFlag.test_and_set();
+    mContinusDrop = 0;
 }
 
 NuPlayer::Renderer::~Renderer() {
@@ -1381,8 +1382,8 @@ void NuPlayer::Renderer::onDrainVideoQueue() {
 
     if (!mPaused) {
         setVideoLateByUs(nowUs - realTimeUs);
-        tooLate = (mVideoLateByUs > 40000);
-
+        //tooLate = (mVideoLateByUs > 40000);
+        tooLate = isTooLate(realTimeUs,nowUs);
         if (tooLate) {
             ALOGV("video late by %lld us (%.2f secs)",
                  (long long)mVideoLateByUs, mVideoLateByUs / 1E6);
@@ -1706,6 +1707,7 @@ void NuPlayer::Renderer::onFlush(const sp<AMessage> &msg) {
     if (notifyComplete) {
         notifyFlushComplete(audio);
     }
+    mContinusDrop = 0;
 }
 
 void NuPlayer::Renderer::flushQueue(List<QueueEntry> *queue) {
@@ -2141,4 +2143,48 @@ void NuPlayer::Renderer::onChangeAudioFormat(
     notify->post();
 }
 
+#define MAX_DELAY 60000 //60ms
+#define DROP_TH_CNT 6
+static int64_t drop_th[DROP_TH_CNT] = {
+    300000,
+    400000,
+    500000,
+    600000,
+    700000,
+    800000,
+};
+
+static int32_t frame_th[DROP_TH_CNT] = {
+    1, 2, 3, 4, 5, 6
+};
+
+bool NuPlayer::Renderer::isTooLate(int64_t ts, int64_t media)
+{
+    bool ret = false;
+    int64_t diff = media - ts;
+
+    if(diff > MAX_DELAY) {
+        int32_t i;
+        for(i=0; i<DROP_TH_CNT; i++) {
+            if(diff < drop_th[i]) {
+                if(mContinusDrop >= frame_th[i]) {
+                    mContinusDrop = 0;
+                    return false;
+                }
+                else {
+                    mContinusDrop ++;
+                    return true;
+                }
+            }
+        }
+
+        if(i == DROP_TH_CNT) {
+            return true;
+        }
+    }
+    else
+        mContinusDrop = 0;
+
+    return ret;
+}
 }  // namespace android

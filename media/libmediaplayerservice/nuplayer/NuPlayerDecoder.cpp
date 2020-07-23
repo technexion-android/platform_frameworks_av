@@ -976,7 +976,7 @@ status_t NuPlayer::Decoder::fetchInputData(sp<AMessage> &reply) {
 
             int32_t layerId = 0;
             bool haveLayerId = accessUnit->meta()->findInt32("temporal-layer-id", &layerId);
-            if (mRenderer->getVideoLateByUs() > 100000LL
+            if (mRenderer->getVideoLateByUs() > 1000000LL
                     && mIsVideoAVC
                     && !IsAVCReferenceFrame(accessUnit)) {
                 dropAccessUnit = true;
