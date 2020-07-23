@@ -324,6 +324,37 @@ void NuPlayer::Decoder::onConfigure(const sp<AMessage> &format) {
 
     mCodec->getName(&mComponentName);
 
+    if (mComponentName.startsWith("c2.imx") && mComponentName.endsWith("decoder")){
+        if( property_get_int32("media.hantro_vpu.enable-tile", 0)){
+            format->setInt32("vendor.hal-pixel-format.value", 0x105);//HAL_PIXEL_FORMAT_NV12_G1_TILED
+        }else if( property_get_int32("media.amphion_vpu.enable-tile", 0)){
+            format->setInt32("vendor.hal-pixel-format.value", 0x104);//HAL_PIXEL_FORMAT_NV12_TILED
+            ALOGI("use tile format by property");
+        }
+#ifdef MALONE_VPU
+        else{
+            format->setInt32("vendor.hal-pixel-format.value", 0x14);//HAL_PIXEL_FORMAT_YCbCr_422_I
+            ALOGI("enable YUYV format");
+        }
+
+        AString consumer_name;
+        int32_t input_width = 0;
+        if(mSurface != NULL)
+            consumer_name = mSurface->getConsumerName();
+
+        format->findInt32("width", &input_width);
+
+        //set tile format when play 4K video with SurfaceView
+        //SurfaceView means GPU will not touch VPU output and directly pass to surfaceflinger to do composition.
+        //SurfaceTexure means VPU output will be further process by GPU 3D as a YUV texture and finally will process as RGB layer, then pass to surfaceflinger to do composition.
+        //As GPU can't handle VPU tile directly, so only enable VPU tile for SurfaceView.
+        if(consumer_name.size() > 0 && input_width >= 3840 && consumer_name.startsWith("SurfaceView")){
+            format->setInt32("vendor.hal-pixel-format.value", 0x104);//HAL_PIXEL_FORMAT_NV12_TILED
+            ALOGI("use tile format by SurfaceView");
+        }
+#endif
+    }
+
     status_t err;
     if (mSurface != NULL) {
         // disconnect from surface as MediaCodec will reconnect
