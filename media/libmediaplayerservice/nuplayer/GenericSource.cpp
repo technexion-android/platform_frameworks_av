@@ -193,6 +193,7 @@ status_t NuPlayer::GenericSource::initFromDataSource() {
     }
 
     mLock.lock();
+    mExtractor = extractor;
     mFileMeta = fileMeta;
     if (mFileMeta != NULL) {
         int64_t duration;
@@ -473,14 +474,22 @@ void NuPlayer::GenericSource::onPrepareAsync() {
         }
         notifyVideoSizeChanged(msg);
     }
+    //FLAG_SECURE && FLAG_PROTECTED will be known if/when prepareDrm is called by the app
+    uint32_t flags = FLAG_CAN_PAUSE;
+    uint32_t extractor_flags = mExtractor->flags();
+    if(extractor_flags & MediaExtractor::CAN_SEEK)
+        flags |= FLAG_CAN_SEEK;
+    if(extractor_flags & MediaExtractor::CAN_SEEK_FORWARD){
+        flags |= FLAG_CAN_SEEK;
+        flags |= FLAG_CAN_SEEK_FORWARD;
+    }
+    if(extractor_flags & MediaExtractor::CAN_SEEK_BACKWARD){
+        flags |= FLAG_CAN_SEEK;
+        flags |= FLAG_CAN_SEEK_BACKWARD;
+    }
 
-    notifyFlagsChanged(
-            // FLAG_SECURE will be known if/when prepareDrm is called by the app
-            // FLAG_PROTECTED will be known if/when prepareDrm is called by the app
-            FLAG_CAN_PAUSE |
-            FLAG_CAN_SEEK_BACKWARD |
-            FLAG_CAN_SEEK_FORWARD |
-            FLAG_CAN_SEEK);
+    ALOGV("flags %x", flags);
+    notifyFlagsChanged(flags);
 
     finishPrepareAsync();
 

@@ -40,6 +40,7 @@ class IMediaSource;
 class MediaBuffer;
 struct MediaClock;
 struct NuCachedSource2;
+class IMediaExtractor;
 
 struct NuPlayer::GenericSource : public NuPlayer::Source,
                                  public MediaBufferObserver // Modular DRM
@@ -174,6 +175,7 @@ private:
     mutable Mutex mDisconnectLock; // Protects mDataSource, mHttpSource and mDisconnected
 
     sp<ALooper> mLooper;
+    sp<IMediaExtractor> mExtractor;
 
     void resetDataSource();
 
