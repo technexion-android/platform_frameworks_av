@@ -699,7 +699,12 @@ sp<ConstGraphicBlockBuffer> ConstGraphicBlockBuffer::AllocateEmpty(
         return nullptr;
     }
     // NOTE: we currently only support YUV420 formats for byte-buffer mode.
-    sp<ABuffer> aBuffer(alloc(align(width, 16) * align(height, 16) * 3 / 2));
+    #ifdef MALONE_VPU
+    sp<ABuffer> aBuffer(alloc(align(width, 16) * align(height, 16) * 2));
+    #else
+    sp<ABuffer> aBuffer(alloc(align(width, 16) * align(height, 16) * 3/2));
+    #endif
+
     return new ConstGraphicBlockBuffer(
             format,
             aBuffer,
@@ -757,6 +762,13 @@ bool ConstGraphicBlockBuffer::canCopy(const std::shared_ptr<C2Buffer> &buffer) c
     // FIXME: format() is not const, but we cannot change it, so do a const cast here
     const_cast<ConstGraphicBlockBuffer *>(this)->format()->findInt32("color-format", &colorFormat);
 
+    int32_t andorid_colorFormat = 0;
+    if(const_cast<ConstGraphicBlockBuffer *>(this)->format()->findInt32("android._color-format", &andorid_colorFormat)
+        && andorid_colorFormat == COLOR_FormatYCbYCr){
+        colorFormat = COLOR_FormatYCbYCr;
+        ALOGV("ConstGraphicBlockBuffer::canCopy set colorFormat COLOR_FormatYCbYCr");
+    }
+
     GraphicView2MediaImageConverter converter(
             buffer->data().graphicBlocks()[0].map().get(), colorFormat, true /* copy */);
     if (converter.initCheck() != OK) {
@@ -778,6 +790,13 @@ bool ConstGraphicBlockBuffer::copy(const std::shared_ptr<C2Buffer> &buffer) {
     }
     int32_t colorFormat = COLOR_FormatYUV420Flexible;
     format()->findInt32("color-format", &colorFormat);
+
+    int32_t andorid_colorFormat = 0;
+    if(format()->findInt32("android._color-format", &andorid_colorFormat)
+        && andorid_colorFormat == COLOR_FormatYCbYCr){
+        colorFormat = COLOR_FormatYCbYCr;
+        ALOGV("ConstGraphicBlockBuffer::copy set colorFormat COLOR_FormatYCbYCr");
+    }
 
     GraphicView2MediaImageConverter converter(
             buffer->data().graphicBlocks()[0].map().get(), colorFormat, true /* copy */);
