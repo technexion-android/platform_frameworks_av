@@ -80,7 +80,7 @@ void readFromAMessage(
 
 void writeToAMessage(const sp<AMessage> &msg, const BufferingSettings &buffering);
 void readFromAMessage(const sp<AMessage> &msg, BufferingSettings *buffering /* nonnull */);
-
+extern const char *MEDIA_MIMETYPE_AUDIO_AAC_EXT;
 }  // namespace android
 
 #endif  // UTILS_H_
