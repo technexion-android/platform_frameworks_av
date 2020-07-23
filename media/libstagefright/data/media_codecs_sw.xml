@@ -18,7 +18,7 @@
     <Settings>
         <!-- disable TV and telephony domains by default. These must be opted in by OEMs -->
         <Domain name="telephony" enabled="false" />
-        <Domain name="tv" enabled="false" />
+        <Domain name="tv" enabled="true" />
         <Variant name="slow-cpu" enabled="false" />
     </Settings>
     <Decoders>
@@ -40,7 +40,7 @@
             <Limit name="sample-rate" ranges="16000" />
             <Limit name="bitrate" range="6600-23850" />
         </MediaCodec>
-        <MediaCodec name="c2.android.aac.decoder" type="audio/mp4a-latm">
+        <MediaCodec name="c2.android.aac.decoder" type="audio/x-mp4a-latm">
             <Alias name="OMX.google.aac.decoder" />
             <Limit name="channel-count" max="8" />
             <Limit name="sample-rate" ranges="7350,8000,11025,12000,16000,22050,24000,32000,44100,48000" />
@@ -112,14 +112,14 @@
             <Limit name="alignment" value="2x2" />
             <Limit name="block-size" value="16x16" />
             <Variant name="!slow-cpu">
-                <Limit name="size" min="2x2" max="4080x4080" />
+                <Limit name="size" min="2x2" max="1280x720" />
                 <!-- profiles and levels:  ProfileHigh : Level52 -->
                 <Limit name="block-count" range="1-32768" /> <!-- max 4096x2048 equivalent -->
                 <Limit name="blocks-per-second" range="1-1966080" />
                 <Limit name="bitrate" range="1-48000000" />
             </Variant>
             <Variant name="slow-cpu">
-                <Limit name="size" min="2x2" max="2048x2048" />
+                <Limit name="size" min="2x2" max="1280x720" />
                 <!-- profiles and levels:  ProfileHigh : Level51 -->
                 <Limit name="block-count" range="1-16384" />
                 <Limit name="blocks-per-second" range="1-491520" />
@@ -132,14 +132,14 @@
             <Limit name="alignment" value="2x2" />
             <Limit name="block-size" value="8x8" />
             <Variant name="!slow-cpu">
-                <Limit name="size" min="2x2" max="4096x4096" />
+                <Limit name="size" min="2x2" max="1280x720" />
                 <!-- profiles and levels:  ProfileMain : MainTierLevel51 -->
                 <Limit name="block-count" range="1-196608" /> <!-- max 4096x3072 -->
                 <Limit name="blocks-per-second" range="1-2000000" />
                 <Limit name="bitrate" range="1-10000000" />
             </Variant>
             <Variant name="slow-cpu">
-                <Limit name="size" min="2x2" max="2048x2048" />
+                <Limit name="size" min="2x2" max="1280x720" />
                 <!-- profiles and levels:  ProfileMain : MainTierLevel51 -->
                 <Limit name="block-count" range="1-65536" />
                 <Limit name="blocks-per-second" range="1-491520" />
@@ -149,7 +149,7 @@
         </MediaCodec>
         <MediaCodec name="c2.android.vp8.decoder" type="video/x-vnd.on2.vp8" variant="slow-cpu,!slow-cpu">
             <Alias name="OMX.google.vp8.decoder" />
-            <Limit name="size" min="2x2" max="2048x2048" />
+            <Limit name="size" min="2x2" max="1280x720" />
             <Limit name="alignment" value="2x2" />
             <Limit name="block-size" value="16x16" />
             <Variant name="!slow-cpu">
@@ -169,7 +169,7 @@
             <Limit name="alignment" value="2x2" />
             <Limit name="block-size" value="16x16" />
             <Variant name="!slow-cpu">
-                <Limit name="size" min="2x2" max="2048x2048" />
+                <Limit name="size" min="2x2" max="1920x1088" />
                 <Limit name="block-count" range="1-16384" />
                 <Limit name="blocks-per-second" range="1-500000" />
                 <Limit name="bitrate" range="1-40000000" />
@@ -183,7 +183,7 @@
             <Feature name="adaptive-playback" />
         </MediaCodec>
         <MediaCodec name="c2.android.av1.decoder" type="video/av01" variant="!slow-cpu">
-            <Limit name="size" min="2x2" max="1920x1080" />
+            <Limit name="size" min="2x2" max="1280x720" />
             <Limit name="alignment" value="2x2" />
             <Limit name="block-size" value="16x16" />
             <Limit name="block-count" range="1-16384" />
@@ -194,7 +194,7 @@
         <MediaCodec name="c2.android.mpeg2.decoder" type="video/mpeg2" domain="tv">
             <Alias name="OMX.google.mpeg2.decoder" />
             <!-- profiles and levels:  ProfileMain : LevelHL -->
-            <Limit name="size" min="16x16" max="1920x1088" />
+            <Limit name="size" min="16x16" max="1280x720" />
             <Limit name="alignment" value="2x2" />
             <Limit name="block-size" value="16x16" />
             <Limit name="blocks-per-second" range="1-244800" />
@@ -260,14 +260,14 @@
             <Limit name="alignment" value="2x2" />
             <Limit name="block-size" value="16x16" />
             <Variant name="!slow-cpu">
-                <Limit name="size" min="16x16" max="2048x2048" />
+                <Limit name="size" min="16x16" max="1280x720" />
                 <!-- profiles and levels:  ProfileBaseline : Level41 -->
                 <Limit name="block-count" range="1-8192" /> <!-- max 2048x1024 -->
                 <Limit name="blocks-per-second" range="1-245760" />
                 <Limit name="bitrate" range="1-12000000" />
             </Variant>
             <Variant name="slow-cpu">
-                <Limit name="size" min="16x16" max="1808x1808" />
+                <Limit name="size" min="16x16" max="1280x720" />
                 <!-- profiles and levels:  ProfileBaseline : Level3 -->
                 <Limit name="block-count" range="1-1620" />
                 <Limit name="blocks-per-second" range="1-40500" />
@@ -280,14 +280,14 @@
             <Limit name="alignment" value="2x2" />
             <Limit name="block-size" value="16x16" />
             <Variant name="!slow-cpu">
-                <Limit name="size" min="2x2" max="2048x2048" />
+                <Limit name="size" min="2x2" max="1280x720" />
                 <!-- profiles and levels:  ProfileMain : Level_Version0-3 -->
                 <!-- 2016 devices can encode at about 10fps at this block count -->
                 <Limit name="block-count" range="1-16384" />
                 <Limit name="bitrate" range="1-40000000" />
             </Variant>
             <Variant name="slow-cpu">
-                <Limit name="size" min="2x2" max="1280x1280" />
+                <Limit name="size" min="2x2" max="1280x720" />
                 <!-- profiles and levels:  ProfileMain : Level_Version0-3 -->
                 <Limit name="block-count" range="1-3600" /> <!-- max 1280x720 -->
                 <Limit name="bitrate" range="1-20000000" />
@@ -310,7 +310,7 @@
         <MediaCodec name="c2.android.vp9.encoder" type="video/x-vnd.on2.vp9" variant="!slow-cpu">
             <Alias name="OMX.google.vp9.encoder" />
             <!-- profiles and levels:  ProfileMain : Level_Version0-3 -->
-            <Limit name="size" min="2x2" max="2048x2048" />
+            <Limit name="size" min="2x2" max="1280x720" />
             <Limit name="alignment" value="2x2" />
             <Limit name="block-size" value="16x16" />
             <!-- 2016 devices can encode at about 8fps at this block count -->
