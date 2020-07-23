@@ -145,7 +145,17 @@ void SkipCutBuffer::write(const char *src, size_t num) {
     if (available < num) {
         int32_t newcapacity = mCapacity + (num - available);
         char * newbuffer = new char[newcapacity];
-        memcpy(newbuffer, mCutBuffer, mCapacity);
+        if (mWriteHead < mReadHead) {
+            // MA-16950: data isn't continuous in this case, need to memcpy twice
+            // to move previous data to new buffer.
+            size_t copyLeft = mCapacity - mReadHead;
+            memcpy(newbuffer, mCutBuffer + mReadHead, copyLeft);
+            memcpy(newbuffer + copyLeft, mCutBuffer, mWriteHead);
+            mReadHead = 0;
+            mWriteHead += copyLeft;
+        } else {
+            memcpy(newbuffer, mCutBuffer, mCapacity);
+        }
         delete [] mCutBuffer;
         mCapacity = newcapacity;
         mCutBuffer = newbuffer;
