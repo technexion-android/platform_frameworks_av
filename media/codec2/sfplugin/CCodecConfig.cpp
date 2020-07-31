@@ -632,6 +632,9 @@ void CCodecConfig::initializeStandardParams() {
     add(ConfigMapper(KEY_SAMPLE_RATE,   C2_PARAMKEY_CODED_SAMPLE_RATE,  "value")
         .limitTo(D::AUDIO & D::CODED));
 
+    add(ConfigMapper(KEY_PCM_BIG_ENDIAN,   C2_PARAMKEY_PCM_BIG_ENDIAN,  "value")
+        .limitTo(D::AUDIO));
+
     add(ConfigMapper(KEY_PCM_ENCODING,  C2_PARAMKEY_PCM_ENCODING,       "value")
         .limitTo(D::AUDIO)
         .withMappers([](C2Value v) -> C2Value {

@@ -92,7 +92,16 @@ public:
                 .withSetter((Setter<decltype(*mPcmEncodingInfo)>::StrictValueWithNoDeps))
                 .build());
 
+        addParameter(
+                DefineParam(mPcmBigEndian, C2_PARAMKEY_PCM_BIG_ENDIAN)
+                .withDefault(new C2StreamPcmBigEndian::input(0u, 0))
+                .withFields({C2F(mPcmBigEndian, value).inRange(0, 1)})
+                .withSetter(Setter<decltype(*mPcmBigEndian)>::NonStrictValueWithNoDeps)
+                .build());
     }
+
+    uint32_t getPcmBigEndian() const { return mPcmBigEndian->value; };
+    uint32_t getChannelCount() const { return mChannelCount->value; };
 
 private:
     std::shared_ptr<C2StreamSampleRateInfo::output> mSampleRate;
@@ -100,6 +109,7 @@ private:
     std::shared_ptr<C2StreamBitrateInfo::input> mBitrate;
     std::shared_ptr<C2StreamMaxBufferSizeInfo::input> mInputMaxBufSize;
     std::shared_ptr<C2StreamPcmEncodingInfo::output> mPcmEncodingInfo;
+    std::shared_ptr<C2StreamPcmBigEndian::input> mPcmBigEndian;
 };
 
 C2SoftRawDec::C2SoftRawDec(
@@ -154,7 +164,44 @@ void C2SoftRawDec::process(
     work->worklets.front()->output.buffers.clear();
     work->worklets.front()->output.ordinal = work->input.ordinal;
     if (!work->input.buffers.empty()) {
-        work->worklets.front()->output.buffers.push_back(work->input.buffers[0]);
+        if(mIntf->getPcmBigEndian()){
+            C2ReadView view = work->input.buffers[0]->data().linearBlocks().front().map().get();
+            size_t size = view.capacity();
+            const uint16_t * srcBuffer = (const uint16_t *)(view.data());
+            std::shared_ptr<C2LinearBlock> block;
+            C2MemoryUsage usage = { C2MemoryUsage::CPU_READ, C2MemoryUsage::CPU_WRITE };
+            c2_status_t err = pool->fetchLinearBlock(size, usage, &block);
+            if (err != C2_OK){
+                ALOGE("fetchLinearBlock fail!");
+                work->result = C2_NO_MEMORY;
+                return;
+            }
+            C2WriteView wView = block->map().get();
+            if (wView.error() != C2_OK){
+                ALOGE("block->map() fail!");
+                return;
+            }
+            uint16_t *dstBuffer = reinterpret_cast<uint16_t *> (wView.data());
+            uint32_t channels = mIntf->getChannelCount();
+
+            uint32_t len = size / channels / 2;
+            uint16_t tmp;
+            uint32_t i,j;
+
+            for (i = 0; i < len; i ++)
+            {
+                for (j = 0; j < channels; j ++)
+                {
+                    tmp = srcBuffer[i*channels+j];
+                    tmp = ((tmp&0xFF)<<8) | ((tmp&0xFF00)>>8);
+                    dstBuffer[i*channels+j] = tmp;
+                }
+            }
+            work->worklets.front()->output.buffers.clear();
+            work->worklets.front()->output.buffers.push_back(createLinearBuffer(block, 0, size));
+        }
+        else
+            work->worklets.front()->output.buffers.push_back(work->input.buffers[0]);
     }
     if (work->input.flags & C2FrameData::FLAG_END_OF_STREAM) {
         mSignalledEos = true;

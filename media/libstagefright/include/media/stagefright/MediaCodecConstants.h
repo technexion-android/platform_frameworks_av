@@ -790,6 +790,7 @@ constexpr char KEY_MIME[] = "mime";
 constexpr char KEY_OPERATING_RATE[] = "operating-rate";
 constexpr char KEY_OUTPUT_REORDER_DEPTH[] = "output-reorder-depth";
 constexpr char KEY_PCM_ENCODING[] = "pcm-encoding";
+constexpr char KEY_PCM_BIG_ENDIAN[] = "pcm-big-endian";
 constexpr char KEY_PIXEL_ASPECT_RATIO_HEIGHT[] = "sar-height";
 constexpr char KEY_PIXEL_ASPECT_RATIO_WIDTH[] = "sar-width";
 constexpr char KEY_PREPEND_HEADERS_TO_SYNC_FRAMES[] = "prepend-sps-pps-to-idr-frames";
