@@ -2912,10 +2912,14 @@ void NuPlayer::sendTimedTextData(const sp<ABuffer> &buffer) {
     size_t size = 0;
     int64_t timeUs;
     int32_t flag = TextDescriptions::IN_BAND_TEXT_3GPP;
+    bool srt = false;
 
     AString mime;
     CHECK(buffer->meta()->findString("mime", &mime));
-    CHECK(strcasecmp(mime.c_str(), MEDIA_MIMETYPE_TEXT_3GPP) == 0);
+    //if mime typs is srt, use srt parsing method
+    if(!strcasecmp(mime.c_str(), MEDIA_MIMETYPE_TEXT_SRT)){
+        srt = true;
+    }
 
     data = buffer->data();
     size = buffer->size();
@@ -2929,6 +2933,11 @@ void NuPlayer::sendTimedTextData(const sp<ABuffer> &buffer) {
         } else {
             flag |= TextDescriptions::LOCAL_DESCRIPTIONS;
         }
+        if(srt){
+            flag &= ~ TextDescriptions::IN_BAND_TEXT_3GPP;
+            flag |= TextDescriptions::OUT_OF_BAND_TEXT_SRT;
+        }
+
         TextDescriptions::getParcelOfDescriptions(
                 (const uint8_t *)data, size, flag, timeUs / 1000, &parcel);
     }
