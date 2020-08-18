@@ -46,7 +46,6 @@ NuPlayer::NuPlayerStreamListener::NuPlayerStreamListener(
 }
 
 void NuPlayer::NuPlayerStreamListener::start() {
-    mSource->setListener(this);
     for (size_t i = 0; i < kNumBuffers; ++i) {
         mSource->onBufferAvailable(i);
     }
