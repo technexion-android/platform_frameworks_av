@@ -40,7 +40,7 @@
             <Limit name="sample-rate" ranges="16000" />
             <Limit name="bitrate" range="6600-23850" />
         </MediaCodec>
-        <MediaCodec name="c2.android.aac.decoder" type="audio/x-mp4a-latm">
+        <MediaCodec name="c2.android.aac.decoder" type="audio/mp4a-latm">
             <Alias name="OMX.google.aac.decoder" />
             <Limit name="channel-count" max="8" />
             <Limit name="sample-rate" ranges="7350,8000,11025,12000,16000,22050,24000,32000,44100,48000" />

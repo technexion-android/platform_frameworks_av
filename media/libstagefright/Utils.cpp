@@ -49,8 +49,6 @@
 
 namespace android {
 
-const char *MEDIA_MIMETYPE_AUDIO_AAC_EXT = "audio/x-mp4a-latm";
-
 static status_t copyNALUToABuffer(sp<ABuffer> *buffer, const uint8_t *ptr, size_t length) {
     if (((*buffer)->size() + 4 + length) > ((*buffer)->capacity() - (*buffer)->offset())) {
         sp<ABuffer> tmpBuffer = new (std::nothrow) ABuffer((*buffer)->size() + 4 + length + 1024);
@@ -1410,8 +1408,7 @@ status_t convertMetaDataToMessage(
             if (meta->findData(kKeyStreamHeader, &type, &data, &size)) {
                 parseMpeg2ProfileLevelFromHeader((uint8_t*)data, size, msg);
             }
-        } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AAC)
-            || !strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AAC_EXT)) {
+        } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AAC)) {
             parseAacProfileFromCsd(buffer, msg);
         }
 
@@ -1939,7 +1936,6 @@ status_t convertMessageToMetaData(const sp<AMessage> &msg, sp<MetaData> &meta) {
                 meta->setData(kKeyAVCC, kTypeAVCC, avcc.data(), outsize);
             }
         } else if (mime == MEDIA_MIMETYPE_AUDIO_AAC ||
-                mime == MEDIA_MIMETYPE_AUDIO_AAC_EXT ||
                 mime == MEDIA_MIMETYPE_VIDEO_MPEG4 ||
                 mime == MEDIA_MIMETYPE_AUDIO_WMA ||
                 mime == MEDIA_MIMETYPE_AUDIO_MS_ADPCM ||
@@ -2095,7 +2091,6 @@ static const struct mime_conv_t mimeLookup[] = {
     { MEDIA_MIMETYPE_AUDIO_AMR_NB,      AUDIO_FORMAT_AMR_NB },
     { MEDIA_MIMETYPE_AUDIO_AMR_WB,      AUDIO_FORMAT_AMR_WB },
     { MEDIA_MIMETYPE_AUDIO_AAC,         AUDIO_FORMAT_AAC },
-    { MEDIA_MIMETYPE_AUDIO_AAC_EXT,     AUDIO_FORMAT_AAC },
     { MEDIA_MIMETYPE_AUDIO_VORBIS,      AUDIO_FORMAT_VORBIS },
     { MEDIA_MIMETYPE_AUDIO_OPUS,        AUDIO_FORMAT_OPUS},
     { MEDIA_MIMETYPE_AUDIO_AC3,         AUDIO_FORMAT_AC3},
