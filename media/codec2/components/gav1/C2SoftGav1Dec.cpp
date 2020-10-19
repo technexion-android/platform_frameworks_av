@@ -458,32 +458,27 @@ void C2SoftGav1Dec::process(const std::unique_ptr<C2Work> &work,
   }
 }
 
-static void copyOutputBufferToYuvPlanarFrame(uint8_t *dst, const uint8_t *srcY,
-                                             const uint8_t *srcU,
-                                             const uint8_t *srcV, size_t srcYStride,
-                                             size_t srcUStride, size_t srcVStride,
-                                             size_t dstYStride, size_t dstUVStride,
-                                             uint32_t width, uint32_t height) {
-  uint8_t *const dstStart = dst;
-
+static void copyOutputBufferToYV12Frame(uint8_t *dst, uint8_t *dst_u, uint8_t *dst_v, 
+                                        const uint8_t *srcY, const uint8_t *srcU, const uint8_t *srcV, 
+                                        size_t srcYStride,size_t srcUStride, size_t srcVStride,
+                                        size_t dstYStride, size_t dstUVStride,
+                                        uint32_t width, uint32_t height) {
   for (size_t i = 0; i < height; ++i) {
     memcpy(dst, srcY, width);
     srcY += srcYStride;
     dst += dstYStride;
   }
 
-  dst = dstStart + dstYStride * height;
   for (size_t i = 0; i < height / 2; ++i) {
-    memcpy(dst, srcV, width / 2);
+    memcpy(dst_v, srcV, width / 2);
     srcV += srcVStride;
-    dst += dstUVStride;
+    dst_v += dstUVStride;
   }
 
-  dst = dstStart + (dstYStride * height) + (dstUVStride * height / 2);
   for (size_t i = 0; i < height / 2; ++i) {
-    memcpy(dst, srcU, width / 2);
+    memcpy(dst_u, srcU, width / 2);
     srcU += srcUStride;
-    dst += dstUVStride;
+    dst_u += dstUVStride;
   }
 }
 
@@ -647,7 +642,7 @@ bool C2SoftGav1Dec::outputBuffer(const std::shared_ptr<C2BlockPool> &pool,
   }
   C2MemoryUsage usage = {C2MemoryUsage::CPU_READ, C2MemoryUsage::CPU_WRITE};
 
-  c2_status_t err = pool->fetchGraphicBlock(align(mWidth, 16), mHeight, format,
+  c2_status_t err = pool->fetchGraphicBlock( align(mWidth, 16), mHeight, format,
                                             usage, &block);
 
   if (err != C2_OK) {
@@ -668,9 +663,13 @@ bool C2SoftGav1Dec::outputBuffer(const std::shared_ptr<C2BlockPool> &pool,
         block->height(), mWidth, mHeight, (int)buffer->user_private_data);
 
   uint8_t *dst = const_cast<uint8_t *>(wView.data()[C2PlanarLayout::PLANE_Y]);
+  uint8_t *dst_u = const_cast<uint8_t *>(wView.data()[C2PlanarLayout::PLANE_U]);
+  uint8_t *dst_v = const_cast<uint8_t *>(wView.data()[C2PlanarLayout::PLANE_V]);
+
   size_t srcYStride = buffer->stride[0];
   size_t srcUStride = buffer->stride[1];
   size_t srcVStride = buffer->stride[2];
+
   C2PlanarLayout layout = wView.layout();
   size_t dstYStride = layout.planes[C2PlanarLayout::PLANE_Y].rowInc;
   size_t dstUVStride = layout.planes[C2PlanarLayout::PLANE_U].rowInc;
@@ -693,9 +692,8 @@ bool C2SoftGav1Dec::outputBuffer(const std::shared_ptr<C2BlockPool> &pool,
     const uint8_t *srcY = (const uint8_t *)buffer->plane[0];
     const uint8_t *srcU = (const uint8_t *)buffer->plane[1];
     const uint8_t *srcV = (const uint8_t *)buffer->plane[2];
-    copyOutputBufferToYuvPlanarFrame(dst, srcY, srcU, srcV, srcYStride, srcUStride,
-                                     srcVStride, dstYStride, dstUVStride,
-                                     mWidth, mHeight);
+    copyOutputBufferToYV12Frame(dst, dst_u, dst_v, srcY, srcU, srcV, srcYStride, srcUStride,
+                                srcVStride, dstYStride, dstUVStride, mWidth, mHeight);
   }
   finishWork(buffer->user_private_data, work, std::move(block));
   block = nullptr;
