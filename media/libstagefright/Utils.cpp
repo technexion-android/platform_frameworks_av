@@ -2342,7 +2342,7 @@ bool canPassThrough(const sp<MetaData>& meta)
     //only enable for ac3 now
     if (0 == strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AC3) || 0 == strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_EAC3)){
 
-        int32_t value = property_get_int32( "persist.audio.pass.through", 0 /* default_value */);
+        int32_t value = property_get_int32( "vendor.persist.audio.pass.through", 0 /* default_value */);
         if(value != 2000)
             return false;
 
