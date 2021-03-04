@@ -1850,6 +1850,15 @@ PipelineWatcher::Clock::duration CCodecBufferChannel::elapsed() {
         Mutexed<Input>::Locked input(mInput);
         n = input->inputDelay + input->pipelineDelay + outputDelay;
     }
+
+    {
+        Mutexed<Output>::Locked output(mOutput);
+        if (output->buffers &&
+            (output->buffers->hasPending() || output->buffers->numActiveSlots() > 0)) {
+            return std::chrono::steady_clock::duration::zero();
+        }
+    }
+
     return mPipelineWatcher.lock()->elapsed(PipelineWatcher::Clock::now(), n);
 }
 
