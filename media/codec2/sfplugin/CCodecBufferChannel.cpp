@@ -246,6 +246,15 @@ status_t CCodecBufferChannel::queueInputBufferInternal(sp<MediaCodecBuffer> buff
             }
         }
         work->input.buffers.push_back(c2buffer);
+
+        if(buffer->meta()->findInt32("hantro-secure-buffers", &tmp) && 2 == tmp){
+            sp<EncryptedLinearBlockBuffer2> encryptedBuffer((EncryptedLinearBlockBuffer2 *)buffer.get());
+            std::shared_ptr<C2Buffer> c2buffer2 = encryptedBuffer->getC2Buffer();
+            if(c2buffer2 != nullptr){
+                work->input.buffers.push_back(c2buffer2);
+            }
+        }
+
         queuedBuffers.push_back(c2buffer);
     } else if (eos) {
         flags |= C2FrameData::FLAG_END_OF_STREAM;
@@ -512,7 +521,13 @@ status_t CCodecBufferChannel::queueSecureInputBuffer(
     if (!hasCryptoOrDescrambler()) {
         return -ENOSYS;
     }
+
+#ifdef HANTRO_VPU
+    sp<EncryptedLinearBlockBuffer2> encryptedBuffer((EncryptedLinearBlockBuffer2 *)buffer.get());
+    buffer->meta()->setInt32("hantro-secure-buffers", 2);
+#else
     sp<EncryptedLinearBlockBuffer> encryptedBuffer((EncryptedLinearBlockBuffer *)buffer.get());
+#endif
 
     ssize_t result = -1;
     ssize_t codecDataOffset = 0;
@@ -541,7 +556,7 @@ status_t CCodecBufferChannel::queueSecureInputBuffer(
             // Copy clear meta data to shared memory (VPU driver reads them from there).
             // WARNING: we might have issue if they are crypted, as below code copy only clear data !!!
             int size = buffer->size();
-            int fd2 = destination.secureMemory->data[1];
+            int fd2 = encryptedBuffer->handle2()->data[0];
             void* vaddr = mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd2, 0);
             if (vaddr == MAP_FAILED) {
                 ALOGE("Could not mmap %s", strerror(errno));

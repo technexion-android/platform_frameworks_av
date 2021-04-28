@@ -393,6 +393,24 @@ private:
     int32_t mHeapSeqNum;
 };
 
+class EncryptedLinearBlockBuffer2 : public EncryptedLinearBlockBuffer {
+public:
+    EncryptedLinearBlockBuffer2(
+            const sp<AMessage> &format,
+            const std::shared_ptr<C2LinearBlock> &block,
+            const std::shared_ptr<C2LinearBlock> &block2,
+            const sp<IMemory> &memory,
+            int32_t heapSeqNum = -1);
+    EncryptedLinearBlockBuffer2() = delete;
+
+    virtual ~EncryptedLinearBlockBuffer2() = default;
+    std::shared_ptr<C2Buffer> getC2Buffer();
+    native_handle_t *handle2() const;
+
+private:
+    std::shared_ptr<C2LinearBlock> mBlock2;
+};
+
 }  // namespace android
 
 #endif  // CODEC2_BUFFER_H_

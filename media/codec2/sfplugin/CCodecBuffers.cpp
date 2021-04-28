@@ -901,7 +901,19 @@ sp<Codec2Buffer> EncryptedLinearInputBuffers::Alloc(
     }
 
     memoryVector->at(slot).block = block;
+
+#ifdef HANTRO_VPU
+    std::shared_ptr<C2LinearBlock> block2;
+    C2MemoryUsage block2_usage = { C2MemoryUsage::CPU_READ, C2MemoryUsage::CPU_WRITE };
+    err = pool->fetchLinearBlock(capacity, block2_usage, &block2);
+    if (err != C2_OK || block == nullptr) {
+        return nullptr;
+    }
+
+    return new EncryptedLinearBlockBuffer2(format, block, block2, memory, heapSeqNum);
+#else
     return new EncryptedLinearBlockBuffer(format, block, memory, heapSeqNum);
+#endif
 }
 
 sp<Codec2Buffer> EncryptedLinearInputBuffers::createNewBuffer() {

@@ -876,4 +876,22 @@ native_handle_t *EncryptedLinearBlockBuffer::handle() const {
     return const_cast<native_handle_t *>(mBlock->handle());
 }
 
+EncryptedLinearBlockBuffer2::EncryptedLinearBlockBuffer2(
+    const sp<AMessage> &format,
+    const std::shared_ptr<C2LinearBlock> &block,
+    const std::shared_ptr<C2LinearBlock> &block2,
+    const sp<IMemory> &memory,
+    int32_t heapSeqNum)
+    : EncryptedLinearBlockBuffer(format,block,memory,heapSeqNum){
+    mBlock2 = block2;
+}
+
+std::shared_ptr<C2Buffer> EncryptedLinearBlockBuffer2::getC2Buffer() {
+    return C2Buffer::CreateLinearBuffer(mBlock2->share(offset(), size(), C2Fence()));
+}
+
+native_handle_t *EncryptedLinearBlockBuffer2::handle2() const {
+    return const_cast<native_handle_t *>(mBlock2->handle());
+}
+
 }  // namespace android
