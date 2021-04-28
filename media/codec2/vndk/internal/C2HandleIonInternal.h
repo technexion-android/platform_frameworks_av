@@ -25,7 +25,7 @@ struct C2HandleIon : public C2Handle {
     // ion handle owns ionFd(!) and bufferFd
     C2HandleIon(int bufferFd, size_t size)
         : C2Handle(cHeader),
-          mFds{ bufferFd ,dup(bufferFd) },
+          mFds{ bufferFd ,bufferFd},
           mInts{ int(size & 0xFFFFFFFF), int((uint64_t(size) >> 32) & 0xFFFFFFFF), kMagic } { }
 
     C2HandleIon(int bufferFd, int bufferFd2, size_t size)
