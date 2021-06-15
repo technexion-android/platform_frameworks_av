@@ -562,22 +562,15 @@ status_t CCodecBufferChannel::queueSecureInputBuffer(
                 ALOGE("Could not mmap %s", strerror(errno));
             } else if (vaddr != NULL) {
                 size_t offset = 0;
+
                 // reset shared memory content
                 memset(vaddr, 0, size);
                 for (size_t i = 0; i < numSubSamples; i++) {
                     const CryptoPlugin::SubSample& subSample = subSamples[i];
-
-                    if (subSample.mNumBytesOfClearData != 0) {
-                        memcpy(reinterpret_cast<uint8_t*>(vaddr) + offset,
-                               reinterpret_cast<const uint8_t*>(encryptedBuffer->getmMemory()->unsecurePointer()) + offset,
-                               subSample.mNumBytesOfClearData);
-
-                        offset += subSample.mNumBytesOfClearData;
-                    }
-
-                    if (subSample.mNumBytesOfEncryptedData != 0) {
-                        offset += subSample.mNumBytesOfEncryptedData;
-                    }
+                    memcpy(reinterpret_cast<uint8_t*>(vaddr) + offset,
+                            reinterpret_cast<const uint8_t*>(encryptedBuffer->getmMemory()->unsecurePointer()) + offset,
+                            subSample.mNumBytesOfClearData + subSample.mNumBytesOfEncryptedData);
+                    offset += subSample.mNumBytesOfClearData + subSample.mNumBytesOfEncryptedData;
                 }
                 munmap(vaddr, size);
             } else {
