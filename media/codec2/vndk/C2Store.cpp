@@ -676,7 +676,7 @@ private:
                     me.set().allocFlags = defaultFlags;
                     me.set().minAlignment = defaultAlign;
 #else
-                    me.set().heapMask = ~(1 << UNMAPPED_HEAP_ID);
+                    me.set().heapMask = ~0;
                     me.set().allocFlags = 0;
                     me.set().minAlignment = 0;
 #endif
